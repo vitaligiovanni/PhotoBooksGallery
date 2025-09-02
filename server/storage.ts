@@ -3,6 +3,9 @@ import {
   categories,
   products,
   orders,
+  blogCategories,
+  blogPosts,
+  comments,
   type User,
   type UpsertUser,
   type Category,
@@ -11,6 +14,12 @@ import {
   type InsertProduct,
   type Order,
   type InsertOrder,
+  type BlogCategory,
+  type InsertBlogCategory,
+  type BlogPost,
+  type InsertBlogPost,
+  type Comment,
+  type InsertComment,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or } from "drizzle-orm";
@@ -39,6 +48,26 @@ export interface IStorage {
   getOrder(id: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrder(id: string, order: Partial<InsertOrder>): Promise<Order>;
+
+  // Blog category operations
+  getBlogCategories(): Promise<BlogCategory[]>;
+  createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory>;
+  updateBlogCategory(id: string, category: Partial<InsertBlogCategory>): Promise<BlogCategory>;
+  deleteBlogCategory(id: string): Promise<void>;
+
+  // Blog post operations
+  getBlogPosts(categoryId?: string, status?: string): Promise<BlogPost[]>;
+  getBlogPost(id: string): Promise<BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: string): Promise<void>;
+
+  // Comment operations
+  getComments(postId?: string): Promise<Comment[]>;
+  createComment(comment: InsertComment): Promise<Comment>;
+  updateComment(id: string, comment: Partial<InsertComment>): Promise<Comment>;
+  deleteComment(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -179,6 +208,101 @@ export class DatabaseStorage implements IStorage {
       .where(eq(orders.id, id))
       .returning();
     return updatedOrder;
+  }
+
+  // Blog category operations
+  async getBlogCategories(): Promise<BlogCategory[]> {
+    return await db.select().from(blogCategories).orderBy(blogCategories.sortOrder);
+  }
+
+  async createBlogCategory(category: InsertBlogCategory): Promise<BlogCategory> {
+    const [newCategory] = await db.insert(blogCategories).values(category).returning();
+    return newCategory;
+  }
+
+  async updateBlogCategory(id: string, category: Partial<InsertBlogCategory>): Promise<BlogCategory> {
+    const [updatedCategory] = await db
+      .update(blogCategories)
+      .set(category)
+      .where(eq(blogCategories.id, id))
+      .returning();
+    return updatedCategory;
+  }
+
+  async deleteBlogCategory(id: string): Promise<void> {
+    await db.delete(blogCategories).where(eq(blogCategories.id, id));
+  }
+
+  // Blog post operations
+  async getBlogPosts(categoryId?: string, status?: string): Promise<BlogPost[]> {
+    const conditions = [];
+    if (categoryId) {
+      conditions.push(eq(blogPosts.categoryId, categoryId));
+    }
+    if (status) {
+      conditions.push(eq(blogPosts.status, status as any));
+    }
+    
+    if (conditions.length > 0) {
+      return await db.select().from(blogPosts).where(and(...conditions)).orderBy(desc(blogPosts.createdAt));
+    }
+    
+    return await db.select().from(blogPosts).orderBy(desc(blogPosts.createdAt));
+  }
+
+  async getBlogPost(id: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post;
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
+    return post;
+  }
+
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [newPost] = await db.insert(blogPosts).values(post).returning();
+    return newPost;
+  }
+
+  async updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const [updatedPost] = await db
+      .update(blogPosts)
+      .set({ ...post, updatedAt: new Date() })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updatedPost;
+  }
+
+  async deleteBlogPost(id: string): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  // Comment operations
+  async getComments(postId?: string): Promise<Comment[]> {
+    if (postId) {
+      return await db.select().from(comments).where(eq(comments.postId, postId)).orderBy(desc(comments.createdAt));
+    }
+    
+    return await db.select().from(comments).orderBy(desc(comments.createdAt));
+  }
+
+  async createComment(comment: InsertComment): Promise<Comment> {
+    const [newComment] = await db.insert(comments).values(comment).returning();
+    return newComment;
+  }
+
+  async updateComment(id: string, comment: Partial<InsertComment>): Promise<Comment> {
+    const [updatedComment] = await db
+      .update(comments)
+      .set(comment)
+      .where(eq(comments.id, id))
+      .returning();
+    return updatedComment;
+  }
+
+  async deleteComment(id: string): Promise<void> {
+    await db.delete(comments).where(eq(comments.id, id));
   }
 }
 

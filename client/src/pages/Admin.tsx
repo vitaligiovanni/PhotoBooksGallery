@@ -480,8 +480,19 @@ function BlogManager() {
                                 </div>
                                 <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
                                   <img 
-                                    src={field.value.startsWith('/objects/') 
-                                      ? field.value 
+                                    src={field.value.startsWith('https://storage.googleapis.com/') 
+                                      ? (() => {
+                                          // Преобразуем Google Storage URL в локальный путь
+                                          const url = new URL(field.value);
+                                          const pathParts = url.pathname.split('/');
+                                          // Находим .private/uploads и берем UUID после этого
+                                          const privateIndex = pathParts.indexOf('.private');
+                                          if (privateIndex >= 0 && pathParts[privateIndex + 1] === 'uploads') {
+                                            const uuid = pathParts[privateIndex + 2];
+                                            return `/objects/uploads/${uuid}`;
+                                          }
+                                          return field.value;
+                                        })()
                                       : field.value
                                     }
                                     alt="Preview" 

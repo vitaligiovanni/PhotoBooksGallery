@@ -439,13 +439,13 @@ function ProductsManager() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              {selectedFormat && PHOTOBOOK_SIZES[selectedFormat]?.map((size) => (
+                              {selectedFormat && selectedFormat !== "none" && PHOTOBOOK_SIZES[selectedFormat]?.map((size) => (
                                 <SelectItem key={formatPhotobookSize(size)} value={formatPhotobookSize(size)}>
                                   {size.label}
                                 </SelectItem>
                               ))}
-                              {!selectedFormat && (
-                                <SelectItem value="" disabled>
+                              {(!selectedFormat || selectedFormat === "none") && (
+                                <SelectItem value="disabled" disabled>
                                   Сначала выберите формат
                                 </SelectItem>
                               )}
@@ -457,7 +457,7 @@ function ProductsManager() {
                     />
                   </div>
 
-                  {selectedFormat && (
+                  {selectedFormat && selectedFormat !== "none" && (
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={productForm.control}

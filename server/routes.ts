@@ -380,10 +380,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Нормализуем URL изображения если необходимо
       if (postData.featuredImage && postData.featuredImage.startsWith('https://storage.googleapis.com/')) {
         const objectStorageService = new ObjectStorageService();
-        postData.featuredImage = objectStorageService.normalizeObjectEntityPath(postData.featuredImage);
         
-        // Устанавливаем ACL для загруженного изображения
-        await objectStorageService.trySetObjectEntityAclPolicy(
+        // Нормализуем путь к изображению и устанавливаем ACL
+        postData.featuredImage = await objectStorageService.trySetObjectEntityAclPolicy(
           postData.featuredImage,
           {
             owner: userId,
@@ -438,6 +437,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting blog post:", error);
       res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Public blog API routes (for frontend blog pages)
+  app.get('/api/blog/posts', async (req, res) => {
+    try {
+      const { category, search } = req.query;
+      // Получаем только опубликованные посты для публичной страницы
+      const posts = await storage.getBlogPosts(
+        category as string, 
+        "published" // Только опубликованные посты
+      );
+      
+      // Фильтруем по поиску если указан
+      let filteredPosts = posts;
+      if (search) {
+        const searchTerm = (search as string).toLowerCase();
+        filteredPosts = posts.filter(post => 
+          (post.title as any)?.ru?.toLowerCase().includes(searchTerm) ||
+          (post.title as any)?.hy?.toLowerCase().includes(searchTerm) ||
+          (post.title as any)?.en?.toLowerCase().includes(searchTerm) ||
+          (post.excerpt as any)?.ru?.toLowerCase().includes(searchTerm) ||
+          (post.excerpt as any)?.hy?.toLowerCase().includes(searchTerm) ||
+          (post.excerpt as any)?.en?.toLowerCase().includes(searchTerm)
+        );
+      }
+      
+      res.json(filteredPosts);
+    } catch (error) {
+      console.error("Error fetching public blog posts:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get('/api/blog/posts/:slug', async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const posts = await storage.getBlogPosts();
+      const post = posts.find(p => p.slug === slug && p.status === 'published');
+      
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+
+      // Увеличиваем счетчик просмотров
+      await storage.incrementBlogPostViews(post.id);
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching blog post by slug:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  app.get('/api/blog/categories', async (req, res) => {
+    try {
+      const categories = await storage.getBlogCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching public blog categories:", error);
+      res.status(500).json({ message: "Failed to fetch blog categories" });
     }
   });
 

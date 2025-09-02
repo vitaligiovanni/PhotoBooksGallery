@@ -71,7 +71,7 @@ function BlogManager() {
       content: { ru: "", hy: "", en: "" },
       featuredImage: "",
       categoryId: "none",
-      status: "draft" as const,
+      status: "published" as const,
       publishedAt: null,
       seoTitle: { ru: "", hy: "", en: "" },
       seoDescription: { ru: "", hy: "", en: "" },

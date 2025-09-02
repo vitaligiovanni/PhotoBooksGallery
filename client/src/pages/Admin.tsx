@@ -55,6 +55,7 @@ function ProductsManager() {
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [localPreviews, setLocalPreviews] = useState<string[]>([]);
 
   const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -80,6 +81,8 @@ function ProductsManager() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setIsProductDialogOpen(false);
+      setLocalPreviews([]);
+      setUploadedImages([]);
       productForm.reset();
       toast({
         title: "Успех",
@@ -103,6 +106,8 @@ function ProductsManager() {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       setIsProductDialogOpen(false);
       setEditingProduct(null);
+      setLocalPreviews([]);
+      setUploadedImages([]);
       productForm.reset();
       toast({
         title: "Успех",
@@ -156,9 +161,7 @@ function ProductsManager() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    
-    // For now, we'll just use the stored paths as they are
-    // Later we can implement proper image serving through the backend
+    setLocalPreviews([]);
     setUploadedImages(product.images || []);
     
     productForm.reset({
@@ -183,30 +186,19 @@ function ProductsManager() {
     };
   };
 
+  const handleFilesAdded = (previews: string[]) => {
+    // Add local previews immediately when files are selected
+    setLocalPreviews(prev => [...prev, ...previews]);
+  };
+
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     const newImageUrls = result.successful.map(file => {
       const uploadURL = file.uploadURL as string;
-      
-      // For preview, we'll use the Google Cloud Storage URL directly
-      // and convert to object path for storage
-      const objectPath = (() => {
-        try {
-          const urlObj = new URL(uploadURL);
-          const pathParts = urlObj.pathname.split('/');
-          if (pathParts.length >= 3) {
-            return `/objects/${pathParts.slice(2).join('/')}`;
-          }
-        } catch (error) {
-          console.error("Error converting URL:", error);
-        }
-        return uploadURL;
-      })();
-      
-      // For now, use the original upload URL for preview since it's accessible
-      // Later we can implement proper object serving
       return uploadURL;
     });
     
+    // Replace local previews with uploaded URLs
+    setLocalPreviews([]);
     setUploadedImages(prev => [...prev, ...newImageUrls]);
     
     toast({
@@ -216,7 +208,15 @@ function ProductsManager() {
   };
 
   const removeImage = (index: number) => {
-    setUploadedImages(prev => prev.filter((_, i) => i !== index));
+    const totalPreviews = localPreviews.length;
+    if (index < totalPreviews) {
+      // Remove from local previews
+      setLocalPreviews(prev => prev.filter((_, i) => i !== index));
+    } else {
+      // Remove from uploaded images
+      const uploadedIndex = index - totalPreviews;
+      setUploadedImages(prev => prev.filter((_, i) => i !== uploadedIndex));
+    }
   };
 
   const handleDelete = (id: string) => {
@@ -239,6 +239,7 @@ function ProductsManager() {
               onClick={() => {
                 setEditingProduct(null);
                 setUploadedImages([]);
+                setLocalPreviews([]);
                 productForm.reset({
                   name: { ru: "", hy: "", en: "" },
                   description: { ru: "", hy: "", en: "" },
@@ -373,6 +374,7 @@ function ProductsManager() {
                       maxFileSize={5242880} // 5MB
                       onGetUploadParameters={handleGetUploadParameters}
                       onComplete={handleUploadComplete}
+                      onFilesAdded={handleFilesAdded}
                       buttonClassName="bg-blue-500 hover:bg-blue-600"
                     >
                       <Plus className="h-4 w-4 mr-2" />
@@ -381,15 +383,19 @@ function ProductsManager() {
                   </div>
 
                   {/* Image Preview Grid */}
-                  {uploadedImages.length > 0 && (
+                  {(localPreviews.length > 0 || uploadedImages.length > 0) && (
                     <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-                      {uploadedImages.map((imageUrl, index) => (
-                        <div key={index} className="relative group">
+                      {/* Local previews (shown immediately after file selection) */}
+                      {localPreviews.map((preview, index) => (
+                        <div key={`preview-${index}`} className="relative group">
                           <img
-                            src={imageUrl}
-                            alt={`Product image ${index + 1}`}
-                            className="w-full h-24 object-cover rounded border"
+                            src={preview}
+                            alt={`Preview ${index + 1}`}
+                            className="w-full h-24 object-cover rounded border border-blue-300"
                           />
+                          <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
+                            Локальный
+                          </div>
                           <button
                             type="button"
                             onClick={() => removeImage(index)}
@@ -399,10 +405,30 @@ function ProductsManager() {
                           </button>
                         </div>
                       ))}
+                      {/* Uploaded images */}
+                      {uploadedImages.map((imageUrl, index) => (
+                        <div key={`uploaded-${index}`} className="relative group">
+                          <img
+                            src={imageUrl}
+                            alt={`Product image ${index + 1}`}
+                            className="w-full h-24 object-cover rounded border border-green-300"
+                          />
+                          <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">
+                            Загружено
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removeImage(localPreviews.length + index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   )}
 
-                  {uploadedImages.length < 6 && (
+                  {(localPreviews.length + uploadedImages.length) < 6 && (
                     <p className="text-sm text-amber-600">
                       Рекомендуется загрузить минимум 6 изображений для лучшего представления товара
                     </p>

@@ -16,6 +16,7 @@ interface ObjectUploaderProps {
   onComplete?: (
     result: UploadResult<Record<string, unknown>, Record<string, unknown>>
   ) => void;
+  onFilesAdded?: (previews: string[]) => void;
   buttonClassName?: string;
   children: ReactNode;
 }
@@ -53,10 +54,30 @@ export function ObjectUploader({
   maxFileSize = 10485760, // 10MB default
   onGetUploadParameters,
   onComplete,
+  onFilesAdded,
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
   const [showModal, setShowModal] = useState(false);
+  
+  // Function to create local previews
+  const createFilePreviews = async (files: File[]) => {
+    const previews: string[] = [];
+    
+    for (const file of files) {
+      if (file.type.startsWith('image/')) {
+        const preview = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+        previews.push(preview);
+      }
+    }
+    
+    return previews;
+  };
+
   const [uppy] = useState(() =>
     new Uppy({
       restrictions: {
@@ -69,6 +90,12 @@ export function ObjectUploader({
       .use(AwsS3, {
         shouldUseMultipart: false,
         getUploadParameters: onGetUploadParameters,
+      })
+      .on("files-added", async (files) => {
+        // Create local previews when files are selected
+        const fileArray = Object.values(files).map(file => file.data as File);
+        const previews = await createFilePreviews(fileArray);
+        onFilesAdded?.(previews);
       })
       .on("complete", (result) => {
         onComplete?.(result);

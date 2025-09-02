@@ -196,21 +196,23 @@ function ProductsManager() {
       const uploadURL = file.uploadURL as string;
       console.log('Upload URL:', uploadURL); // Debug log
       
-      // Use Google Cloud Storage URL for preview (remove query params for GET access)
+      // Convert to object path for database storage
       try {
         const urlObj = new URL(uploadURL);
-        // Remove query parameters to get basic object URL that might be publicly accessible
-        const baseUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
-        console.log('Base URL for preview:', baseUrl);
-        return baseUrl;
+        const pathParts = urlObj.pathname.split('/');
+        if (pathParts.length >= 3) {
+          const objectPath = `/objects/${pathParts.slice(2).join('/')}`;
+          console.log('Object path for storage:', objectPath);
+          return objectPath;
+        }
       } catch (error) {
         console.error('Error processing URL:', error);
-        return uploadURL;
       }
+      
+      return uploadURL;
     });
     
-    // Replace local previews with uploaded URLs
-    setLocalPreviews([]);
+    // Keep local previews for display, but store object paths for database
     setUploadedImages(prev => [...prev, ...newImageUrls]);
     
     toast({
@@ -220,14 +222,12 @@ function ProductsManager() {
   };
 
   const removeImage = (index: number) => {
-    const totalPreviews = localPreviews.length;
-    if (index < totalPreviews) {
-      // Remove from local previews
-      setLocalPreviews(prev => prev.filter((_, i) => i !== index));
-    } else {
-      // Remove from uploaded images
-      const uploadedIndex = index - totalPreviews;
-      setUploadedImages(prev => prev.filter((_, i) => i !== uploadedIndex));
+    // Remove local preview
+    setLocalPreviews(prev => prev.filter((_, i) => i !== index));
+    
+    // Also remove corresponding uploaded image if it exists
+    if (index < uploadedImages.length) {
+      setUploadedImages(prev => prev.filter((_, i) => i !== index));
     }
   };
 
@@ -395,63 +395,39 @@ function ProductsManager() {
                   </div>
 
                   {/* Image Preview Grid */}
-                  {(localPreviews.length > 0 || uploadedImages.length > 0) && (
+                  {localPreviews.length > 0 && (
                     <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
-                      {/* Local previews (shown immediately after file selection) */}
-                      {localPreviews.map((preview, index) => (
-                        <div key={`preview-${index}`} className="relative group">
-                          <img
-                            src={preview}
-                            alt={`Preview ${index + 1}`}
-                            className="w-full h-24 object-cover rounded border border-blue-300"
-                          />
-                          <div className="absolute top-1 left-1 bg-blue-500 text-white text-xs px-1 rounded">
-                            Локальный
+                      {/* Show local previews with status indicator */}
+                      {localPreviews.map((preview, index) => {
+                        const isUploaded = index < uploadedImages.length;
+                        return (
+                          <div key={`preview-${index}`} className="relative group">
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className={`w-full h-24 object-cover rounded border ${
+                                isUploaded ? 'border-green-300' : 'border-blue-300'
+                              }`}
+                            />
+                            <div className={`absolute top-1 left-1 text-white text-xs px-1 rounded ${
+                              isUploaded ? 'bg-green-500' : 'bg-blue-500'
+                            }`}>
+                              {isUploaded ? 'Загружено' : 'Локальный'}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => removeImage(index)}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              ×
+                            </button>
                           </div>
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
-                      {/* Uploaded images */}
-                      {uploadedImages.map((imageUrl, index) => (
-                        <div key={`uploaded-${index}`} className="relative group">
-                          <img
-                            src={imageUrl}
-                            alt={`Product image ${index + 1}`}
-                            className="w-full h-24 object-cover rounded border border-green-300"
-                            onError={(e) => {
-                              console.error('Failed to load image:', imageUrl);
-                              // Show placeholder on error
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                          <div className="hidden absolute inset-0 bg-gray-200 rounded border border-green-300 flex items-center justify-center text-sm text-gray-500">
-                            Изображение загружено
-                            <br />
-                            (не удается отобразить)
-                          </div>
-                          <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">
-                            Загружено
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => removeImage(localPreviews.length + index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
 
-                  {(localPreviews.length + uploadedImages.length) < 6 && (
+                  {localPreviews.length < 6 && (
                     <p className="text-sm text-amber-600">
                       Рекомендуется загрузить минимум 6 изображений для лучшего представления товара
                     </p>

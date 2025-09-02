@@ -428,11 +428,18 @@ function BlogManager() {
                               maxNumberOfFiles={1}
                               maxFileSize={5242880} // 5MB
                               onGetUploadParameters={async () => {
-                                const response = await apiRequest("POST", "/api/objects/upload");
-                                return {
-                                  method: "PUT" as const,
-                                  url: response.uploadURL,
-                                };
+                                try {
+                                  console.log("Requesting upload URL...");
+                                  const response = await apiRequest("POST", "/api/objects/upload");
+                                  console.log("Upload URL response:", response);
+                                  return {
+                                    method: "PUT" as const,
+                                    url: response.uploadURL,
+                                  };
+                                } catch (error) {
+                                  console.error("Error getting upload URL:", error);
+                                  throw error;
+                                }
                               }}
                               onComplete={(result) => {
                                 console.log("Upload result:", result);

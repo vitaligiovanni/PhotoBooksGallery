@@ -1,0 +1,30 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+image-page.js:53 Loaded!😎
+Admin.tsx:432 Requesting upload URL...
+Admin.tsx:434 Upload URL response: Response {type: 'basic', url: 'https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/api/objects/upload', redirected: false, status: 200, ok: true, …}body: (...)bodyUsed: falseheaders: Headers {}ok: trueredirected: falsestatus: 200statusText: "OK"type: "basic"url: "https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/api/objects/upload"[[Prototype]]: Response
+ObjectUploader.tsx:95 Got upload parameters: {method: 'PUT', url: undefined}method: "PUT"url: undefined[[Prototype]]: Objectconstructor: ƒ Object()hasOwnProperty: ƒ hasOwnProperty()isPrototypeOf: ƒ isPrototypeOf()propertyIsEnumerable: ƒ propertyIsEnumerable()toLocaleString: ƒ toLocaleString()toString: ƒ toString()valueOf: ƒ valueOf()__defineGetter__: ƒ __defineGetter__()__defineSetter__: ƒ __defineSetter__()__lookupGetter__: ƒ __lookupGetter__()__lookupSetter__: ƒ __lookupSetter__()__proto__: (...)get __proto__: ƒ __proto__()set __proto__: ƒ __proto__()
+chunk-6IRVPNOI.js?v=ed03f2a6:1989 [Uppy] [23:41:48] Cannot upload to an undefined URL
+error @ chunk-6IRVPNOI.js?v=ed03f2a6:1989
+log @ chunk-6IRVPNOI.js?v=ed03f2a6:3255
+(anonymous) @ chunk-6IRVPNOI.js?v=ed03f2a6:3642
+emitAll @ chunk-6IRVPNOI.js?v=ed03f2a6:385
+emit @ chunk-6IRVPNOI.js?v=ed03f2a6:330
+emit @ chunk-6IRVPNOI.js?v=ed03f2a6:2636
+onError @ @uppy_aws-s3.js?v=ed03f2a6:1878
+(anonymous) @ @uppy_aws-s3.js?v=ed03f2a6:1024
+Promise.then
+createUpload_fn @ @uppy_aws-s3.js?v=ed03f2a6:1154
+start @ @uppy_aws-s3.js?v=ed03f2a6:1071
+(anonymous) @ @uppy_aws-s3.js?v=ed03f2a6:1938
+uploadLocalFile_fn @ @uppy_aws-s3.js?v=ed03f2a6:1867
+(anonymous) @ @uppy_aws-s3.js?v=ed03f2a6:1564
+(anonymous) @ @uppy_aws-s3.js?v=ed03f2a6:1545
+runUpload_fn @ chunk-6IRVPNOI.js?v=ed03f2a6:3852
+await in runUpload_fn
+(anonymous) @ chunk-6IRVPNOI.js?v=ed03f2a6:3358
+Promise.then
+upload @ chunk-6IRVPNOI.js?v=ed03f2a6:3347
+(anonymous) @ @uppy_react.js?v=ed03f2a6:4671
+(anonymous) @ chunk-6IRVPNOI.js?v=ed03f2a6:1489Understand this error
+ObjectUploader.tsx:114 Uppy complete result: {successful: Array(0), failed: Array(1), uploadID: 'NcLjppFd_lR6VhkymJJly'}failed: [{…}]successful: []uploadID: "NcLjppFd_lR6VhkymJJly"[[Prototype]]: Object
+Admin.tsx:445 Upload result: 

@@ -430,11 +430,22 @@ function BlogManager() {
                               onGetUploadParameters={async () => {
                                 try {
                                   console.log("Requesting upload URL...");
-                                  const response = await apiRequest("POST", "/api/objects/upload");
-                                  console.log("Upload URL response:", response);
+                                  const response = await fetch("/api/objects/upload", {
+                                    method: "POST",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                  });
+                                  
+                                  if (!response.ok) {
+                                    throw new Error(`HTTP error! status: ${response.status}`);
+                                  }
+                                  
+                                  const data = await response.json();
+                                  console.log("Upload URL response:", data);
                                   return {
                                     method: "PUT" as const,
-                                    url: response.uploadURL,
+                                    url: data.uploadURL,
                                   };
                                 } catch (error) {
                                   console.error("Error getting upload URL:", error);

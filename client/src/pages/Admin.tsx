@@ -471,6 +471,37 @@ function BlogManager() {
                                 Загрузить изображение
                               </div>
                             </ObjectUploader>
+                            
+                            {/* Превью загруженного изображения */}
+                            {field.value && (
+                              <div className="mt-4 space-y-2">
+                                <div className="text-sm text-muted-foreground">
+                                  Загружено изображение:
+                                </div>
+                                <div className="relative w-32 h-32 border rounded-lg overflow-hidden">
+                                  <img 
+                                    src={field.value.startsWith('/objects/') 
+                                      ? field.value 
+                                      : field.value
+                                    }
+                                    alt="Preview" 
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      console.log("Image load error:", e);
+                                      // Показываем placeholder при ошибке
+                                      e.currentTarget.src = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiBmaWxsPSIjRjNGNEY2Ii8+CjxwYXRoIGQ9Ik0xMS41IDEyLjVIMjAuNVYxOS41SDExLjVWMTIuNVoiIGZpbGw9IiNEMUQ1REIiLz4KPC9zdmc+";
+                                    }}
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => field.onChange("")}
+                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
+                                  >
+                                    ×
+                                  </button>
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </FormControl>
                         <FormMessage />

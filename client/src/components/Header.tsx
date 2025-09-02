@@ -67,6 +67,15 @@ export function Header() {
                 )}
               </Button>
 
+              {/* Admin Panel (for admins only) */}
+              {isAuthenticated && (user as any)?.role === 'admin' && (
+                <Link href="/admin">
+                  <Button variant="outline" size="sm" data-testid="button-admin">
+                    CRM
+                  </Button>
+                </Link>
+              )}
+
               {/* User Account */}
               {isAuthenticated ? (
                 <Button

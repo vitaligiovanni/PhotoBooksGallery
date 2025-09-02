@@ -125,10 +125,26 @@ function ProductsManager() {
   });
 
   const handleSubmit = (data: any) => {
+    // Convert Google Cloud Storage URLs to object paths for database storage
+    const convertedImages = uploadedImages.map(url => {
+      if (url.startsWith('https://storage.googleapis.com/')) {
+        try {
+          const urlObj = new URL(url);
+          const pathParts = urlObj.pathname.split('/');
+          if (pathParts.length >= 3) {
+            return `/objects/${pathParts.slice(2).join('/')}`;
+          }
+        } catch (error) {
+          console.error("Error converting URL for storage:", error);
+        }
+      }
+      return url;
+    });
+
     // Merge uploaded images with form data
     const submitData = {
       ...data,
-      images: uploadedImages.length > 0 ? uploadedImages : (data.images || [])
+      images: convertedImages.length > 0 ? convertedImages : (data.images || [])
     };
     
     if (editingProduct) {
@@ -140,7 +156,11 @@ function ProductsManager() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
+    
+    // For now, we'll just use the stored paths as they are
+    // Later we can implement proper image serving through the backend
     setUploadedImages(product.images || []);
+    
     productForm.reset({
       name: product.name,
       description: product.description,
@@ -165,21 +185,26 @@ function ProductsManager() {
 
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     const newImageUrls = result.successful.map(file => {
-      const url = file.uploadURL as string;
+      const uploadURL = file.uploadURL as string;
       
-      // Convert Google Cloud Storage URLs to object paths
-      try {
-        const urlObj = new URL(url);
-        const pathParts = urlObj.pathname.split('/');
-        if (pathParts.length >= 3) {
-          const objectPath = pathParts.slice(2).join('/');
-          return `/objects/${objectPath}`;
+      // For preview, we'll use the Google Cloud Storage URL directly
+      // and convert to object path for storage
+      const objectPath = (() => {
+        try {
+          const urlObj = new URL(uploadURL);
+          const pathParts = urlObj.pathname.split('/');
+          if (pathParts.length >= 3) {
+            return `/objects/${pathParts.slice(2).join('/')}`;
+          }
+        } catch (error) {
+          console.error("Error converting URL:", error);
         }
-      } catch (error) {
-        console.error("Error converting URL:", error);
-      }
+        return uploadURL;
+      })();
       
-      return url;
+      // For now, use the original upload URL for preview since it's accessible
+      // Later we can implement proper object serving
+      return uploadURL;
     });
     
     setUploadedImages(prev => [...prev, ...newImageUrls]);

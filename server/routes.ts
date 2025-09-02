@@ -372,10 +372,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const postData = insertBlogPostSchema.parse({
+      let postData = {
         ...req.body,
         authorId: userId
-      });
+      };
+
+      // Нормализуем URL изображения если необходимо
+      if (postData.featuredImage && postData.featuredImage.startsWith('https://storage.googleapis.com/')) {
+        const objectStorageService = new ObjectStorageService();
+        postData.featuredImage = objectStorageService.normalizeObjectEntityPath(postData.featuredImage);
+        
+        // Устанавливаем ACL для загруженного изображения
+        await objectStorageService.trySetObjectEntityAclPolicy(
+          postData.featuredImage,
+          {
+            owner: userId,
+            visibility: "public", // Изображения статей блога публичные
+          }
+        );
+      }
+
+      // Если categoryId равен "none", устанавливаем null
+      if (postData.categoryId === "none") {
+        postData.categoryId = null;
+      }
+
+      postData = insertBlogPostSchema.parse(postData);
       const post = await storage.createBlogPost(postData);
       res.status(201).json(post);
     } catch (error) {

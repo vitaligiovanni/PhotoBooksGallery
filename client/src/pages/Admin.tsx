@@ -138,11 +138,17 @@ function BlogManager() {
     return new Date(dateString).toLocaleDateString('ru-RU');
   };
 
-  const handleBlogPostSubmit = (data: any) => {
+  const handleBlogPostSubmit = async (data: any) => {
     if (editingPost) {
       // Update logic would go here
     } else {
-      createBlogPostMutation.mutate(data);
+      const postData = {
+        ...data,
+        // Если featuredImage это URL загрузки, нормализуем его
+        featuredImage: data.featuredImage || ""
+      };
+      
+      createBlogPostMutation.mutate(postData);
     }
   };
 
@@ -389,6 +395,65 @@ function BlogManager() {
                       )}
                     />
                   </div>
+                  
+                  <FormField
+                    control={blogPostForm.control}
+                    name="featuredImage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Изображение статьи</FormLabel>
+                        <FormControl>
+                          <div className="space-y-4">
+                            {field.value && (
+                              <div className="flex items-center gap-2 p-2 border rounded">
+                                <img 
+                                  src={field.value} 
+                                  alt="Preview" 
+                                  className="w-16 h-16 object-cover rounded"
+                                />
+                                <span className="text-sm text-muted-foreground flex-1">
+                                  Изображение загружено
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => field.onChange("")}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                            <ObjectUploader
+                              maxNumberOfFiles={1}
+                              maxFileSize={5242880} // 5MB
+                              onGetUploadParameters={async () => {
+                                const response = await apiRequest("POST", "/api/objects/upload");
+                                return {
+                                  method: "PUT" as const,
+                                  url: response.uploadURL,
+                                };
+                              }}
+                              onComplete={(result) => {
+                                if (result.successful && result.successful.length > 0) {
+                                  const uploadedFile = result.successful[0];
+                                  if (uploadedFile && 'uploadURL' in uploadedFile) {
+                                    field.onChange(uploadedFile.uploadURL);
+                                  }
+                                }
+                              }}
+                            >
+                              <div className="flex items-center gap-2">
+                                <Plus className="h-4 w-4" />
+                                Загрузить изображение
+                              </div>
+                            </ObjectUploader>
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   
                   <FormField
                     control={blogPostForm.control}

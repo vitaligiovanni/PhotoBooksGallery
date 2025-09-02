@@ -163,9 +163,37 @@ function ProductsManager() {
     };
   };
 
-  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+  const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     const newImageUrls = result.successful.map(file => file.uploadURL as string);
-    setUploadedImages(prev => [...prev, ...newImageUrls]);
+    
+    // Convert Google Cloud Storage URLs to object paths
+    const convertedUrls = await Promise.all(
+      newImageUrls.map(async (url) => {
+        try {
+          // Extract the object path from the Google Cloud Storage URL
+          const urlObj = new URL(url);
+          const pathParts = urlObj.pathname.split('/');
+          if (pathParts.length >= 3) {
+            const bucketName = pathParts[1];
+            const objectPath = pathParts.slice(2).join('/');
+            const normalizedPath = `/${bucketName}/${objectPath}`;
+            
+            // Update the object with ACL policy
+            const response = await apiRequest("PUT", "/api/banner-images", {
+              bannerImageURL: normalizedPath
+            });
+            const data = await response.json();
+            return data.objectPath || `/objects/${objectPath}`;
+          }
+          return url;
+        } catch (error) {
+          console.error("Error converting URL:", error);
+          return url;
+        }
+      })
+    );
+    
+    setUploadedImages(prev => [...prev, ...convertedUrls]);
     
     toast({
       title: "Успех",
@@ -426,7 +454,13 @@ function ProductsManager() {
                 products.map((product) => (
                   <TableRow key={product.id}>
                     <TableCell>
-                      {product.imageUrl ? (
+                      {(product.images && product.images.length > 0) ? (
+                        <img 
+                          src={product.images[0]} 
+                          alt={(product.name as any)?.ru || "Product"} 
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      ) : product.imageUrl ? (
                         <img 
                           src={product.imageUrl} 
                           alt={(product.name as any)?.ru || "Product"} 

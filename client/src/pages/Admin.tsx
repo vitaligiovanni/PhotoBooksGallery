@@ -70,7 +70,7 @@ function BlogManager() {
       excerpt: { ru: "", hy: "", en: "" },
       content: { ru: "", hy: "", en: "" },
       featuredImage: "",
-      categoryId: "",
+      categoryId: "none",
       status: "draft" as const,
       publishedAt: null,
       seoTitle: { ru: "", hy: "", en: "" },
@@ -334,7 +334,7 @@ function BlogManager() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Без категории</SelectItem>
+                              <SelectItem value="none">Без категории</SelectItem>
                               {blogCategories.map((category) => (
                                 <SelectItem key={category.id} value={category.id}>
                                   {(category.name as any)?.ru || 'Без названия'}

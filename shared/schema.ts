@@ -371,3 +371,4 @@ export const calculateAdditionalSpreadPrice = (basePrice: number): number => {
 export const formatPhotobookSize = (size: PhotobookSize): string => {
   return `${size.width}x${size.height}`;
 };
+

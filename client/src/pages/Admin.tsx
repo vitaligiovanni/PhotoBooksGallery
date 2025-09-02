@@ -75,7 +75,7 @@ function ProductsManager() {
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("/api/products", "POST", data);
+      return await apiRequest("POST", "/api/products", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -97,7 +97,7 @@ function ProductsManager() {
 
   const updateProductMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      return await apiRequest(`/api/products/${id}`, "PUT", data);
+      return await apiRequest("PUT", `/api/products/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -113,7 +113,7 @@ function ProductsManager() {
 
   const deleteProductMutation = useMutation({
     mutationFn: async (id: string) => {
-      return await apiRequest(`/api/products/${id}`, "DELETE");
+      return await apiRequest("DELETE", `/api/products/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
@@ -155,7 +155,7 @@ function ProductsManager() {
   };
 
   const handleGetUploadParameters = async () => {
-    const response = await apiRequest("/api/objects/upload", "POST");
+    const response = await apiRequest("POST", "/api/objects/upload");
     const data = await response.json();
     return {
       method: "PUT" as const,

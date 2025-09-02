@@ -38,6 +38,9 @@ export function Header() {
               <Link href="/editor" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-editor">
                 {t('editor')}
               </Link>
+              <Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-blog">
+                {t('blog')}
+              </Link>
               <a href="#about" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-about">
                 {t('about')}
               </a>
@@ -119,6 +122,9 @@ export function Header() {
                 </Link>
                 <Link href="/editor" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-editor">
                   {t('editor')}
+                </Link>
+                <Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-blog">
+                  {t('blog')}
                 </Link>
                 <a href="#about" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-about">
                   {t('about')}

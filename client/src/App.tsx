@@ -15,6 +15,8 @@ import Product from "@/pages/Product";
 import Cart from "@/pages/Cart";
 import Editor from "@/pages/Editor";
 import Admin from "@/pages/Admin";
+import Blog from "@/pages/Blog";
+import BlogPost from "@/pages/BlogPost";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -28,6 +30,8 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/editor" component={Editor} />
       <Route path="/admin" component={Admin} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
       <Route component={NotFound} />
     </Switch>
   );

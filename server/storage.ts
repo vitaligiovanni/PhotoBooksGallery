@@ -22,7 +22,7 @@ import {
   type InsertComment,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, and, ilike, or } from "drizzle-orm";
+import { eq, desc, and, ilike, or, ne, sql } from "drizzle-orm";
 
 export interface IStorage {
   // User operations (required for Replit Auth)
@@ -56,12 +56,14 @@ export interface IStorage {
   deleteBlogCategory(id: string): Promise<void>;
 
   // Blog post operations
-  getBlogPosts(categoryId?: string, status?: string): Promise<BlogPost[]>;
+  getBlogPosts(categoryId?: string, status?: string, search?: string): Promise<BlogPost[]>;
   getBlogPost(id: string): Promise<BlogPost | undefined>;
   getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
   createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
   updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost>;
   deleteBlogPost(id: string): Promise<void>;
+  incrementBlogPostViews(id: string): Promise<void>;
+  getRelatedBlogPosts(id: string): Promise<BlogPost[]>;
 
   // Comment operations
   getComments(postId?: string): Promise<Comment[]>;
@@ -234,13 +236,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Blog post operations
-  async getBlogPosts(categoryId?: string, status?: string): Promise<BlogPost[]> {
+  async getBlogPosts(categoryId?: string, status?: string, search?: string): Promise<BlogPost[]> {
     const conditions = [];
     if (categoryId) {
       conditions.push(eq(blogPosts.categoryId, categoryId));
     }
     if (status) {
       conditions.push(eq(blogPosts.status, status as any));
+    }
+    if (search) {
+      conditions.push(
+        or(
+          ilike(blogPosts.title, `%${search}%`),
+          ilike(blogPosts.excerpt, `%${search}%`),
+          ilike(blogPosts.content, `%${search}%`)
+        )
+      );
     }
     
     if (conditions.length > 0) {
@@ -276,6 +287,35 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBlogPost(id: string): Promise<void> {
     await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  async incrementBlogPostViews(id: string): Promise<void> {
+    await db
+      .update(blogPosts)
+      .set({ viewCount: sql`${blogPosts.viewCount} + 1` })
+      .where(eq(blogPosts.id, id));
+  }
+
+  async getRelatedBlogPosts(id: string): Promise<BlogPost[]> {
+    // Get the current post to find related posts by category
+    const [currentPost] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    if (!currentPost) {
+      return [];
+    }
+
+    // Find posts in the same category, excluding the current post
+    return await db
+      .select()
+      .from(blogPosts)
+      .where(
+        and(
+          eq(blogPosts.categoryId, currentPost.categoryId!),
+          eq(blogPosts.status, 'published'),
+          ne(blogPosts.id, id) // Exclude current post
+        )
+      )
+      .orderBy(desc(blogPosts.publishedAt))
+      .limit(4);
   }
 
   // Comment operations

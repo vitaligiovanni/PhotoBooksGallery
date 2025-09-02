@@ -195,7 +195,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
-      if (error.message?.includes('violates foreign key constraint')) {
+      if (error instanceof Error && error.message?.includes('violates foreign key constraint')) {
         return res.status(400).json({ message: "Выбранная категория не существует" });
       }
       res.status(500).json({ message: "Failed to create product" });
@@ -434,6 +434,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/comments', async (req, res) => {
     try {
       const commentData = insertCommentSchema.parse(req.body);
+      const comment = await storage.createComment(commentData);
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
+  // Additional blog routes for frontend
+  app.get('/api/blog/categories', async (req, res) => {
+    try {
+      const categories = await storage.getBlogCategories();
+      res.json(categories);
+    } catch (error) {
+      console.error("Error fetching blog categories:", error);
+      res.status(500).json({ message: "Failed to fetch blog categories" });
+    }
+  });
+
+  app.get('/api/blog/posts', async (req, res) => {
+    try {
+      const { category, status = 'published', search } = req.query;
+      const posts = await storage.getBlogPosts(
+        category as string, 
+        status as string,
+        search as string
+      );
+      res.json(posts);
+    } catch (error) {
+      console.error("Error fetching blog posts:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get('/api/blog/posts/:slug', async (req, res) => {
+    try {
+      const post = await storage.getBlogPostBySlug(req.params.slug);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Increment view count
+      await storage.incrementBlogPostViews(post.id);
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Error fetching blog post:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  app.get('/api/blog/posts/:id/related', async (req, res) => {
+    try {
+      const relatedPosts = await storage.getRelatedBlogPosts(req.params.id);
+      res.json(relatedPosts);
+    } catch (error) {
+      console.error("Error fetching related posts:", error);
+      res.status(500).json({ message: "Failed to fetch related posts" });
+    }
+  });
+
+  app.get('/api/blog/comments/:postId', async (req, res) => {
+    try {
+      const comments = await storage.getComments(req.params.postId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post('/api/blog/posts/:postId/comments', async (req, res) => {
+    try {
+      const commentData = insertCommentSchema.parse({
+        ...req.body,
+        postId: req.params.postId
+      });
       const comment = await storage.createComment(commentData);
       res.status(201).json(comment);
     } catch (error) {

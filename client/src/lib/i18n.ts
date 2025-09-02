@@ -7,6 +7,7 @@ const resources = {
       // Header
       catalog: "Каталог",
       editor: "Редактор",
+      blog: "Блог",
       about: "О нас",
       contact: "Контакты",
       cart: "Корзина",
@@ -71,6 +72,7 @@ const resources = {
       // Header
       catalog: "Կատալոգ",
       editor: "Խմբագիր",
+      blog: "Բլոգ",
       about: "Մեր մասին",
       contact: "Կապ",
       cart: "Զամբյուղ",
@@ -135,6 +137,7 @@ const resources = {
       // Header
       catalog: "Catalog",
       editor: "Editor",
+      blog: "Blog",
       about: "About",
       contact: "Contact",
       cart: "Cart",

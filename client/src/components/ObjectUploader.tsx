@@ -89,7 +89,14 @@ export function ObjectUploader({
     })
       .use(AwsS3, {
         shouldUseMultipart: false,
-        getUploadParameters: onGetUploadParameters,
+        getUploadParameters: async (file) => {
+          const params = await onGetUploadParameters();
+          return {
+            method: params.method,
+            url: params.url,
+            fields: {},
+          };
+        },
       })
       .on("files-added", async (files) => {
         // Create local previews when files are selected

@@ -437,8 +437,10 @@ function BlogManager() {
                               onComplete={(result) => {
                                 if (result.successful && result.successful.length > 0) {
                                   const uploadedFile = result.successful[0];
-                                  if (uploadedFile && 'uploadURL' in uploadedFile) {
-                                    field.onChange(uploadedFile.uploadURL);
+                                  // Uppy возвращает uploadURL как метод, а не поле
+                                  const uploadURL = uploadedFile.uploadURL;
+                                  if (uploadURL) {
+                                    field.onChange(uploadURL);
                                   }
                                 }
                               }}

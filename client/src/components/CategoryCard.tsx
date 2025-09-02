@@ -17,30 +17,36 @@ export function CategoryCard({ category }: CategoryCardProps) {
 
   return (
     <Link href={`/catalog/${category.slug}`}>
-      <Card className="category-card cursor-pointer border border-border hover:border-primary transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white/90 to-white/70 hover:from-white hover:to-white/90" data-testid={`card-category-${category.slug}`}>
-        <CardContent className="p-6 text-center">
-          <div className="aspect-square overflow-hidden rounded-lg mb-4">
-            <img 
-              src={category.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200'} 
-              alt={name}
-              className="w-full h-full object-cover"
-              data-testid={`img-category-${category.slug}`}
-            />
+      <Card className="category-card group cursor-pointer border-0 bg-gradient-to-br from-white via-white to-primary/5 shadow-sm hover:shadow-2xl transition-all duration-500 hover:-translate-y-3 hover:scale-[1.02] rounded-2xl overflow-hidden" data-testid={`card-category-${category.slug}`}>
+        <CardContent className="p-0">
+          <div className="relative overflow-hidden">
+            <div className="aspect-square overflow-hidden">
+              <img 
+                src={category.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200'} 
+                alt={name}
+                className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+                data-testid={`img-category-${category.slug}`}
+              />
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 text-white">
+              <h3 className="font-serif text-2xl font-bold mb-1 drop-shadow-lg" data-testid={`text-category-name-${category.slug}`}>
+                {name}
+              </h3>
+              {description && (
+                <p className="text-white/90 text-sm leading-relaxed drop-shadow" data-testid={`text-category-description-${category.slug}`}>
+                  {description}
+                </p>
+              )}
+            </div>
           </div>
           
-          <h3 className="font-serif text-xl font-semibold text-foreground mb-2" data-testid={`text-category-name-${category.slug}`}>
-            {name}
-          </h3>
-          
-          {description && (
-            <p className="text-muted-foreground text-sm mb-4" data-testid={`text-category-description-${category.slug}`}>
-              {description}
-            </p>
-          )}
-          
-          <span className="inline-flex items-center text-primary font-medium">
-            {t('viewAll')} <ArrowRight className="ml-2 h-4 w-4" />
-          </span>
+          <div className="p-6 text-center bg-gradient-to-b from-white to-gray-50/50">
+            <span className="inline-flex items-center text-primary font-semibold text-lg group-hover:text-primary/80 transition-colors duration-300">
+              {t('viewAll')} 
+              <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-300" />
+            </span>
+          </div>
         </CardContent>
       </Card>
     </Link>

@@ -3,7 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
+import { CategoryCard } from "@/components/CategoryCard";
+import { useQuery } from "@tanstack/react-query";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Medal, Truck, Palette, Headphones, Star } from "lucide-react";
+import type { Category } from "@shared/schema";
+
+function CategoriesGrid() {
+  const { t } = useTranslation();
+  
+  const { data: categories, isLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {[...Array(4)].map((_, i) => (
+          <Skeleton key={i} className="h-64 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {(categories || []).map((category) => (
+        <CategoryCard key={category.id} category={category} />
+      ))}
+    </div>
+  );
+}
 
 export default function Landing() {
   const { t } = useTranslation();
@@ -79,29 +109,7 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Mock categories */}
-            {[
-              { name: t('photobooks'), slug: 'photobooks', image: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200' },
-              { name: t('photoframes'), slug: 'frames', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200' },
-              { name: t('giftBoxes'), slug: 'boxes', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200' },
-              { name: t('photoSouvenirs'), slug: 'souvenirs', image: 'https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200' }
-            ].map((category) => (
-              <Card key={category.slug} className="category-card cursor-pointer border border-border hover:border-primary transition-all duration-300 hover:-translate-y-1 bg-gradient-to-br from-white/90 to-white/70 hover:from-white hover:to-white/90" data-testid={`card-category-${category.slug}`}>
-                <CardContent className="p-6 text-center">
-                  <img 
-                    src={category.image} 
-                    alt={category.name}
-                    className="w-full h-40 object-cover rounded-lg mb-4"
-                  />
-                  <h3 className="font-serif text-xl font-semibold text-foreground mb-2">{category.name}</h3>
-                  <span className="inline-flex items-center text-primary font-medium">
-                    {t('viewAll')}
-                  </span>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <CategoriesGrid />
         </div>
       </section>
 

@@ -22,18 +22,12 @@ function Router() {
 
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <Route path="/" component={Landing} />
-      ) : (
-        <>
-          <Route path="/" component={Home} />
-          <Route path="/catalog/:category?" component={Catalog} />
-          <Route path="/product/:id" component={Product} />
-          <Route path="/cart" component={Cart} />
-          <Route path="/editor" component={Editor} />
-          <Route path="/admin" component={Admin} />
-        </>
-      )}
+      <Route path="/" component={isAuthenticated ? Home : Landing} />
+      <Route path="/catalog/:category?" component={Catalog} />
+      <Route path="/product/:id" component={Product} />
+      <Route path="/cart" component={Cart} />
+      <Route path="/editor" component={Editor} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

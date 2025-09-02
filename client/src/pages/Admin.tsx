@@ -851,7 +851,8 @@ function ProductsManager() {
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
-    setLocalPreviews([]);
+    // Set existing images as previews so they are displayed
+    setLocalPreviews(product.images || []);
     setUploadedImages(product.images || []);
     setSelectedFormat((product.photobookFormat as PhotobookFormat | "none") || "none");
     

@@ -38,7 +38,7 @@ export default function Admin() {
 
   // Redirect to login if not authenticated or not admin
   useEffect(() => {
-    if (!isLoading && (!isAuthenticated || user?.role !== 'admin')) {
+    if (!isLoading && (!isAuthenticated || (user as any)?.role !== 'admin')) {
       toast({
         title: "Access Denied",
         description: "Admin access required. Redirecting to login...",
@@ -54,29 +54,17 @@ export default function Admin() {
   // Queries
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
-    enabled: isAuthenticated && user?.role === 'admin',
-    onError: (error) => {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "Session expired. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-      }
-    },
+    enabled: isAuthenticated && (user as any)?.role === 'admin',
   });
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user as any)?.role === 'admin',
   });
 
   const { data: orders, isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/orders"],
-    enabled: isAuthenticated && user?.role === 'admin',
+    enabled: isAuthenticated && (user as any)?.role === 'admin',
   });
 
   // Product form
@@ -89,7 +77,7 @@ export default function Admin() {
       imageUrl: '',
       categoryId: '',
       options: {},
-      isActive: true,
+      isActive: true as boolean,
       sortOrder: 0,
     },
   });
@@ -181,7 +169,7 @@ export default function Admin() {
       imageUrl: product.imageUrl || '',
       categoryId: product.categoryId || '',
       options: product.options || {},
-      isActive: product.isActive,
+      isActive: product.isActive ?? true,
       sortOrder: product.sortOrder || 0,
     });
     setIsProductDialogOpen(true);

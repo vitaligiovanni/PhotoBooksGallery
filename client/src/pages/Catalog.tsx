@@ -71,7 +71,7 @@ export default function Catalog() {
       switch (sortBy) {
         case "price-low": return Number(a.price) - Number(b.price);
         case "price-high": return Number(b.price) - Number(a.price);
-        case "name": return aName.localeCompare(bName);
+        case "name": return (aName as string).localeCompare(bName as string);
         default: return 0;
       }
     });

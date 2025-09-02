@@ -36,37 +36,11 @@ export default function Home() {
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
     enabled: isAuthenticated,
-    onError: (error) => {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   const { data: products, isLoading: productsLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
     enabled: isAuthenticated,
-    onError: (error) => {
-      if (isUnauthorizedError(error as Error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/api/login";
-        }, 500);
-        return;
-      }
-    },
   });
 
   const handleAddToCart = (product: Product) => {
@@ -97,7 +71,7 @@ export default function Home() {
       <section className="hero-gradient text-white py-16">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="font-serif text-4xl sm:text-5xl font-bold mb-4" data-testid="text-welcome-title">
-            Добро пожаловать, {user?.firstName || 'друг'}!
+            Добро пожаловать, {(user as any)?.firstName || 'друг'}!
           </h1>
           <p className="text-xl opacity-90 mb-8">
             Создайте уникальную фотокнигу из ваших лучших воспоминаний
@@ -133,7 +107,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {categories?.map((category) => (
+              {(categories || []).map((category: any) => (
                 <CategoryCard key={category.id} category={category} />
               ))}
             </div>
@@ -164,7 +138,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products?.slice(0, 8).map((product) => (
+              {(products || []).slice(0, 8).map((product: any) => (
                 <ProductCard 
                   key={product.id} 
                   product={product} 

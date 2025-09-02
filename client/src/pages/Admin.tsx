@@ -56,7 +56,7 @@ function ProductsManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [localPreviews, setLocalPreviews] = useState<string[]>([]);
-  const [selectedFormat, setSelectedFormat] = useState<PhotobookFormat | "">("");
+  const [selectedFormat, setSelectedFormat] = useState<PhotobookFormat | "none">("none");
 
   const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -140,10 +140,17 @@ function ProductsManager() {
     // uploadedImages already contains correct object paths, no need for conversion
     console.log('Submitting images:', uploadedImages); // Debug log
     
+    // Convert "none" to null for photobook fields
+    const cleanedData = {
+      ...data,
+      photobookFormat: data.photobookFormat === "none" ? null : data.photobookFormat,
+      photobookSize: data.photobookSize === "none" ? null : data.photobookSize,
+    };
+    
     // Merge uploaded images with form data
     const submitData = {
-      ...data,
-      images: uploadedImages.length > 0 ? uploadedImages : (data.images || [])
+      ...cleanedData,
+      images: uploadedImages.length > 0 ? uploadedImages : (cleanedData.images || [])
     };
     
     console.log('Submit data:', submitData); // Debug log
@@ -159,7 +166,7 @@ function ProductsManager() {
     setEditingProduct(product);
     setLocalPreviews([]);
     setUploadedImages(product.images || []);
-    setSelectedFormat((product.photobookFormat as PhotobookFormat) || "");
+    setSelectedFormat((product.photobookFormat as PhotobookFormat | "none") || "none");
     
     productForm.reset({
       name: product.name,
@@ -168,8 +175,8 @@ function ProductsManager() {
       categoryId: product.categoryId,
       imageUrl: product.imageUrl,
       images: product.images || [],
-      photobookFormat: product.photobookFormat || "",
-      photobookSize: product.photobookSize || "",
+      photobookFormat: product.photobookFormat || "none",
+      photobookSize: product.photobookSize || "none",
       minSpreads: product.minSpreads || 10,
       additionalSpreadPrice: product.additionalSpreadPrice || "0",
       isActive: product.isActive,
@@ -253,7 +260,7 @@ function ProductsManager() {
                 setEditingProduct(null);
                 setUploadedImages([]);
                 setLocalPreviews([]);
-                setSelectedFormat("");
+                setSelectedFormat("none");
                 productForm.reset({
                   name: { ru: "", hy: "", en: "" },
                   description: { ru: "", hy: "", en: "" },
@@ -261,8 +268,8 @@ function ProductsManager() {
                   categoryId: "",
                   imageUrl: "",
                   images: [],
-                  photobookFormat: "",
-                  photobookSize: "",
+                  photobookFormat: "none",
+                  photobookSize: "none",
                   minSpreads: 10,
                   additionalSpreadPrice: "0",
                   isActive: true,
@@ -394,9 +401,9 @@ function ProductsManager() {
                           <Select 
                             onValueChange={(value) => {
                               field.onChange(value);
-                              setSelectedFormat(value as PhotobookFormat);
+                              setSelectedFormat(value as PhotobookFormat | "none");
                               // Reset size when format changes
-                              productForm.setValue("photobookSize", "");
+                              productForm.setValue("photobookSize", "none");
                             }} 
                             value={field.value}
                           >
@@ -406,7 +413,7 @@ function ProductsManager() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="">Не фотокнига</SelectItem>
+                              <SelectItem value="none">Не фотокнига</SelectItem>
                               {Object.entries(PHOTOBOOK_FORMAT_LABELS).map(([key, label]) => (
                                 <SelectItem key={key} value={key}>
                                   {label}

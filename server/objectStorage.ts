@@ -149,20 +149,16 @@ export class ObjectStorageService {
       throw new ObjectNotFoundError();
     }
 
-    const parts = objectPath.slice(1).split("/");
-    if (parts.length < 2) {
-      throw new ObjectNotFoundError();
-    }
-
-    const entityId = parts.slice(1).join("/");
+    // Extract the entity ID after /objects/
+    const entityId = objectPath.substring(9); // Remove "/objects/"
     console.log('Looking for entity ID:', entityId); // Debug log
     
-    // entityId already contains the full path from the bucket
-    // So we need to construct the full object path directly
-    const objectEntityPath = `/${entityId}`;
-    console.log('Object entity path:', objectEntityPath); // Debug log
+    // Get the private object directory to determine the bucket
+    const privateObjectDir = this.getPrivateObjectDir();
+    const { bucketName } = parseObjectPath(privateObjectDir);
     
-    const { bucketName, objectName } = parseObjectPath(objectEntityPath);
+    // The entity ID should be the object name within the bucket
+    const objectName = entityId;
     console.log('Bucket:', bucketName, 'Object:', objectName); // Debug log
     
     const bucket = objectStorageClient.bucket(bucketName);

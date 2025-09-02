@@ -130,27 +130,16 @@ function ProductsManager() {
   });
 
   const handleSubmit = (data: any) => {
-    // Convert Google Cloud Storage URLs to object paths for database storage
-    const convertedImages = uploadedImages.map(url => {
-      if (url.startsWith('https://storage.googleapis.com/')) {
-        try {
-          const urlObj = new URL(url);
-          const pathParts = urlObj.pathname.split('/');
-          if (pathParts.length >= 3) {
-            return `/objects/${pathParts.slice(2).join('/')}`;
-          }
-        } catch (error) {
-          console.error("Error converting URL for storage:", error);
-        }
-      }
-      return url;
-    });
-
+    // uploadedImages already contains correct object paths, no need for conversion
+    console.log('Submitting images:', uploadedImages); // Debug log
+    
     // Merge uploaded images with form data
     const submitData = {
       ...data,
-      images: convertedImages.length > 0 ? convertedImages : (data.images || [])
+      images: uploadedImages.length > 0 ? uploadedImages : (data.images || [])
     };
+    
+    console.log('Submit data:', submitData); // Debug log
     
     if (editingProduct) {
       updateProductMutation.mutate({ id: editingProduct.id, data: submitData });

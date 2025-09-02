@@ -132,13 +132,14 @@ function BlogManager() {
       }
     },
     onSuccess: () => {
+      const wasEditing = !!editingPost;
       queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
       setIsBlogPostDialogOpen(false);
       setEditingPost(null);
       blogPostForm.reset();
       toast({
         title: "Успех",
-        description: editingPost ? "Статья блога успешно обновлена" : "Статья блога успешно создана",
+        description: wasEditing ? "Статья блога успешно обновлена" : "Статья блога успешно создана",
       });
     }
   });
@@ -293,9 +294,20 @@ function BlogManager() {
             </DialogContent>
           </Dialog>
           
-          <Dialog open={isBlogPostDialogOpen} onOpenChange={setIsBlogPostDialogOpen}>
+          <Dialog open={isBlogPostDialogOpen} onOpenChange={(open) => {
+            setIsBlogPostDialogOpen(open);
+            if (!open) {
+              setEditingPost(null);
+            }
+          }}>
             <DialogTrigger asChild>
-              <Button className="bg-gradient-to-r from-green-500 to-green-600">
+              <Button 
+                className="bg-gradient-to-r from-green-500 to-green-600"
+                onClick={() => {
+                  setEditingPost(null);
+                  setIsBlogPostDialogOpen(true);
+                }}
+              >
                 <FileText className="h-4 w-4 mr-2" />
                 Новая статья
               </Button>

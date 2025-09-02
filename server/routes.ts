@@ -380,15 +380,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Нормализуем URL изображения если необходимо
       if (postData.featuredImage && postData.featuredImage.startsWith('https://storage.googleapis.com/')) {
         const objectStorageService = new ObjectStorageService();
-        
-        // Нормализуем путь к изображению и устанавливаем ACL
-        postData.featuredImage = await objectStorageService.trySetObjectEntityAclPolicy(
-          postData.featuredImage,
-          {
-            owner: userId,
-            visibility: "public", // Изображения статей блога публичные
-          }
-        );
+        postData.featuredImage = objectStorageService.normalizeObjectEntityPath(postData.featuredImage);
       }
 
       // Если categoryId равен "none", устанавливаем null

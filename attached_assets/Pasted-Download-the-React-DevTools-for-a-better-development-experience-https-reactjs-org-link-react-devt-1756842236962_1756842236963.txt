@@ -1,0 +1,66 @@
+Download the React DevTools for a better development experience: https://reactjs.org/link/react-devtools
+image-page.js:53 Loaded!😎
+Admin.tsx:432 Requesting upload URL...
+Admin.tsx:445 Upload URL response: {uploadURL: 'https://storage.googleapis.com/replit-objstore-1ef…182d617244ac128a00ad84f&X-Goog-SignedHeaders=host'}
+ObjectUploader.tsx:95 Got upload parameters: {method: 'PUT', url: 'https://storage.googleapis.com/replit-objstore-1ef…182d617244ac128a00ad84f&X-Goog-SignedHeaders=host'}
+ObjectUploader.tsx:114 Uppy complete result: {successful: Array(1), failed: Array(0), uploadID: 'qboIKXlC2jCRAnphcPfAB'}
+Admin.tsx:456 Upload result: {successful: Array(1), failed: Array(0), uploadID: 'qboIKXlC2jCRAnphcPfAB'}
+Admin.tsx:459 Uploaded file: {source: 'DashboardModal', id: 'uppy-8ccpktkycoq/jpg-1e-image/jpeg-418588-1615640454119', name: '8ccpktKYcoQ.jpg', extension: 'jpg', meta: {…}, …}
+Admin.tsx:462 Upload URL: https://storage.googleapis.com/replit-objstore-1efe5232-8560-4909-9b6d-efdf412f3f35/.private/uploads/3d3eea80-65ad-476d-8818-a0a754ca81b8
+queryClient.ts:15  POST https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/api/blog-posts 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+mutationFn @ Admin.tsx:95
+fn @ @tanstack_react-query.js?v=ed03f2a6:1189
+run @ @tanstack_react-query.js?v=ed03f2a6:494
+start @ @tanstack_react-query.js?v=ed03f2a6:536
+execute @ @tanstack_react-query.js?v=ed03f2a6:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=ed03f2a6:2630
+(anonymous) @ @tanstack_react-query.js?v=ed03f2a6:3295
+handleBlogPostSubmit @ Admin.tsx:151
+(anonymous) @ chunk-4BFJKWC4.js?v=ed03f2a6:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=ed03f2a6:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=ed03f2a6:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=ed03f2a6:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=ed03f2a6:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=ed03f2a6:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=ed03f2a6:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=ed03f2a6:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=ed03f2a6:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=ed03f2a6:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=ed03f2a6:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=ed03f2a6:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=ed03f2a6:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=ed03f2a6:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=ed03f2a6:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=ed03f2a6:5449Understand this error
+queryClient.ts:15  POST https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/api/blog-posts 500 (Internal Server Error)
+apiRequest @ queryClient.ts:15
+mutationFn @ Admin.tsx:95
+fn @ @tanstack_react-query.js?v=ed03f2a6:1189
+run @ @tanstack_react-query.js?v=ed03f2a6:494
+start @ @tanstack_react-query.js?v=ed03f2a6:536
+execute @ @tanstack_react-query.js?v=ed03f2a6:1225
+await in execute
+mutate @ @tanstack_react-query.js?v=ed03f2a6:2630
+(anonymous) @ @tanstack_react-query.js?v=ed03f2a6:3295
+handleBlogPostSubmit @ Admin.tsx:151
+(anonymous) @ chunk-4BFJKWC4.js?v=ed03f2a6:1465
+await in (anonymous)
+callCallback2 @ chunk-RPCDYKBN.js?v=ed03f2a6:3674
+invokeGuardedCallbackDev @ chunk-RPCDYKBN.js?v=ed03f2a6:3699
+invokeGuardedCallback @ chunk-RPCDYKBN.js?v=ed03f2a6:3733
+invokeGuardedCallbackAndCatchFirstError @ chunk-RPCDYKBN.js?v=ed03f2a6:3736
+executeDispatch @ chunk-RPCDYKBN.js?v=ed03f2a6:7014
+processDispatchQueueItemsInOrder @ chunk-RPCDYKBN.js?v=ed03f2a6:7034
+processDispatchQueue @ chunk-RPCDYKBN.js?v=ed03f2a6:7043
+dispatchEventsForPlugins @ chunk-RPCDYKBN.js?v=ed03f2a6:7051
+(anonymous) @ chunk-RPCDYKBN.js?v=ed03f2a6:7174
+batchedUpdates$1 @ chunk-RPCDYKBN.js?v=ed03f2a6:18913
+batchedUpdates @ chunk-RPCDYKBN.js?v=ed03f2a6:3579
+dispatchEventForPluginEventSystem @ chunk-RPCDYKBN.js?v=ed03f2a6:7173
+dispatchEventWithEnableCapturePhaseSelectiveHydrationWithoutDiscreteEventReplay @ chunk-RPCDYKBN.js?v=ed03f2a6:5478
+dispatchEvent @ chunk-RPCDYKBN.js?v=ed03f2a6:5472
+dispatchDiscreteEvent @ chunk-RPCDYKBN.js?v=ed03f2a6:5449Understand this error
+queryClient.ts:15  POST https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/api/blog-posts 500 (Internal Server Error)

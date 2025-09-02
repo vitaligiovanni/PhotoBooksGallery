@@ -120,25 +120,27 @@ export default function ProductPage() {
           <div className="space-y-4">
             <div className="aspect-square overflow-hidden rounded-lg border border-border">
               <img 
-                src={product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600'} 
+                src={(product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600')} 
                 alt={name}
                 className="w-full h-full object-cover"
                 data-testid="img-product-main"
               />
             </div>
             
-            {/* Thumbnail gallery would go here */}
-            <div className="grid grid-cols-4 gap-2">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="aspect-square rounded border border-border overflow-hidden opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
-                  <img 
-                    src={product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150'} 
-                    alt={`${name} view ${i + 1}`}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ))}
-            </div>
+            {/* Thumbnail gallery */}
+            {product.images && product.images.length > 1 && (
+              <div className="grid grid-cols-4 gap-2">
+                {product.images.slice(0, 4).map((image, i) => (
+                  <div key={i} className="aspect-square rounded border border-border overflow-hidden opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
+                    <img 
+                      src={image} 
+                      alt={`${name} view ${i + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Product Details */}

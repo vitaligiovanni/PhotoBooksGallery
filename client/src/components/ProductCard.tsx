@@ -22,7 +22,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       <Link href={`/product/${product.id}`} className="block">
         <div className="aspect-square overflow-hidden relative">
           <img 
-            src={product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300'} 
+            src={(product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300')} 
             alt={name}
             className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
             data-testid={`img-product-${product.id}`}

@@ -13,6 +13,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { useToast } from "@/hooks/use-toast";
 import { Star, ShoppingCart, Heart } from "lucide-react";
 import type { Product } from "@shared/schema";
+import { PHOTOBOOK_FORMAT_LABELS } from "@shared/schema";
 import type { LocalizedText } from "@/types";
 
 export default function ProductPage() {
@@ -21,6 +22,7 @@ export default function ProductPage() {
   const { toast } = useToast();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
+  const [spreads, setSpreads] = useState(10); // Default to minimum spreads
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", id],
@@ -50,6 +52,21 @@ export default function ProductPage() {
     handleAddToCart();
     // Navigate to cart
     window.location.href = '/cart';
+  };
+
+  // Calculate total price for photobook
+  const calculateTotalPrice = () => {
+    if (!product) return 0;
+    const basePrice = Number(product.price);
+    const minSpreads = product.minSpreads || 10;
+    const additionalSpreadPrice = Number(product.additionalSpreadPrice || 0);
+    
+    if (spreads <= minSpreads) {
+      return basePrice;
+    } else {
+      const additionalSpreads = spreads - minSpreads;
+      return basePrice + (additionalSpreads * additionalSpreadPrice);
+    }
   };
 
   if (isLoading) {
@@ -165,16 +182,80 @@ export default function ProductPage() {
               </p>
             </div>
 
+            {/* Photobook Information */}
+            {product.photobookFormat && (
+              <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-3">
+                <h3 className="font-semibold text-lg">Параметры фотокниги</h3>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Формат:</span>
+                    <span className="ml-2 font-medium">
+                      {PHOTOBOOK_FORMAT_LABELS[product.photobookFormat as keyof typeof PHOTOBOOK_FORMAT_LABELS] || product.photobookFormat}
+                    </span>
+                  </div>
+                  {product.photobookSize && (
+                    <div>
+                      <span className="text-muted-foreground">Размер:</span>
+                      <span className="ml-2 font-medium">{product.photobookSize} см</span>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-muted-foreground">Мин. разворотов:</span>
+                    <span className="ml-2 font-medium">{product.minSpreads || 10}</span>
+                  </div>
+                  {product.additionalSpreadPrice && Number(product.additionalSpreadPrice) > 0 && (
+                    <div>
+                      <span className="text-muted-foreground">Доп. разворот:</span>
+                      <span className="ml-2 font-medium">₽{Number(product.additionalSpreadPrice).toLocaleString()}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Spreads Selector */}
+                <div className="mt-4">
+                  <label className="text-sm font-medium mb-2 block">Количество разворотов</label>
+                  <div className="flex items-center space-x-4">
+                    <Select value={spreads.toString()} onValueChange={(value) => setSpreads(Number(value))}>
+                      <SelectTrigger className="w-32" data-testid="select-spreads">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 41 }, (_, i) => i + 10).map((num) => (
+                          <SelectItem key={num} value={num.toString()}>
+                            {num} разворотов
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {spreads > (product.minSpreads || 10) && (
+                      <span className="text-sm text-muted-foreground">
+                        +{spreads - (product.minSpreads || 10)} дополнительных
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Price */}
             <div className="border-t border-b border-border py-6">
               <div className="flex items-center space-x-4">
                 <span className="font-bold text-3xl text-primary" data-testid="text-product-price">
-                  ₽{Number(product.price).toLocaleString()}
+                  ₽{product.photobookFormat ? calculateTotalPrice().toLocaleString() : Number(product.price).toLocaleString()}
                 </span>
-                <span className="text-muted-foreground line-through">
-                  ₽{Math.round(Number(product.price) * 1.2).toLocaleString()}
-                </span>
-                <Badge className="bg-secondary text-secondary-foreground">-15%</Badge>
+                {!product.photobookFormat && (
+                  <>
+                    <span className="text-muted-foreground line-through">
+                      ₽{Math.round(Number(product.price) * 1.2).toLocaleString()}
+                    </span>
+                    <Badge className="bg-secondary text-secondary-foreground">-15%</Badge>
+                  </>
+                )}
+                {product.photobookFormat && spreads > (product.minSpreads || 10) && (
+                  <span className="text-sm text-muted-foreground">
+                    Базовая: ₽{Number(product.price).toLocaleString()} + ₽{(calculateTotalPrice() - Number(product.price)).toLocaleString()} за доп. развороты
+                  </span>
+                )}
               </div>
             </div>
 

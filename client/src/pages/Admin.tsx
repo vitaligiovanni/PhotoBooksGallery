@@ -32,9 +32,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertProductSchema } from "@shared/schema";
+import { insertProductSchema, PHOTOBOOK_SIZES, PHOTOBOOK_FORMAT_LABELS, calculateAdditionalSpreadPrice, formatPhotobookSize } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, Category, Order, User } from "@shared/schema";
+import type { Product, Category, Order, User, PhotobookFormat } from "@shared/schema";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 
@@ -56,6 +56,7 @@ function ProductsManager() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
   const [localPreviews, setLocalPreviews] = useState<string[]>([]);
+  const [selectedFormat, setSelectedFormat] = useState<PhotobookFormat | "">("");
 
   const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -69,6 +70,10 @@ function ProductsManager() {
       categoryId: "",
       imageUrl: "",
       images: [],
+      photobookFormat: "",
+      photobookSize: "",
+      minSpreads: 10,
+      additionalSpreadPrice: "0",
       isActive: true,
       sortOrder: 0
     }
@@ -83,6 +88,7 @@ function ProductsManager() {
       setIsProductDialogOpen(false);
       setLocalPreviews([]);
       setUploadedImages([]);
+      setSelectedFormat("");
       productForm.reset();
       toast({
         title: "Успех",
@@ -108,6 +114,7 @@ function ProductsManager() {
       setEditingProduct(null);
       setLocalPreviews([]);
       setUploadedImages([]);
+      setSelectedFormat("");
       productForm.reset();
       toast({
         title: "Успех",
@@ -152,6 +159,7 @@ function ProductsManager() {
     setEditingProduct(product);
     setLocalPreviews([]);
     setUploadedImages(product.images || []);
+    setSelectedFormat((product.photobookFormat as PhotobookFormat) || "");
     
     productForm.reset({
       name: product.name,
@@ -160,6 +168,10 @@ function ProductsManager() {
       categoryId: product.categoryId,
       imageUrl: product.imageUrl,
       images: product.images || [],
+      photobookFormat: product.photobookFormat || "",
+      photobookSize: product.photobookSize || "",
+      minSpreads: product.minSpreads || 10,
+      additionalSpreadPrice: product.additionalSpreadPrice || "0",
       isActive: product.isActive,
       sortOrder: product.sortOrder
     });
@@ -241,6 +253,7 @@ function ProductsManager() {
                 setEditingProduct(null);
                 setUploadedImages([]);
                 setLocalPreviews([]);
+                setSelectedFormat("");
                 productForm.reset({
                   name: { ru: "", hy: "", en: "" },
                   description: { ru: "", hy: "", en: "" },
@@ -248,6 +261,10 @@ function ProductsManager() {
                   categoryId: "",
                   imageUrl: "",
                   images: [],
+                  photobookFormat: "",
+                  photobookSize: "",
+                  minSpreads: 10,
+                  additionalSpreadPrice: "0",
                   isActive: true,
                   sortOrder: 0
                 });
@@ -318,9 +335,20 @@ function ProductsManager() {
                     name="price"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Цена</FormLabel>
+                        <FormLabel>Цена (за минимальное количество разворотов)</FormLabel>
                         <FormControl>
-                          <Input type="number" step="0.01" {...field} />
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            {...field}
+                            onChange={(e) => {
+                              field.onChange(e.target.value);
+                              // Auto-calculate additional spread price
+                              const basePrice = parseFloat(e.target.value) || 0;
+                              const additionalPrice = calculateAdditionalSpreadPrice(basePrice);
+                              productForm.setValue("additionalSpreadPrice", additionalPrice.toString());
+                            }}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -350,6 +378,121 @@ function ProductsManager() {
                       </FormItem>
                     )}
                   />
+                </div>
+
+                {/* Photobook Configuration Section */}
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-lg">Параметры фотокниги</h3>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={productForm.control}
+                      name="photobookFormat"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Формат фотокниги</FormLabel>
+                          <Select 
+                            onValueChange={(value) => {
+                              field.onChange(value);
+                              setSelectedFormat(value as PhotobookFormat);
+                              // Reset size when format changes
+                              productForm.setValue("photobookSize", "");
+                            }} 
+                            value={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите формат" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">Не фотокнига</SelectItem>
+                              {Object.entries(PHOTOBOOK_FORMAT_LABELS).map(([key, label]) => (
+                                <SelectItem key={key} value={key}>
+                                  {label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={productForm.control}
+                      name="photobookSize"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Размер</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите размер" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {selectedFormat && PHOTOBOOK_SIZES[selectedFormat]?.map((size) => (
+                                <SelectItem key={formatPhotobookSize(size)} value={formatPhotobookSize(size)}>
+                                  {size.label}
+                                </SelectItem>
+                              ))}
+                              {!selectedFormat && (
+                                <SelectItem value="" disabled>
+                                  Сначала выберите формат
+                                </SelectItem>
+                              )}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {selectedFormat && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <FormField
+                        control={productForm.control}
+                        name="minSpreads"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Минимальное количество разворотов</FormLabel>
+                            <FormControl>
+                              <Input 
+                                type="number" 
+                                min="1" 
+                                max="50" 
+                                {...field}
+                                onChange={(e) => {
+                                  field.onChange(parseInt(e.target.value) || 10);
+                                  // Auto-calculate additional spread price
+                                  const basePrice = parseFloat(productForm.getValues("price")) || 0;
+                                  const additionalPrice = calculateAdditionalSpreadPrice(basePrice);
+                                  productForm.setValue("additionalSpreadPrice", additionalPrice.toString());
+                                }}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={productForm.control}
+                        name="additionalSpreadPrice"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Цена за доп. разворот (автоматически: 10%)</FormLabel>
+                            <FormControl>
+                              <Input type="number" step="0.01" {...field} readOnly className="bg-gray-50" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <FormField

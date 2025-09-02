@@ -59,10 +59,22 @@ export const products = pgTable("products", {
   images: text("images").array(), // Array of image URLs
   categoryId: varchar("category_id").references(() => categories.id),
   options: jsonb("options"), // {sizes: string[], coverTypes: string[], etc}
+  // Photobook specific fields
+  photobookFormat: varchar("photobook_format"), // album, book, square
+  photobookSize: varchar("photobook_size"), // "20x15", "30x20", etc
+  minSpreads: integer("min_spreads").default(10), // minimum spreads
+  additionalSpreadPrice: decimal("additional_spread_price", { precision: 10, scale: 2 }), // price per additional spread
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Photobook format enum
+export const photobookFormatEnum = pgEnum("photobook_format", [
+  "album",
+  "book",
+  "square"
+]);
 
 // Order status enum
 export const orderStatusEnum = pgEnum("order_status", [
@@ -316,3 +328,46 @@ export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Promocode = typeof promocodes.$inferSelect;
 export type InsertPromocode = z.infer<typeof insertPromocodeSchema>;
+
+// Photobook format types and constants
+export type PhotobookFormat = "album" | "book" | "square";
+
+export interface PhotobookSize {
+  width: number;
+  height: number;
+  label: string;
+}
+
+export const PHOTOBOOK_SIZES: Record<PhotobookFormat, PhotobookSize[]> = {
+  album: [
+    { width: 20, height: 15, label: "20×15 см" },
+    { width: 30, height: 20, label: "30×20 см" },
+    { width: 35, height: 25, label: "35×25 см" },
+    { width: 40, height: 30, label: "40×30 см" },
+  ],
+  book: [
+    { width: 15, height: 20, label: "15×20 см" },
+    { width: 20, height: 30, label: "20×30 см" },
+    { width: 35, height: 25, label: "35×25 см" },
+    { width: 30, height: 40, label: "30×40 см" },
+  ],
+  square: [
+    // TODO: Add square sizes when specified
+  ],
+};
+
+export const PHOTOBOOK_FORMAT_LABELS: Record<PhotobookFormat, string> = {
+  album: "Альбомный",
+  book: "Книжный",
+  square: "Квадратный",
+};
+
+// Helper function to calculate additional spread price (10% of base price)
+export const calculateAdditionalSpreadPrice = (basePrice: number): number => {
+  return Math.round(basePrice * 0.1);
+};
+
+// Helper function to format size as string
+export const formatPhotobookSize = (size: PhotobookSize): string => {
+  return `${size.width}x${size.height}`;
+};

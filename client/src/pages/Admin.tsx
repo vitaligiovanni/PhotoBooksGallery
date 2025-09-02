@@ -163,37 +163,26 @@ function ProductsManager() {
     };
   };
 
-  const handleUploadComplete = async (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
-    const newImageUrls = result.successful.map(file => file.uploadURL as string);
-    
-    // Convert Google Cloud Storage URLs to object paths
-    const convertedUrls = await Promise.all(
-      newImageUrls.map(async (url) => {
-        try {
-          // Extract the object path from the Google Cloud Storage URL
-          const urlObj = new URL(url);
-          const pathParts = urlObj.pathname.split('/');
-          if (pathParts.length >= 3) {
-            const bucketName = pathParts[1];
-            const objectPath = pathParts.slice(2).join('/');
-            const normalizedPath = `/${bucketName}/${objectPath}`;
-            
-            // Update the object with ACL policy
-            const response = await apiRequest("PUT", "/api/banner-images", {
-              bannerImageURL: normalizedPath
-            });
-            const data = await response.json();
-            return data.objectPath || `/objects/${objectPath}`;
-          }
-          return url;
-        } catch (error) {
-          console.error("Error converting URL:", error);
-          return url;
+  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    const newImageUrls = result.successful.map(file => {
+      const url = file.uploadURL as string;
+      
+      // Convert Google Cloud Storage URLs to object paths
+      try {
+        const urlObj = new URL(url);
+        const pathParts = urlObj.pathname.split('/');
+        if (pathParts.length >= 3) {
+          const objectPath = pathParts.slice(2).join('/');
+          return `/objects/${objectPath}`;
         }
-      })
-    );
+      } catch (error) {
+        console.error("Error converting URL:", error);
+      }
+      
+      return url;
+    });
     
-    setUploadedImages(prev => [...prev, ...convertedUrls]);
+    setUploadedImages(prev => [...prev, ...newImageUrls]);
     
     toast({
       title: "Успех",

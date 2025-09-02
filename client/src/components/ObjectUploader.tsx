@@ -77,7 +77,6 @@ export function ObjectUploader({
   );
 
   const handleButtonClick = () => {
-    console.log("ObjectUploader button clicked!");
     setShowModal(true);
   };
 

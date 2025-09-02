@@ -90,17 +90,55 @@ function BlogManager() {
     }
   });
 
+  // Предзаполнение формы при редактировании
+  useEffect(() => {
+    if (editingPost) {
+      blogPostForm.reset({
+        title: editingPost.title || { ru: "", hy: "", en: "" },
+        slug: editingPost.slug || "",
+        excerpt: editingPost.excerpt || { ru: "", hy: "", en: "" },
+        content: editingPost.content || { ru: "", hy: "", en: "" },
+        featuredImage: editingPost.featuredImage || "",
+        categoryId: editingPost.categoryId || "none",
+        status: editingPost.status,
+        publishedAt: editingPost.publishedAt,
+        seoTitle: editingPost.seoTitle || { ru: "", hy: "", en: "" },
+        seoDescription: editingPost.seoDescription || { ru: "", hy: "", en: "" },
+        tags: editingPost.tags || []
+      });
+    } else {
+      blogPostForm.reset({
+        title: { ru: "", hy: "", en: "" },
+        slug: "",
+        excerpt: { ru: "", hy: "", en: "" },
+        content: { ru: "", hy: "", en: "" },
+        featuredImage: "",
+        categoryId: "none",
+        status: "published" as const,
+        publishedAt: null,
+        seoTitle: { ru: "", hy: "", en: "" },
+        seoDescription: { ru: "", hy: "", en: "" },
+        tags: []
+      });
+    }
+  }, [editingPost, blogPostForm]);
+
   const createBlogPostMutation = useMutation({
     mutationFn: async (data: any) => {
-      return await apiRequest("POST", "/api/blog-posts", data);
+      if (editingPost) {
+        return await apiRequest("PUT", `/api/blog-posts/${editingPost.id}`, data);
+      } else {
+        return await apiRequest("POST", "/api/blog-posts", data);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
       setIsBlogPostDialogOpen(false);
+      setEditingPost(null);
       blogPostForm.reset();
       toast({
         title: "Успех",
-        description: "Статья блога успешно создана",
+        description: editingPost ? "Статья блога успешно обновлена" : "Статья блога успешно создана",
       });
     }
   });
@@ -264,9 +302,9 @@ function BlogManager() {
             </DialogTrigger>
             <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Добавить статью блога</DialogTitle>
+                <DialogTitle>{editingPost ? "Редактировать статью" : "Добавить статью блога"}</DialogTitle>
                 <DialogDescription>
-                  Заполните информацию для новой статьи блога
+                  {editingPost ? "Внесите изменения в статью блога" : "Заполните информацию для новой статьи блога"}
                 </DialogDescription>
               </DialogHeader>
               <Form {...blogPostForm}>
@@ -545,10 +583,13 @@ function BlogManager() {
                   />
                   
                   <div className="flex justify-end gap-2">
-                    <Button type="button" variant="outline" onClick={() => setIsBlogPostDialogOpen(false)}>
+                    <Button type="button" variant="outline" onClick={() => {
+                      setIsBlogPostDialogOpen(false);
+                      setEditingPost(null);
+                    }}>
                       Отмена
                     </Button>
-                    <Button type="submit">Создать статью</Button>
+                    <Button type="submit">{editingPost ? "Обновить статью" : "Создать статью"}</Button>
                   </div>
                 </form>
               </Form>
@@ -606,7 +647,14 @@ function BlogManager() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="sm">
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        onClick={() => {
+                          setEditingPost(post);
+                          setIsBlogPostDialogOpen(true);
+                        }}
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button 

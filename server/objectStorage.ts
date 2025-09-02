@@ -157,8 +157,8 @@ export class ObjectStorageService {
     const privateObjectDir = this.getPrivateObjectDir();
     const { bucketName } = parseObjectPath(privateObjectDir);
     
-    // The object name should include the .private/ prefix
-    const objectName = `.private/${entityId}`;
+    // The entity ID already contains the full path, don't add .private/ prefix
+    const objectName = entityId;
     console.log('Bucket:', bucketName, 'Object:', objectName); // Debug log
     
     const bucket = objectStorageClient.bucket(bucketName);

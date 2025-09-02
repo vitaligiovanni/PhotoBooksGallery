@@ -55,7 +55,8 @@ export const products = pgTable("products", {
   name: jsonb("name").notNull(), // {ru: string, hy: string, en: string}
   description: jsonb("description"), // {ru: string, hy: string, en: string}
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
-  imageUrl: varchar("image_url"),
+  imageUrl: varchar("image_url"), // Primary image URL
+  images: text("images").array(), // Array of image URLs
   categoryId: varchar("category_id").references(() => categories.id),
   options: jsonb("options"), // {sizes: string[], coverTypes: string[], etc}
   isActive: boolean("is_active").default(true),

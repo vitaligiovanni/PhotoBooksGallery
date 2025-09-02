@@ -35,6 +35,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertProductSchema } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, Category, Order, User } from "@shared/schema";
+import { ObjectUploader } from "@/components/ObjectUploader";
+import type { UploadResult } from "@uppy/core";
 
 // Navigation items
 const navigationItems = [
@@ -52,6 +54,7 @@ function ProductsManager() {
   const { toast } = useToast();
   const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
@@ -64,6 +67,7 @@ function ProductsManager() {
       price: "0",
       categoryId: "",
       imageUrl: "",
+      images: [],
       isActive: true,
       sortOrder: 0
     }
@@ -129,25 +133,58 @@ function ProductsManager() {
   });
 
   const handleSubmit = (data: any) => {
+    // Merge uploaded images with form data
+    const submitData = {
+      ...data,
+      images: uploadedImages.length > 0 ? uploadedImages : (data.images || [])
+    };
+    
     if (editingProduct) {
-      updateProductMutation.mutate({ id: editingProduct.id, data });
+      updateProductMutation.mutate({ id: editingProduct.id, data: submitData });
     } else {
-      createProductMutation.mutate(data);
+      createProductMutation.mutate(submitData);
     }
   };
 
   const handleEdit = (product: Product) => {
     setEditingProduct(product);
+    setUploadedImages(product.images || []);
     productForm.reset({
       name: product.name,
       description: product.description,
       price: product.price,
       categoryId: product.categoryId,
       imageUrl: product.imageUrl,
+      images: product.images || [],
       isActive: product.isActive,
       sortOrder: product.sortOrder
     });
     setIsProductDialogOpen(true);
+  };
+
+  const handleGetUploadParameters = async () => {
+    const response = await apiRequest("/api/objects/upload", {
+      method: "POST"
+    });
+    const data = await response.json();
+    return {
+      method: "PUT" as const,
+      url: data.uploadURL,
+    };
+  };
+
+  const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
+    const newImageUrls = result.successful.map(file => file.uploadURL as string);
+    setUploadedImages(prev => [...prev, ...newImageUrls]);
+    
+    toast({
+      title: "Успех",
+      description: `Загружено ${newImageUrls.length} изображений`,
+    });
+  };
+
+  const removeImage = (index: number) => {
+    setUploadedImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleDelete = (id: string) => {
@@ -169,7 +206,17 @@ function ProductsManager() {
               className="bg-gradient-to-r from-blue-500 to-blue-600"
               onClick={() => {
                 setEditingProduct(null);
-                productForm.reset();
+                setUploadedImages([]);
+                productForm.reset({
+                  name: { ru: "", hy: "", en: "" },
+                  description: { ru: "", hy: "", en: "" },
+                  price: "0",
+                  categoryId: "",
+                  imageUrl: "",
+                  images: [],
+                  isActive: true,
+                  sortOrder: 0
+                });
               }}
             >
               <Plus className="h-4 w-4 mr-2" />
@@ -271,7 +318,7 @@ function ProductsManager() {
                   name="imageUrl"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>URL изображения</FormLabel>
+                      <FormLabel>URL основного изображения</FormLabel>
                       <FormControl>
                         <Input {...field} />
                       </FormControl>
@@ -279,6 +326,51 @@ function ProductsManager() {
                     </FormItem>
                   )}
                 />
+
+                {/* Image Upload Section */}
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Галерея изображений (6-10 фото)</FormLabel>
+                    <ObjectUploader
+                      maxNumberOfFiles={10}
+                      maxFileSize={5242880} // 5MB
+                      onGetUploadParameters={handleGetUploadParameters}
+                      onComplete={handleUploadComplete}
+                      buttonClassName="bg-blue-500 hover:bg-blue-600"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Загрузить изображения
+                    </ObjectUploader>
+                  </div>
+
+                  {/* Image Preview Grid */}
+                  {uploadedImages.length > 0 && (
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-gray-50 rounded-lg">
+                      {uploadedImages.map((imageUrl, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={imageUrl}
+                            alt={`Product image ${index + 1}`}
+                            className="w-full h-24 object-cover rounded border"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeImage(index)}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {uploadedImages.length < 6 && (
+                    <p className="text-sm text-amber-600">
+                      Рекомендуется загрузить минимум 6 изображений для лучшего представления товара
+                    </p>
+                  )}
+                </div>
 
                 <FormField
                   control={productForm.control}

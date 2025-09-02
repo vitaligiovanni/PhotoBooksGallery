@@ -22,7 +22,8 @@ import {
   Star,
   Plus,
   Edit,
-  Trash2
+  Trash2,
+  Tag
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -32,9 +33,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertProductSchema, PHOTOBOOK_SIZES, PHOTOBOOK_FORMAT_LABELS, calculateAdditionalSpreadPrice, formatPhotobookSize } from "@shared/schema";
+import { insertProductSchema, insertBlogPostSchema, insertBlogCategorySchema, PHOTOBOOK_SIZES, PHOTOBOOK_FORMAT_LABELS, calculateAdditionalSpreadPrice, formatPhotobookSize } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, Category, Order, User, PhotobookFormat } from "@shared/schema";
+import type { Product, Category, Order, User, PhotobookFormat, BlogPost, BlogCategory } from "@shared/schema";
 import { ObjectUploader } from "@/components/ObjectUploader";
 import type { UploadResult } from "@uppy/core";
 
@@ -48,6 +49,502 @@ const navigationItems = [
   { id: 'analytics', label: 'Аналитика', icon: BarChart3, color: 'text-indigo-600' },
   { id: 'settings', label: 'Настройки', icon: Settings, color: 'text-gray-600' },
 ];
+
+// Blog Manager Component
+function BlogManager() {
+  const { toast } = useToast();
+  const [isBlogPostDialogOpen, setIsBlogPostDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
+  const [editingCategory, setEditingCategory] = useState<BlogCategory | null>(null);
+  const [activeTab, setActiveTab] = useState<'posts' | 'categories'>('posts');
+
+  const { data: blogPosts = [] } = useQuery<BlogPost[]>({ queryKey: ["/api/blog-posts"] });
+  const { data: blogCategories = [] } = useQuery<BlogCategory[]>({ queryKey: ["/api/blog-categories"] });
+
+  const blogPostForm = useForm({
+    resolver: zodResolver(insertBlogPostSchema),
+    defaultValues: {
+      title: { ru: "", hy: "", en: "" },
+      slug: "",
+      excerpt: { ru: "", hy: "", en: "" },
+      content: { ru: "", hy: "", en: "" },
+      featuredImage: "",
+      categoryId: "",
+      status: "draft" as const,
+      publishedAt: null,
+      seoTitle: { ru: "", hy: "", en: "" },
+      seoDescription: { ru: "", hy: "", en: "" },
+      tags: []
+    }
+  });
+
+  const categoryForm = useForm({
+    resolver: zodResolver(insertBlogCategorySchema),
+    defaultValues: {
+      name: { ru: "", hy: "", en: "" },
+      slug: "",
+      description: { ru: "", hy: "", en: "" },
+      color: "#6366f1",
+      sortOrder: 0
+    }
+  });
+
+  const createBlogPostMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/blog-posts", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
+      setIsBlogPostDialogOpen(false);
+      blogPostForm.reset();
+      toast({
+        title: "Успех",
+        description: "Статья блога успешно создана",
+      });
+    }
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/blog-categories", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-categories"] });
+      setIsCategoryDialogOpen(false);
+      categoryForm.reset();
+      toast({
+        title: "Успех",
+        description: "Категория блога успешно создана",
+      });
+    }
+  });
+
+  const deleteBlogPostMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/blog-posts/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/blog-posts"] });
+      toast({
+        title: "Успех",
+        description: "Статья блога удалена",
+      });
+    }
+  });
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return "Не установлено";
+    return new Date(dateString).toLocaleDateString('ru-RU');
+  };
+
+  const handleBlogPostSubmit = (data: any) => {
+    if (editingPost) {
+      // Update logic would go here
+    } else {
+      createBlogPostMutation.mutate(data);
+    }
+  };
+
+  const handleCategorySubmit = (data: any) => {
+    if (editingCategory) {
+      // Update logic would go here
+    } else {
+      createCategoryMutation.mutate(data);
+    }
+  };
+
+  const handleDeletePost = (id: string) => {
+    if (confirm("Вы уверены, что хотите удалить эту статью?")) {
+      deleteBlogPostMutation.mutate(id);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Блог</h1>
+          <p className="text-muted-foreground mt-2">Создавайте и управляйте статьями блога</p>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Новая категория
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Добавить категорию</DialogTitle>
+                <DialogDescription>
+                  Создайте новую категорию для блога
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...categoryForm}>
+                <form onSubmit={categoryForm.handleSubmit(handleCategorySubmit)} className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={categoryForm.control}
+                      name="name.ru"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Название (RU)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={categoryForm.control}
+                      name="name.hy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Название (HY)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={categoryForm.control}
+                      name="name.en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Название (EN)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <FormField
+                    control={categoryForm.control}
+                    name="slug"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Slug (URL)</FormLabel>
+                        <FormControl>
+                          <Input {...field} placeholder="category-slug" />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsCategoryDialogOpen(false)}>
+                      Отмена
+                    </Button>
+                    <Button type="submit">Создать</Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+          
+          <Dialog open={isBlogPostDialogOpen} onOpenChange={setIsBlogPostDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-green-500 to-green-600">
+                <FileText className="h-4 w-4 mr-2" />
+                Новая статья
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Добавить статью блога</DialogTitle>
+                <DialogDescription>
+                  Заполните информацию для новой статьи блога
+                </DialogDescription>
+              </DialogHeader>
+              <Form {...blogPostForm}>
+                <form onSubmit={blogPostForm.handleSubmit(handleBlogPostSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={blogPostForm.control}
+                      name="title.ru"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Заголовок (RU)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={blogPostForm.control}
+                      name="title.hy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Заголовок (HY)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={blogPostForm.control}
+                      name="title.en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Заголовок (EN)</FormLabel>
+                          <FormControl>
+                            <Input {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={blogPostForm.control}
+                      name="slug"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Slug (URL)</FormLabel>
+                          <FormControl>
+                            <Input {...field} placeholder="article-slug" />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={blogPostForm.control}
+                      name="categoryId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Категория</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите категорию" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="">Без категории</SelectItem>
+                              {blogCategories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                  {(category.name as any)?.ru || 'Без названия'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={blogPostForm.control}
+                      name="content.ru"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Содержание (RU)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={8} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={blogPostForm.control}
+                      name="content.hy"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Содержание (HY)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={8} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={blogPostForm.control}
+                      name="content.en"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Содержание (EN)</FormLabel>
+                          <FormControl>
+                            <Textarea {...field} rows={8} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={blogPostForm.control}
+                    name="status"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Статус</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="draft">Черновик</SelectItem>
+                            <SelectItem value="published">Опубликовано</SelectItem>
+                            <SelectItem value="scheduled">Запланировано</SelectItem>
+                            <SelectItem value="archived">Архив</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <div className="flex justify-end gap-2">
+                    <Button type="button" variant="outline" onClick={() => setIsBlogPostDialogOpen(false)}>
+                      Отмена
+                    </Button>
+                    <Button type="submit">Создать статью</Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </div>
+      
+      <div className="flex space-x-1 p-1 bg-muted rounded-lg w-fit">
+        <Button
+          variant={activeTab === 'posts' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('posts')}
+        >
+          Статьи ({blogPosts.length})
+        </Button>
+        <Button
+          variant={activeTab === 'categories' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('categories')}
+        >
+          Категории ({blogCategories.length})
+        </Button>
+      </div>
+      
+      {activeTab === 'posts' && (
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Статьи блога</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {blogPosts.length === 0 ? (
+              <div className="text-center py-8">
+                <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Пока нет статей. Создайте первую статью!</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {blogPosts.map((post) => (
+                  <div key={post.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg">
+                        {(post.title as any)?.ru || 'Без заголовка'}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {(post.excerpt as any)?.ru || 'Без описания'}
+                      </p>
+                      <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <span>Статус: {post.status}</span>
+                        <span>Просмотры: {post.viewCount}</span>
+                        <span>Создано: {formatDate(post.createdAt)}</span>
+                        {post.publishedAt && (
+                          <span>Опубликовано: {formatDate(post.publishedAt)}</span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="sm">
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDeletePost(post.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+      
+      {activeTab === 'categories' && (
+        <Card className="border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle>Категории блога</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {blogCategories.length === 0 ? (
+              <div className="text-center py-8">
+                <Tag className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Пока нет категорий. Создайте первую категорию!</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {blogCategories.map((category) => (
+                  <div key={category.id} className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-4 h-4 rounded-full" 
+                        style={{ backgroundColor: category.color || '#6366f1' }}
+                      />
+                      <h3 className="font-semibold">
+                        {(category.name as any)?.ru || 'Без названия'}
+                      </h3>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      {(category.description as any)?.ru || 'Без описания'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted-foreground">
+                        Slug: {category.slug}
+                      </span>
+                      <div className="flex gap-1">
+                        <Button variant="ghost" size="sm">
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
 
 // Products Manager Component
 function ProductsManager() {
@@ -853,25 +1350,7 @@ export default function Admin() {
       case 'products':
         return <ProductsManager />;
       case 'blog':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Блог</h1>
-                <p className="text-muted-foreground mt-2">Создавайте и управляйте статьями блога</p>
-              </div>
-              <Button className="bg-gradient-to-r from-green-500 to-green-600">
-                <FileText className="h-4 w-4 mr-2" />
-                Новая статья
-              </Button>
-            </div>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground py-8">Система блога будет здесь</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <BlogManager />;
       default:
         return (
           <div className="space-y-6">

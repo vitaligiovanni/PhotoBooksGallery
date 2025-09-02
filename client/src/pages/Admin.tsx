@@ -435,10 +435,13 @@ function BlogManager() {
                                 };
                               }}
                               onComplete={(result) => {
+                                console.log("Upload result:", result);
                                 if (result.successful && result.successful.length > 0) {
                                   const uploadedFile = result.successful[0];
-                                  // Uppy возвращает uploadURL как метод, а не поле
-                                  const uploadURL = uploadedFile.uploadURL;
+                                  console.log("Uploaded file:", uploadedFile);
+                                  // Пробуем разные способы получить URL
+                                  const uploadURL = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || uploadedFile.meta?.uploadURL;
+                                  console.log("Upload URL:", uploadURL);
                                   if (uploadURL) {
                                     field.onChange(uploadURL);
                                   }

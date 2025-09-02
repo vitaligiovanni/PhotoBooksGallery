@@ -105,6 +105,7 @@ export function ObjectUploader({
         onFilesAdded?.(previews);
       })
       .on("complete", (result) => {
+        console.log("Uppy complete result:", result);
         onComplete?.(result);
         setShowModal(false);
       })

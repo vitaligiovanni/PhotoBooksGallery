@@ -196,20 +196,17 @@ function ProductsManager() {
       const uploadURL = file.uploadURL as string;
       console.log('Upload URL:', uploadURL); // Debug log
       
-      // Convert Google Cloud Storage URL to our object path for proper serving
+      // Use Google Cloud Storage URL for preview (remove query params for GET access)
       try {
         const urlObj = new URL(uploadURL);
-        const pathParts = urlObj.pathname.split('/');
-        if (pathParts.length >= 3) {
-          const objectPath = `/objects/${pathParts.slice(2).join('/')}`;
-          console.log('Converted to object path:', objectPath);
-          return objectPath;
-        }
+        // Remove query parameters to get basic object URL that might be publicly accessible
+        const baseUrl = `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
+        console.log('Base URL for preview:', baseUrl);
+        return baseUrl;
       } catch (error) {
-        console.error('Error converting URL:', error);
+        console.error('Error processing URL:', error);
+        return uploadURL;
       }
-      
-      return uploadURL;
     });
     
     // Replace local previews with uploaded URLs

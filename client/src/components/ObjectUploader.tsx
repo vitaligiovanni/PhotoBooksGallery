@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { ReactNode } from "react";
 import Uppy from "@uppy/core";
 import { DashboardModal } from "@uppy/react";
-// CSS styles will be loaded by the component itself
 import AwsS3 from "@uppy/aws-s3";
 import type { UploadResult } from "@uppy/core";
 import { Button } from "@/components/ui/button";
@@ -77,9 +76,14 @@ export function ObjectUploader({
       })
   );
 
+  const handleButtonClick = () => {
+    console.log("ObjectUploader button clicked!");
+    setShowModal(true);
+  };
+
   return (
     <div>
-      <Button onClick={() => setShowModal(true)} className={buttonClassName}>
+      <Button onClick={handleButtonClick} className={buttonClassName} data-testid="button-upload-images">
         {children}
       </Button>
 

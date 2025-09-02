@@ -194,6 +194,21 @@ function ProductsManager() {
   const handleUploadComplete = (result: UploadResult<Record<string, unknown>, Record<string, unknown>>) => {
     const newImageUrls = result.successful.map(file => {
       const uploadURL = file.uploadURL as string;
+      console.log('Upload URL:', uploadURL); // Debug log
+      
+      // Convert Google Cloud Storage URL to our object path for proper serving
+      try {
+        const urlObj = new URL(uploadURL);
+        const pathParts = urlObj.pathname.split('/');
+        if (pathParts.length >= 3) {
+          const objectPath = `/objects/${pathParts.slice(2).join('/')}`;
+          console.log('Converted to object path:', objectPath);
+          return objectPath;
+        }
+      } catch (error) {
+        console.error('Error converting URL:', error);
+      }
+      
       return uploadURL;
     });
     
@@ -412,7 +427,18 @@ function ProductsManager() {
                             src={imageUrl}
                             alt={`Product image ${index + 1}`}
                             className="w-full h-24 object-cover rounded border border-green-300"
+                            onError={(e) => {
+                              console.error('Failed to load image:', imageUrl);
+                              // Show placeholder on error
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
                           />
+                          <div className="hidden absolute inset-0 bg-gray-200 rounded border border-green-300 flex items-center justify-center text-sm text-gray-500">
+                            Изображение загружено
+                            <br />
+                            (не удается отобразить)
+                          </div>
                           <div className="absolute top-1 left-1 bg-green-500 text-white text-xs px-1 rounded">
                             Загружено
                           </div>

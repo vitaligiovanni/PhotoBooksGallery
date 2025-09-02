@@ -92,6 +92,8 @@ export function ObjectUploader({
         open={showModal}
         onRequestClose={() => setShowModal(false)}
         proudlyDisplayPoweredByUppy={false}
+        showProgressDetails={true}
+        closeModalOnClickOutside={true}
         locale={{
           strings: {
             'dropPasteFiles': 'Перетащите файлы сюда или %{browseFiles}',

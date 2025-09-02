@@ -24,7 +24,7 @@ import {
   Edit,
   Trash2
 } from "lucide-react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -218,6 +218,11 @@ function ProductsManager() {
               <DialogTitle>
                 {editingProduct ? "Редактировать товар" : "Добавить товар"}
               </DialogTitle>
+              <DialogDescription>
+                {editingProduct 
+                  ? "Внесите изменения в информацию о товаре" 
+                  : "Заполните информацию для нового товара"}
+              </DialogDescription>
             </DialogHeader>
             <Form {...productForm}>
               <form onSubmit={productForm.handleSubmit(handleSubmit)} className="space-y-4">

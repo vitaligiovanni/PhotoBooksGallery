@@ -254,6 +254,8 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
 export const insertProductSchema = createInsertSchema(products).omit({
   id: true,
   createdAt: true,
+}).extend({
+  categoryId: z.string().min(1, "Выберите категорию"),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

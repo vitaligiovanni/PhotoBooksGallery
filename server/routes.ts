@@ -185,10 +185,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const productData = insertProductSchema.parse(req.body);
+      
+      // Ensure categoryId is not empty string - convert to null if empty
+      if (productData.categoryId === "" || !productData.categoryId) {
+        return res.status(400).json({ message: "Выберите категорию для товара" });
+      }
+      
       const product = await storage.createProduct(productData);
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
+      if (error.message?.includes('violates foreign key constraint')) {
+        return res.status(400).json({ message: "Выбранная категория не существует" });
+      }
       res.status(500).json({ message: "Failed to create product" });
     }
   });

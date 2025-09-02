@@ -396,6 +396,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         postData.categoryId = null;
       }
 
+      // Генерируем slug из заголовка если он пустой
+      if (!postData.slug || postData.slug.trim() === "") {
+        const title = postData.title?.ru || postData.title?.en || postData.title?.hy || "untitled";
+        postData.slug = title
+          .toLowerCase()
+          .replace(/[^a-z0-9а-я]/gi, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '') + '-' + Date.now();
+      }
+
       postData = insertBlogPostSchema.parse(postData);
       const post = await storage.createBlogPost(postData);
       res.status(201).json(post);

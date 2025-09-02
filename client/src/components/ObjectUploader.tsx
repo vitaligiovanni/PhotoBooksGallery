@@ -82,7 +82,7 @@ export function ObjectUploader({
 
   return (
     <div>
-      <Button onClick={handleButtonClick} className={buttonClassName} data-testid="button-upload-images">
+      <Button type="button" onClick={handleButtonClick} className={buttonClassName} data-testid="button-upload-images">
         {children}
       </Button>
 

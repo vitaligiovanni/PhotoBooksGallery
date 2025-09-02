@@ -1,0 +1,74 @@
+﻿
+ObjectUploader.tsx:95 Got upload parameters: 
+{method: 'PUT', url: 'https://storage.googleapis.com/replit-objstore-1ef…8c639b53620bb87d0d904a4&X-Goog-SignedHeaders=host'}
+ObjectUploader.tsx:114 Uppy complete result: 
+{successful: Array(1), failed: Array(0), uploadID: '5VgkfB56Wq8qcoKSGHQ_p'}
+Admin.tsx:456 Upload result: 
+{successful: Array(1), failed: Array(0), uploadID: '5VgkfB56Wq8qcoKSGHQ_p'}
+Admin.tsx:459 Uploaded file: 
+{source: 'DashboardModal', id: 'uppy-111111//5//jpg-10-18-19-1e-image/jpeg-357815-1522920447339', name: '111111 (5).jpg', extension: 'jpg', meta: {…}, …}
+Admin.tsx:462 Upload URL: https://storage.googleapis.com/replit-objstore-1efe5232-8560-4909-9b6d-efdf412f3f35/.private/uploads/bc0ca48e-6e01-430f-b980-6ecef1974d29
+bc0ca48e-6e01-430f-b980-6ecef1974d29:1 
+ GET https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/objects/uploads/bc0ca48e-6e01-430f-b980-6ecef1974d29 404 (Not Found)
+Image		
+commitMount	@	chunk-RPCDYKBN.js?v=ed03f2a6:8412
+commitLayoutEffectOnFiber	@	chunk-RPCDYKBN.js?v=ed03f2a6:17102
+commitLayoutMountEffects_complete	@	chunk-RPCDYKBN.js?v=ed03f2a6:17980
+commitLayoutEffects_begin	@	chunk-RPCDYKBN.js?v=ed03f2a6:17969
+commitLayoutEffects	@	chunk-RPCDYKBN.js?v=ed03f2a6:17920
+commitRootImpl	@	chunk-RPCDYKBN.js?v=ed03f2a6:19353
+commitRoot	@	chunk-RPCDYKBN.js?v=ed03f2a6:19277
+finishConcurrentRender	@	chunk-RPCDYKBN.js?v=ed03f2a6:18805
+performConcurrentWorkOnRoot	@	chunk-RPCDYKBN.js?v=ed03f2a6:18718
+workLoop	@	chunk-RPCDYKBN.js?v=ed03f2a6:197
+flushWork	@	chunk-RPCDYKBN.js?v=ed03f2a6:176
+performWorkUntilDeadline	@	chunk-RPCDYKBN.js?v=ed03f2a6:384
+Admin.tsx:501 Image load error: 
+SyntheticBaseEvent {_reactName: 'onError', _targetInst: null, type: 'error', nativeEvent: Event, target: img.w-full.h-full.object-cover, …}
+bubbles
+: 
+false
+cancelable
+: 
+false
+currentTarget
+: 
+null
+defaultPrevented
+: 
+false
+eventPhase
+: 
+2
+isDefaultPrevented
+: 
+ƒ functionThatReturnsFalse()
+isPropagationStopped
+: 
+ƒ functionThatReturnsFalse()
+isTrusted
+: 
+true
+nativeEvent
+: 
+Event {isTrusted: true, type: 'error', target: img.w-full.h-full.object-cover, currentTarget: null, eventPhase: 0, …}
+target
+: 
+img.w-full.h-full.object-cover
+timeStamp
+: 
+29602.09999999404
+type
+: 
+"error"
+_reactName
+: 
+"onError"
+_targetInst
+: 
+null
+[[Prototype]]
+: 
+Object
+﻿
+

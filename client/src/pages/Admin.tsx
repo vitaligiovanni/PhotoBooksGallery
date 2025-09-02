@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useTranslation } from 'react-i18next';
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,11 +19,24 @@ import {
   Eye,
   TrendingUp,
   Activity,
-  Star
+  Star,
+  Plus,
+  Edit,
+  Trash2
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertProductSchema } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, Category, Order, User } from "@shared/schema";
 
-// Sidebar navigation items
+// Navigation items
 const navigationItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
   { id: 'products', label: 'Товары', icon: Package, color: 'text-green-600' },
@@ -33,6 +46,354 @@ const navigationItems = [
   { id: 'analytics', label: 'Аналитика', icon: BarChart3, color: 'text-indigo-600' },
   { id: 'settings', label: 'Настройки', icon: Settings, color: 'text-gray-600' },
 ];
+
+// Products Manager Component
+function ProductsManager() {
+  const { toast } = useToast();
+  const [isProductDialogOpen, setIsProductDialogOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+
+  const { data: products = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+  const { data: categories = [] } = useQuery<Category[]>({ queryKey: ["/api/categories"] });
+
+  const productForm = useForm({
+    resolver: zodResolver(insertProductSchema),
+    defaultValues: {
+      name: { ru: "", hy: "", en: "" },
+      description: { ru: "", hy: "", en: "" },
+      price: "0",
+      categoryId: "",
+      imageUrl: "",
+      isActive: true,
+      sortOrder: 0
+    }
+  });
+
+  const createProductMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("/api/products", {
+        method: "POST",
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsProductDialogOpen(false);
+      productForm.reset();
+      toast({
+        title: "Успех",
+        description: "Товар успешно создан",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось создать товар",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const updateProductMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      await apiRequest(`/api/products/${id}`, {
+        method: "PUT",
+        body: JSON.stringify(data)
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setIsProductDialogOpen(false);
+      setEditingProduct(null);
+      productForm.reset();
+      toast({
+        title: "Успех",
+        description: "Товар успешно обновлен",
+      });
+    }
+  });
+
+  const deleteProductMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await apiRequest(`/api/products/${id}`, {
+        method: "DELETE"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({
+        title: "Успех",
+        description: "Товар успешно удален",
+      });
+    }
+  });
+
+  const handleSubmit = (data: any) => {
+    if (editingProduct) {
+      updateProductMutation.mutate({ id: editingProduct.id, data });
+    } else {
+      createProductMutation.mutate(data);
+    }
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    productForm.reset({
+      name: product.name,
+      description: product.description,
+      price: product.price,
+      categoryId: product.categoryId,
+      imageUrl: product.imageUrl,
+      isActive: product.isActive,
+      sortOrder: product.sortOrder
+    });
+    setIsProductDialogOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    if (confirm("Вы уверены, что хотите удалить этот товар?")) {
+      deleteProductMutation.mutate(id);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Управление товарами</h1>
+          <p className="text-muted-foreground mt-2">Добавляйте и редактируйте товары в каталоге</p>
+        </div>
+        <Dialog open={isProductDialogOpen} onOpenChange={setIsProductDialogOpen}>
+          <DialogTrigger asChild>
+            <Button 
+              className="bg-gradient-to-r from-blue-500 to-blue-600"
+              onClick={() => {
+                setEditingProduct(null);
+                productForm.reset();
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Добавить товар
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {editingProduct ? "Редактировать товар" : "Добавить товар"}
+              </DialogTitle>
+            </DialogHeader>
+            <Form {...productForm}>
+              <form onSubmit={productForm.handleSubmit(handleSubmit)} className="space-y-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <FormField
+                    control={productForm.control}
+                    name="name.ru"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Название (RU)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={productForm.control}
+                    name="name.hy"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Название (HY)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={productForm.control}
+                    name="name.en"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Название (EN)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <FormField
+                    control={productForm.control}
+                    name="price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Цена</FormLabel>
+                        <FormControl>
+                          <Input type="number" step="0.01" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={productForm.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Категория</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Выберите категорию" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {(category.name as any)?.ru || category.id}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <FormField
+                  control={productForm.control}
+                  name="imageUrl"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL изображения</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={productForm.control}
+                  name="description.ru"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Описание (RU)</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <div className="flex justify-end space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsProductDialogOpen(false)}
+                  >
+                    Отмена
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={createProductMutation.isPending || updateProductMutation.isPending}
+                  >
+                    {editingProduct ? "Обновить" : "Создать"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Card className="border-0 shadow-lg">
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Изображение</TableHead>
+                <TableHead>Название</TableHead>
+                <TableHead>Категория</TableHead>
+                <TableHead>Цена</TableHead>
+                <TableHead>Статус</TableHead>
+                <TableHead>Действия</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    Товары не найдены
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((product) => (
+                  <TableRow key={product.id}>
+                    <TableCell>
+                      {product.imageUrl ? (
+                        <img 
+                          src={product.imageUrl} 
+                          alt={(product.name as any)?.ru || "Product"} 
+                          className="w-12 h-12 object-cover rounded"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-200 rounded flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
+                        </div>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{(product.name as any)?.ru}</p>
+                        <p className="text-sm text-muted-foreground">{product.id}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {categories.find(c => c.id === product.categoryId)?.name?.ru || "—"}
+                    </TableCell>
+                    <TableCell>₽{Number(product.price).toLocaleString()}</TableCell>
+                    <TableCell>
+                      <Badge variant={product.isActive ? "default" : "secondary"}>
+                        {product.isActive ? "Активен" : "Неактивен"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEdit(product)}
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDelete(product.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 // Dashboard stats component
 function DashboardStats() {
@@ -191,25 +552,7 @@ export default function Admin() {
           </div>
         );
       case 'products':
-        return (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Управление товарами</h1>
-                <p className="text-muted-foreground mt-2">Добавляйте и редактируйте товары в каталоге</p>
-              </div>
-              <Button className="bg-gradient-to-r from-blue-500 to-blue-600">
-                <Package className="h-4 w-4 mr-2" />
-                Добавить товар
-              </Button>
-            </div>
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-6">
-                <p className="text-center text-muted-foreground py-8">Модуль управления товарами будет здесь</p>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <ProductsManager />;
       case 'blog':
         return (
           <div className="space-y-6">

@@ -135,7 +135,7 @@ function ReviewsSection() {
     setUploadingPhoto(true);
     try {
       // Get upload URL
-      const uploadResponse = await apiRequest("POST", "/api/objects/upload");
+      const uploadResponse = await apiRequest("POST", "/api/objects/upload") as any;
       const uploadURL = uploadResponse.uploadURL;
 
       // Upload the file
@@ -150,8 +150,8 @@ function ReviewsSection() {
       if (uploadResult.ok) {
         // Normalize the uploaded file path
         const normalizeResponse = await apiRequest("POST", "/api/objects/normalize", {
-          rawPath: uploadURL
-        });
+          rawPath: uploadURL.split('?')[0] // Remove query parameters before normalizing
+        }) as any;
         
         // Set profile photo in form with normalized path
         reviewForm.setValue('profilePhoto', normalizeResponse.normalizedPath);

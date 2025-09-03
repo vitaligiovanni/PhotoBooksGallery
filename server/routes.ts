@@ -66,6 +66,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/objects/normalize", async (req, res) => {
     try {
       const { rawPath } = req.body;
+      
+      if (!rawPath) {
+        return res.status(400).json({ error: "rawPath is required" });
+      }
+      
       const objectStorageService = new ObjectStorageService();
       const normalizedPath = objectStorageService.normalizeObjectEntityPath(rawPath);
       res.json({ normalizedPath });

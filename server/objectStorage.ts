@@ -182,6 +182,11 @@ export class ObjectStorageService {
   normalizeObjectEntityPath(
     rawPath: string,
   ): string {
+    if (!rawPath || typeof rawPath !== 'string') {
+      console.error('Invalid rawPath provided to normalizeObjectEntityPath:', rawPath);
+      return rawPath || '';
+    }
+    
     if (!rawPath.startsWith("https://storage.googleapis.com/")) {
       return rawPath;
     }

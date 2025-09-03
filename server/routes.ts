@@ -96,6 +96,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const categoryData = insertCategorySchema.parse(req.body);
+      
+      // Normalize image URL if it's a Google Storage URL
+      if (categoryData.imageUrl && categoryData.imageUrl.startsWith('https://storage.googleapis.com/')) {
+        const objectStorageService = new ObjectStorageService();
+        categoryData.imageUrl = objectStorageService.normalizeObjectEntityPath(categoryData.imageUrl);
+        console.log('Normalized category image URL:', categoryData.imageUrl);
+      }
+      
       const category = await storage.createCategory(categoryData);
       res.status(201).json(category);
     } catch (error) {
@@ -114,6 +122,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const categoryData = insertCategorySchema.partial().parse(req.body);
+      
+      // Normalize image URL if it's a Google Storage URL
+      if (categoryData.imageUrl && categoryData.imageUrl.startsWith('https://storage.googleapis.com/')) {
+        const objectStorageService = new ObjectStorageService();
+        categoryData.imageUrl = objectStorageService.normalizeObjectEntityPath(categoryData.imageUrl);
+        console.log('Normalized category image URL:', categoryData.imageUrl);
+      }
+      
       const category = await storage.updateCategory(req.params.id, categoryData);
       res.json(category);
     } catch (error) {

@@ -19,12 +19,21 @@ import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
 import NotFound from "@/pages/not-found";
 
-function Router() {
+function HomePage() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  // Показываем Landing страницу пока грузится или если пользователь не авторизован
+  if (isLoading || !isAuthenticated) {
+    return <Landing />;
+  }
+
+  return <Home />;
+}
+
+function Router() {
   return (
     <Switch>
-      <Route path="/" component={isAuthenticated ? Home : Landing} />
+      <Route path="/" component={HomePage} />
       <Route path="/catalog/:category?" component={Catalog} />
       <Route path="/product/:id" component={Product} />
       <Route path="/cart" component={Cart} />

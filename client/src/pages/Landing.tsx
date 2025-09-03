@@ -86,6 +86,10 @@ function ReviewsSection() {
     queryKey: ["/api/reviews"],
   });
 
+  const { data: products } = useQuery({
+    queryKey: ["/api/products"],
+  });
+
   const reviewForm = useForm({
     resolver: zodResolver(z.object({
       authorName: z.string().min(1, "Имя обязательно"),
@@ -94,6 +98,7 @@ function ReviewsSection() {
       comment: z.string().min(10, "Комментарий должен содержать минимум 10 символов"),
       gender: z.string().min(1, "Пол обязательно указать"),
       profilePhoto: z.string().optional(),
+      productId: z.string().optional(), // Связь с товаром
     })),
     defaultValues: {
       authorName: "",
@@ -102,6 +107,7 @@ function ReviewsSection() {
       comment: "",
       gender: "male",
       profilePhoto: "",
+      productId: "",
     }
   });
 
@@ -279,9 +285,28 @@ function ReviewsSection() {
                     <div className="mr-4">
                       <ReviewAvatar review={review} />
                     </div>
-                    <div>
+                    <div className="flex-1">
                       <h4 className="font-semibold text-foreground">{review.authorName}</h4>
                       {renderStars(review.rating)}
+                      {/* Show product name if review is for specific product */}
+                      {review.productId && (
+                        <div className="mt-1">
+                          {(() => {
+                            const product = products?.find((p: any) => p.id === review.productId);
+                            if (product) {
+                              const productName = typeof product.name === 'object' 
+                                ? product.name.ru || product.name.hy || product.name.en 
+                                : product.name;
+                              return (
+                                <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full">
+                                  {productName}
+                                </span>
+                              );
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <p className="text-muted-foreground italic">"{review.comment}"</p>
@@ -409,6 +434,33 @@ function ReviewsSection() {
                         </div>
                       </FormItem>
                     </div>
+
+                    {/* Product Selector */}
+                    <FormField
+                      control={reviewForm.control}
+                      name="productId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>{t('selectProduct')} (необязательно)</FormLabel>
+                          <FormControl>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <SelectTrigger data-testid="select-product">
+                                <SelectValue placeholder="Выберите товар для отзыва" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="">Общий отзыв о магазине</SelectItem>
+                                {(products || []).map((product: any) => (
+                                  <SelectItem key={product.id} value={product.id}>
+                                    {typeof product.name === 'object' ? product.name.ru || product.name.hy || product.name.en : product.name || 'Untitled'}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={reviewForm.control}

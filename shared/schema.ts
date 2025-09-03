@@ -240,6 +240,7 @@ export const promocodes = pgTable("promocodes", {
 export const reviews = pgTable("reviews", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").references(() => users.id), // null для промо-отзывов
+  productId: varchar("product_id").references(() => products.id), // связь с товаром
   authorName: varchar("author_name").notNull(),
   authorEmail: varchar("author_email"), // опционально для промо-отзывов
   profilePhoto: varchar("profile_photo"), // URL фото профиля

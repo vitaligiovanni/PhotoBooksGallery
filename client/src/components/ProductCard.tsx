@@ -32,6 +32,25 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          
+          {/* Discount and Stock Badges */}
+          <div className="absolute top-2 left-2 flex flex-col gap-1">
+            {product.isOnSale && product.discountPercentage && product.discountPercentage > 0 && (
+              <Badge variant="destructive" className="text-xs font-bold">
+                -{product.discountPercentage}%
+              </Badge>
+            )}
+            {product.inStock && (
+              <Badge variant="secondary" className="text-xs bg-green-500 text-white">
+                В наличии
+              </Badge>
+            )}
+            {!product.inStock && (
+              <Badge variant="secondary" className="text-xs bg-red-500 text-white">
+                Нет в наличии
+              </Badge>
+            )}
+          </div>
         </div>
       </Link>
       
@@ -50,9 +69,16 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground uppercase tracking-wide">Цена</span>
-            <span className="font-bold text-primary text-xl" data-testid={`text-product-price-${product.id}`}>
-              ₽{Number(product.price).toLocaleString()}
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-primary text-xl" data-testid={`text-product-price-${product.id}`}>
+                ₽{Number(product.price).toLocaleString()}
+              </span>
+              {product.originalPrice && product.isOnSale && (
+                <span className="text-sm text-muted-foreground line-through">
+                  ₽{Number(product.originalPrice).toLocaleString()}
+                </span>
+              )}
+            </div>
           </div>
           <Button 
             size="sm"

@@ -26,10 +26,11 @@ import {
   Tag
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -754,6 +755,11 @@ function ProductsManager() {
       name: { ru: "", hy: "", en: "" },
       description: { ru: "", hy: "", en: "" },
       price: "0",
+      originalPrice: "",
+      discountPercentage: 0,
+      inStock: true,
+      stockQuantity: 0,
+      isOnSale: false,
       categoryId: "",
       imageUrl: "",
       images: [],
@@ -761,6 +767,14 @@ function ProductsManager() {
       photobookSize: "",
       minSpreads: 10,
       additionalSpreadPrice: "0",
+      paperType: "",
+      coverMaterial: "",
+      bindingType: "",
+      productionTime: 7,
+      shippingTime: 3,
+      weight: "",
+      allowCustomization: true,
+      minCustomPrice: "",
       isActive: true,
       sortOrder: 0
     }
@@ -1070,6 +1084,275 @@ function ProductsManager() {
                           </SelectContent>
                         </Select>
                         <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Pricing and Availability Section */}
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-lg">Цены и наличие</h3>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={productForm.control}
+                      name="originalPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Первоначальная цена (для скидки)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="discountPercentage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Процент скидки (%)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              max="100" 
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="stockQuantity"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Количество в наличии</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="0" 
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                      control={productForm.control}
+                      name="inStock"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Товар в наличии</FormLabel>
+                            <FormDescription>
+                              Отображается ли товар как доступный для заказа
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="isOnSale"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base">Товар по акции</FormLabel>
+                            <FormDescription>
+                              Отображается красный badge со скидкой
+                            </FormDescription>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Materials and Quality Section */}
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-lg">Материалы и качество</h3>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <FormField
+                      control={productForm.control}
+                      name="paperType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Тип бумаги</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите тип бумаги" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="matte">Матовая</SelectItem>
+                              <SelectItem value="glossy">Глянцевая</SelectItem>
+                              <SelectItem value="satin">Сатиновая</SelectItem>
+                              <SelectItem value="premium">Премиум</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="coverMaterial"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Материал обложки</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите материал" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="hardcover">Твердая обложка</SelectItem>
+                              <SelectItem value="softcover">Мягкая обложка</SelectItem>
+                              <SelectItem value="leatherette">Кожзам</SelectItem>
+                              <SelectItem value="fabric">Ткань</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="bindingType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Тип переплета</FormLabel>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Выберите переплет" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="spiral">Спираль</SelectItem>
+                              <SelectItem value="perfect">Клеевой</SelectItem>
+                              <SelectItem value="saddle-stitch">Скрепка</SelectItem>
+                              <SelectItem value="ring">Кольца</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* Production and Delivery Section */}
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-lg">Производство и доставка</h3>
+                  
+                  <div className="grid grid-cols-4 gap-4">
+                    <FormField
+                      control={productForm.control}
+                      name="productionTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Время изготовления (дни)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="1" 
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 7)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="shippingTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Время доставки (дни)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="number" 
+                              min="1" 
+                              {...field}
+                              onChange={(e) => field.onChange(parseInt(e.target.value) || 3)}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="weight"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Вес (кг)</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={productForm.control}
+                      name="minCustomPrice"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Мин. цена за кастом</FormLabel>
+                          <FormControl>
+                            <Input type="number" step="0.01" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  
+                  <FormField
+                    control={productForm.control}
+                    name="allowCustomization"
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                        <div className="space-y-0.5">
+                          <FormLabel className="text-base">Разрешить кастомизацию</FormLabel>
+                          <FormDescription>
+                            Можно ли делать индивидуальные заказы этого товара
+                          </FormDescription>
+                        </div>
+                        <FormControl>
+                          <Switch
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                          />
+                        </FormControl>
                       </FormItem>
                     )}
                   />

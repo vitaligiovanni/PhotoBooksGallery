@@ -55,6 +55,11 @@ export const products = pgTable("products", {
   name: jsonb("name").notNull(), // {ru: string, hy: string, en: string}
   description: jsonb("description"), // {ru: string, hy: string, en: string}
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  originalPrice: decimal("original_price", { precision: 10, scale: 2 }), // For discounts
+  discountPercentage: integer("discount_percentage").default(0), // Discount percentage (0-100)
+  inStock: boolean("in_stock").default(true), // Availability status
+  stockQuantity: integer("stock_quantity").default(0), // Available quantity
+  isOnSale: boolean("is_on_sale").default(false), // Sale status
   imageUrl: varchar("image_url"), // Primary image URL
   images: text("images").array(), // Array of image URLs
   categoryId: varchar("category_id").references(() => categories.id),
@@ -64,6 +69,17 @@ export const products = pgTable("products", {
   photobookSize: varchar("photobook_size"), // "20x15", "30x20", etc
   minSpreads: integer("min_spreads").default(10), // minimum spreads
   additionalSpreadPrice: decimal("additional_spread_price", { precision: 10, scale: 2 }), // price per additional spread
+  // Quality and materials
+  paperType: varchar("paper_type"), // matte, glossy, satin
+  coverMaterial: varchar("cover_material"), // hardcover, softcover, leatherette
+  bindingType: varchar("binding_type"), // spiral, perfect, saddle-stitch
+  // Production and delivery
+  productionTime: integer("production_time").default(7), // Days
+  shippingTime: integer("shipping_time").default(3), // Days
+  weight: decimal("weight", { precision: 5, scale: 2 }), // kg
+  // Customization options
+  allowCustomization: boolean("allow_customization").default(true),
+  minCustomPrice: decimal("min_custom_price", { precision: 10, scale: 2 }), // Minimum price for custom work
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),

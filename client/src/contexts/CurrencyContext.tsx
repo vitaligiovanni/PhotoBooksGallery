@@ -29,8 +29,9 @@ interface CurrencyProviderProps {
 
 export function CurrencyProvider({ children }: CurrencyProviderProps) {
   const [currentCurrencyId, setCurrentCurrencyId] = useState<string>(() => {
-    // Try to get from localStorage, default to first available
-    return localStorage.getItem('current-currency') || '';
+    // Try to get from localStorage, default to empty (will be set when base currency loads)
+    const saved = localStorage.getItem('current-currency');
+    return saved || '';
   });
 
   // Fetch currencies
@@ -52,9 +53,15 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
 
   // Set default currency when currencies load
   useEffect(() => {
-    if (currencies.length > 0 && !currentCurrencyId) {
-      const defaultCurrency = baseCurrency || currencies[0];
-      setCurrentCurrencyId(defaultCurrency.id);
+    if (currencies.length > 0) {
+      // Check if current currency ID is valid
+      const currentExists = currentCurrencyId && currencies.some(c => c.id === currentCurrencyId);
+      
+      if (!currentExists) {
+        // Always prefer the base currency (AMD) as default for new users or if saved currency doesn't exist
+        const defaultCurrency = baseCurrency || currencies.find(c => c.code === 'AMD') || currencies[0];
+        setCurrentCurrencyId(defaultCurrency.id);
+      }
     }
   }, [currencies, baseCurrency, currentCurrencyId]);
 

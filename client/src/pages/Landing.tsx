@@ -633,7 +633,7 @@ export default function Landing() {
               <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-2" data-testid="text-popular-products">
                 {t('popularProducts')}
               </h2>
-              <p className="text-muted-foreground">Выбор наших клиентов</p>
+              <p className="text-muted-foreground">{t('clientChoice')}</p>
             </div>
             <Button variant="ghost" onClick={() => window.location.href = '/catalog'} data-testid="button-view-all-products">
               {t('viewAll')}
@@ -651,7 +651,7 @@ export default function Landing() {
               {t('editorTitle')}
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              Создайте уникальную фотокнигу за несколько минут с помощью нашего простого редактора
+              {t('editorSubtitle')}
             </p>
           </div>
 
@@ -661,7 +661,7 @@ export default function Landing() {
                 <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">{t('uploadPhotos')}</h3>
-                  <p className="text-muted-foreground">Перетащите ваши любимые фото или выберите их из галереи</p>
+                  <p className="text-muted-foreground">{t('uploadPhotosDesc')}</p>
                 </div>
               </div>
               
@@ -669,7 +669,7 @@ export default function Landing() {
                 <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">{t('autoLayout')}</h3>
-                  <p className="text-muted-foreground">Наш алгоритм создаст красивую раскладку на 10 разворотов</p>
+                  <p className="text-muted-foreground">{t('autoLayoutDesc')}</p>
                 </div>
               </div>
               
@@ -677,7 +677,7 @@ export default function Landing() {
                 <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
                 <div>
                   <h3 className="font-semibold text-foreground mb-2">{t('personalize')}</h3>
-                  <p className="text-muted-foreground">Добавьте текст, измените порядок фото и настройте дизайн</p>
+                  <p className="text-muted-foreground">{t('personalizeDesc')}</p>
                 </div>
               </div>
 
@@ -711,7 +711,7 @@ export default function Landing() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-foreground mb-2">
-                      {dragActive ? 'Отпустите фото здесь' : 'Перетащите фото сюда'}
+                      {dragActive ? t('releasePhotosHere') : t('dragPhotosHere')}
                     </h3>
                     <p className="text-muted-foreground text-sm">
                       {dragActive ? 'Загружаем ваши фото...' : 'или нажмите для выбора файлов'}
@@ -719,7 +719,7 @@ export default function Landing() {
                   </div>
                   {!dragActive && (
                     <Button variant="outline" size="sm">
-                      Выбрать файлы
+                      {t('selectFiles')}
                     </Button>
                   )}
                 </CardContent>
@@ -732,8 +732,8 @@ export default function Landing() {
       <section className="py-16 bg-muted">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">Почему выбирают нас</h2>
-            <p className="text-muted-foreground text-lg">Качество и сервис на высшем уровне</p>
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">{t('whyChooseUs')}</h2>
+            <p className="text-muted-foreground text-lg">{t('qualityAndService')}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -741,32 +741,32 @@ export default function Landing() {
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Medal className="text-primary h-8 w-8" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Премиум качество</h3>
-              <p className="text-muted-foreground text-sm">Профессиональная печать на лучших материалах</p>
+              <h3 className="font-semibold text-foreground mb-2">{t('premiumQuality')}</h3>
+              <p className="text-muted-foreground text-sm">{t('professionalPrint')}</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-secondary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Truck className="text-secondary h-8 w-8" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Быстрая доставка</h3>
-              <p className="text-muted-foreground text-sm">Доставим ваш заказ в течение 3-5 рабочих дней</p>
+              <h3 className="font-semibold text-foreground mb-2">{t('fastDelivery')}</h3>
+              <p className="text-muted-foreground text-sm">{t('fastDeliveryDesc')}</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Palette className="text-accent h-8 w-8" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Легкий редактор</h3>
-              <p className="text-muted-foreground text-sm">Интуитивный интерфейс для создания фотокниг</p>
+              <h3 className="font-semibold text-foreground mb-2">{t('easyEditor')}</h3>
+              <p className="text-muted-foreground text-sm">{t('easyEditorDesc')}</p>
             </div>
 
             <div className="text-center">
               <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Headphones className="text-primary h-8 w-8" />
               </div>
-              <h3 className="font-semibold text-foreground mb-2">Поддержка 24/7</h3>
-              <p className="text-muted-foreground text-sm">Всегда готовы помочь с вашими вопросами</p>
+              <h3 className="font-semibold text-foreground mb-2">{t('support247')}</h3>
+              <p className="text-muted-foreground text-sm">{t('support247Desc')}</p>
             </div>
           </div>
         </div>

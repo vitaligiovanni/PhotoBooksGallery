@@ -61,9 +61,13 @@ const resources = {
       
       // Editor
       editorTitle: "Онлайн-редактор фотокниг",
+      editorSubtitle: "Создайте уникальную фотокнигу за несколько минут с помощью нашего простого редактора",
       uploadPhotos: "Загрузите фотографии",
+      uploadPhotosDesc: "Перетащите ваши любимые фото или выберите их из галереи",
       autoLayout: "Автоматическая раскладка",
+      autoLayoutDesc: "Наш алгоритм создаст красивую раскладку на 10 разворотов",
       personalize: "Персонализация",
+      personalizeDesc: "Добавьте текст, измените порядок фото и настройте дизайн",
       startCreating: "Начать создание",
       
       // Theme & UI
@@ -133,7 +137,23 @@ const resources = {
       crmPanel: "CRM Панель",
       administrator: "Администратор",
       sectionInDevelopment: "Раздел в разработке",
-      sectionComingSoon: "Этот раздел скоро будет доступен"
+      sectionComingSoon: "Этот раздел скоро будет доступен",
+      
+      // Landing page elements
+      clientChoice: "Выбор наших клиентов",
+      dragPhotosHere: "Перетащите фото сюда",
+      releasePhotosHere: "Отпустите фото здесь",
+      selectFiles: "Выбрать файлы",
+      whyChooseUs: "Почему выбирают нас",
+      qualityAndService: "Качество и сервис на высшем уровне",
+      premiumQuality: "Премиум качество",
+      professionalPrint: "Профессиональная печать на лучших материалах",
+      fastDelivery: "Быстрая доставка",
+      fastDeliveryDesc: "Доставим ваш заказ в течение 3-5 рабочих дней",
+      easyEditor: "Легкий редактор",
+      easyEditorDesc: "Интуитивный интерфейс для создания фотокниг",
+      support247: "Поддержка 24/7",
+      support247Desc: "Всегда готовы помочь с вашими вопросами"
     }
   },
   hy: {
@@ -195,9 +215,13 @@ const resources = {
       
       // Editor
       editorTitle: "Լուսանկարների գրքերի օնլայն խմբագիր",
+      editorSubtitle: "Ստեղծեք եզակի լուսանկարների գիրք մի քանի րոպեում մեր պարզ խմբագրիչի միջոցով",
       uploadPhotos: "Վերբեռնեք լուսանկարները",
+      uploadPhotosDesc: "Քաշեք ձեր սիրված լուսանկարները կամ ընտրեք դրանք պատկերասրահից",
       autoLayout: "Ավտոմատ դասավորություն",
+      autoLayoutDesc: "Մեր ալգորիթմը կստեղծի գեղեցիկ դասավորություն 10 բացումների վրա",
       personalize: "Անհատականացում",
+      personalizeDesc: "Ավելացրեք տեքստ, փոխեք լուսանկարների կարգը և կարգավորեք դիզայնը",
       startCreating: "Սկսել ստեղծումը",
       
       // Theme & UI
@@ -267,7 +291,23 @@ const resources = {
       crmPanel: "CRM վահանակ",
       administrator: "Ադմինիստրատոր",
       sectionInDevelopment: "Բաժինը զարգացման փուլում է",
-      sectionComingSoon: "Այս բաժինը շուտով հասանելի կլինի"
+      sectionComingSoon: "Այս բաժինը շուտով հասանելի կլինի",
+      
+      // Landing page elements
+      clientChoice: "Մեր հաճախորդների ընտրությունը",
+      dragPhotosHere: "Քաշեք լուսանկարները այստեղ",
+      releasePhotosHere: "Թողեք լուսանկարները այստեղ",
+      selectFiles: "Ընտրել ֆայլեր",
+      whyChooseUs: "Ինչու են մեզ ընտրում",
+      qualityAndService: "Որակ և սպասարկություն բարձրագույն մակարդակով",
+      premiumQuality: "Պրեմիում որակ",
+      professionalPrint: "Մասնագիտական տպագրություն լավագույն նյութերով",
+      fastDelivery: "Արագ առաքում",
+      fastDeliveryDesc: "Կառաքենք ձեր պատվերը 3-5 աշխատանքային օրվա ընթացքում",
+      easyEditor: "Հեշտ խմբագիր",
+      easyEditorDesc: "Ինտուիտիվ ինտերֆեյս լուսանկարների գրքեր ստեղծելու համար",
+      support247: "Աջակցություն 24/7",
+      support247Desc: "Միշտ պատրաստ ենք օգնել ձեր հարցերում"
     }
   },
   en: {
@@ -329,9 +369,13 @@ const resources = {
       
       // Editor
       editorTitle: "Online Photobook Editor",
+      editorSubtitle: "Create a unique photobook in minutes with our simple editor",
       uploadPhotos: "Upload Photos",
+      uploadPhotosDesc: "Drag your favorite photos or select them from the gallery",
       autoLayout: "Auto Layout",
+      autoLayoutDesc: "Our algorithm will create a beautiful layout on 10 spreads",
       personalize: "Personalize",
+      personalizeDesc: "Add text, change photo order and customize design",
       startCreating: "Start Creating",
       
       // Theme & UI
@@ -401,7 +445,23 @@ const resources = {
       crmPanel: "CRM Panel",
       administrator: "Administrator",
       sectionInDevelopment: "Section in Development",
-      sectionComingSoon: "This section will be available soon"
+      sectionComingSoon: "This section will be available soon",
+      
+      // Landing page elements
+      clientChoice: "Our clients' choice",
+      dragPhotosHere: "Drag photos here",
+      releasePhotosHere: "Release photos here",
+      selectFiles: "Select Files",
+      whyChooseUs: "Why Choose Us",
+      qualityAndService: "Quality and service at the highest level",
+      premiumQuality: "Premium Quality",
+      professionalPrint: "Professional printing on the best materials",
+      fastDelivery: "Fast Delivery",
+      fastDeliveryDesc: "We'll deliver your order within 3-5 business days",
+      easyEditor: "Easy Editor",
+      easyEditorDesc: "Intuitive interface for creating photobooks",
+      support247: "24/7 Support",
+      support247Desc: "Always ready to help with your questions"
     }
   }
 };

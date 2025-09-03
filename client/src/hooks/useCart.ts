@@ -5,44 +5,60 @@ import type { CartItem, LocalizedText } from '@/types';
 // Storage key for localStorage
 const CART_STORAGE_KEY = 'photocraft-cart';
 
+// Global cart state and listeners
+let globalCartItems: CartItem[] = [];
+let globalListeners: Array<(items: CartItem[]) => void> = [];
+
 // Load initial cart from localStorage
 const loadCartFromStorage = (): CartItem[] => {
   try {
     const stored = localStorage.getItem(CART_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
+    const items = stored ? JSON.parse(stored) : [];
+    globalCartItems = Array.isArray(items) ? items : [];
+    return globalCartItems;
   } catch {
+    globalCartItems = [];
     return [];
   }
 };
 
-// Save cart to localStorage
-const saveCartToStorage = (items: CartItem[]) => {
+// Save cart to localStorage and notify all listeners
+const saveCartAndNotify = (items: CartItem[]) => {
   try {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
   } catch {
     // Ignore storage errors
   }
+  
+  globalCartItems = [...items];
+  globalListeners.forEach(listener => listener([...items]));
 };
 
+// Initialize global cart
+loadCartFromStorage();
+
 export function useCart() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const loaded = loadCartFromStorage();
-    return Array.isArray(loaded) ? loaded : [];
-  });
+  const [cartItems, setCartItems] = useState<CartItem[]>([...globalCartItems]);
   
-  // Save to localStorage whenever cart changes
+  // Subscribe to global cart changes
   useEffect(() => {
-    if (Array.isArray(cartItems)) {
-      saveCartToStorage(cartItems);
-    }
-  }, [cartItems]);
+    const listener = (newItems: CartItem[]) => {
+      setCartItems([...newItems]);
+    };
+    
+    globalListeners.push(listener);
+    
+    // Cleanup subscription
+    return () => {
+      globalListeners = globalListeners.filter(l => l !== listener);
+    };
+  }, []);
 
   const addToCart = useCallback((product: Product, quantity: number = 1, options?: Record<string, any>) => {
     const productName = typeof product.name === 'object' 
       ? (product.name as LocalizedText)?.ru || (product.name as LocalizedText)?.en || 'Untitled'
       : (product.name as string) || 'Untitled';
 
-    // Calculate actual price (considering discounts)
     const actualPrice = Number(product.price);
 
     const newItem: CartItem = {
@@ -58,54 +74,45 @@ export function useCart() {
       options
     };
 
-    setCartItems(currentItems => {
-      const existingItemIndex = currentItems.findIndex(item => 
-        item.id === product.id && JSON.stringify(item.options) === JSON.stringify(options)
-      );
-      
-      let updatedItems;
-      if (existingItemIndex >= 0) {
-        // Update existing item
-        updatedItems = [...currentItems];
-        updatedItems[existingItemIndex].quantity += quantity;
-      } else {
-        // Add new item
-        updatedItems = [...currentItems, newItem];
-      }
-      
-      // Force save to localStorage immediately
-      setTimeout(() => saveCartToStorage(updatedItems), 0);
-      return updatedItems;
-    });
+    const currentItems = [...globalCartItems];
+    const existingItemIndex = currentItems.findIndex(item => 
+      item.id === product.id && JSON.stringify(item.options) === JSON.stringify(options)
+    );
+    
+    if (existingItemIndex >= 0) {
+      currentItems[existingItemIndex].quantity += quantity;
+    } else {
+      currentItems.push(newItem);
+    }
+    
+    saveCartAndNotify(currentItems);
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    setCartItems(currentItems => currentItems.filter(item => item.id !== productId));
+    const updatedItems = globalCartItems.filter(item => item.id !== productId);
+    saveCartAndNotify(updatedItems);
   }, []);
 
   const updateQuantity = useCallback((productId: string, delta: number) => {
-    setCartItems(currentItems => 
-      currentItems.map(item => {
-        if (item.id === productId) {
-          const newQuantity = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
-    );
+    const updatedItems = globalCartItems.map(item => {
+      if (item.id === productId) {
+        const newQuantity = Math.max(1, item.quantity + delta);
+        return { ...item, quantity: newQuantity };
+      }
+      return item;
+    });
+    saveCartAndNotify(updatedItems);
   }, []);
 
   const clearCart = useCallback(() => {
-    setCartItems([]);
+    saveCartAndNotify([]);
   }, []);
 
   const getCartTotal = useCallback(() => {
-    if (!Array.isArray(cartItems)) return 0;
     return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }, [cartItems]);
 
   const getCartCount = useCallback(() => {
-    if (!Array.isArray(cartItems)) return 0;
     return cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }, [cartItems]);
 

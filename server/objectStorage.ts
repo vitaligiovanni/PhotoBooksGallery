@@ -157,12 +157,15 @@ export class ObjectStorageService {
     const privateObjectDir = this.getPrivateObjectDir();
     const { bucketName } = parseObjectPath(privateObjectDir);
     
-    // Check if entityId already has .private/ prefix to avoid duplication
+    // Files are uploaded to .private/uploads/ directory
     let objectName: string;
     if (entityId.startsWith('.private/')) {
       objectName = entityId; // Already has the correct prefix
-    } else {
+    } else if (entityId.startsWith('uploads/')) {
       objectName = `.private/${entityId}`;
+    } else {
+      // Default to uploads directory
+      objectName = `.private/uploads/${entityId}`;
     }
     console.log('Bucket:', bucketName, 'Object:', objectName); // Debug log
     
@@ -183,22 +186,30 @@ export class ObjectStorageService {
       return rawPath;
     }
   
-    // Extract the path from the URL by removing query parameters and domain
-    const url = new URL(rawPath);
-    const rawObjectPath = url.pathname;
+    try {
+      // Extract the path from the URL by removing query parameters and domain
+      const url = new URL(rawPath);
+      const rawObjectPath = url.pathname;
+      console.log('Raw object path from Google Storage URL:', rawObjectPath);
   
-    let objectEntityDir = this.getPrivateObjectDir();
-    if (!objectEntityDir.endsWith("/")) {
-      objectEntityDir = `${objectEntityDir}/`;
+      // Extract the entity ID from the path
+      // Path format: /bucket-name/.private/uploads/UUID
+      const pathParts = rawObjectPath.split('/');
+      const privateIndex = pathParts.findIndex(part => part === '.private');
+      
+      if (privateIndex !== -1 && privateIndex < pathParts.length - 2) {
+        // Get everything after .private/
+        const entityPath = pathParts.slice(privateIndex + 1).join('/');
+        console.log('Extracted entity path:', entityPath);
+        return `/objects/${entityPath}`;
+      }
+      
+      // Fallback: return the raw path
+      return rawPath;
+    } catch (error) {
+      console.error('Error normalizing object entity path:', error);
+      return rawPath;
     }
-  
-    if (!rawObjectPath.startsWith(objectEntityDir)) {
-      return rawObjectPath;
-    }
-  
-    // Extract the entity ID from the path
-    const entityId = rawObjectPath.slice(objectEntityDir.length);
-    return `/objects/${entityId}`;
   }
 }
 

@@ -127,12 +127,21 @@ function CategoriesManager() {
   });
 
   const handleCategorySubmit = async (data: any) => {
+    console.log("Submitting category data:", data);
+    
+    let imageUrl = data.imageUrl || "";
+    
+    // Если это Google Storage URL, сохраним его как есть пока
+    if (imageUrl.startsWith('https://storage.googleapis.com/')) {
+      console.log("Saving Google Storage URL directly:", imageUrl);
+    }
+    
     const categoryData = {
       ...data,
-      // Нормализуем URL изображения если это была загрузка
-      imageUrl: data.imageUrl || ""
+      imageUrl: imageUrl
     };
     
+    console.log("Final category data:", categoryData);
     createCategoryMutation.mutate(categoryData);
   };
 
@@ -314,22 +323,7 @@ function CategoriesManager() {
                           {field.value && (
                             <div className="flex items-center gap-2 p-2 border rounded">
                               <img 
-                                src={field.value.startsWith('/objects/') 
-                                  ? field.value 
-                                  : field.value.startsWith('https://storage.googleapis.com/') 
-                                    ? (() => {
-                                        // Преобразуем Google Storage URL в локальный путь
-                                        const url = new URL(field.value);
-                                        const pathParts = url.pathname.split('/');
-                                        const privateIndex = pathParts.findIndex(part => part === '.private');
-                                        if (privateIndex !== -1 && privateIndex < pathParts.length - 2) {
-                                          const entityId = pathParts.slice(privateIndex + 2).join('/');
-                                          return `/objects/${entityId}`;
-                                        }
-                                        return field.value;
-                                      })()
-                                    : field.value
-                                } 
+                                src={field.value} 
                                 alt="Preview" 
                                 className="w-16 h-16 object-cover rounded"
                                 onError={(e) => {
@@ -377,33 +371,18 @@ function CategoriesManager() {
                                 throw error;
                               }
                             }}
-                            onComplete={async (result) => {
+                            onComplete={(result) => {
+                              console.log("Full upload result:", result);
                               if (result.successful && result.successful.length > 0) {
                                 const uploadedFile = result.successful[0];
-                                const uploadURL = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || uploadedFile.meta?.uploadURL;
-                                console.log("Upload completed:", { uploadedFile, uploadURL });
+                                console.log("Uploaded file details:", uploadedFile);
+                                
+                                // Просто сохраняем URL загрузки как есть
+                                const uploadURL = uploadedFile.uploadURL;
+                                console.log("Setting uploadURL:", uploadURL);
                                 
                                 if (uploadURL) {
-                                  // Нормализуем URL для использования в приложении
-                                  try {
-                                    const response = await fetch("/api/objects/normalize", {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({ rawPath: uploadURL })
-                                    });
-                                    
-                                    if (response.ok) {
-                                      const data = await response.json();
-                                      field.onChange(data.normalizedPath || uploadURL);
-                                    } else {
-                                      field.onChange(uploadURL);
-                                    }
-                                  } catch (error) {
-                                    console.error("Error normalizing URL:", error);
-                                    field.onChange(uploadURL);
-                                  }
+                                  field.onChange(uploadURL);
                                 }
                               }
                             }}
@@ -482,22 +461,7 @@ function CategoriesManager() {
                         <TableCell>
                           {category.imageUrl ? (
                             <img 
-                              src={category.imageUrl.startsWith('/objects/') 
-                                ? category.imageUrl 
-                                : category.imageUrl.startsWith('https://storage.googleapis.com/') 
-                                  ? (() => {
-                                      // Преобразуем Google Storage URL в локальный путь
-                                      const url = new URL(category.imageUrl);
-                                      const pathParts = url.pathname.split('/');
-                                      const privateIndex = pathParts.findIndex(part => part === '.private');
-                                      if (privateIndex !== -1 && privateIndex < pathParts.length - 2) {
-                                        const entityId = pathParts.slice(privateIndex + 2).join('/');
-                                        return `/objects/${entityId}`;
-                                      }
-                                      return category.imageUrl;
-                                    })()
-                                  : category.imageUrl
-                              } 
+                              src={category.imageUrl} 
                               alt={(category.name as any)?.ru || 'Категория'} 
                               className="w-12 h-12 object-cover rounded-lg border"
                               onError={(e) => {

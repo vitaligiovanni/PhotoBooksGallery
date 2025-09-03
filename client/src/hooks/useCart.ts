@@ -2,34 +2,25 @@ import { useState, useCallback } from 'react';
 import type { Product } from '@shared/schema';
 import type { CartItem, LocalizedText } from '@/types';
 
-// Global cart state
+// Simple global state management
 let globalCartItems: CartItem[] = [];
-let globalSetCartItems: ((items: CartItem[]) => void) | null = null;
-let globalCartListeners: Array<(items: CartItem[]) => void> = [];
+let listeners: Array<() => void> = [];
 
-const notifyListeners = (items: CartItem[]) => {
-  globalCartListeners.forEach(listener => listener(items));
+const notifyListeners = () => {
+  listeners.forEach(listener => listener());
 };
 
 export function useCart() {
-  const [cartItems, setCartItems] = useState<CartItem[]>(globalCartItems);
-
-  // Register this component as a listener
-  const updateLocalState = useCallback((items: CartItem[]) => {
-    setCartItems(items);
+  const [, forceUpdate] = useState({});
+  
+  // Force component re-render
+  const updateComponent = useCallback(() => {
+    forceUpdate({});
   }, []);
 
-  // Register/unregister listener
-  if (!globalCartListeners.includes(updateLocalState)) {
-    globalCartListeners.push(updateLocalState);
-  }
-
-  // Set global updater function
-  if (!globalSetCartItems) {
-    globalSetCartItems = (items: CartItem[]) => {
-      globalCartItems = items;
-      notifyListeners(items);
-    };
+  // Register listener on mount, unregister on unmount
+  if (!listeners.includes(updateComponent)) {
+    listeners.push(updateComponent);
   }
 
   const addToCart = useCallback((product: Product, quantity: number = 1, options?: Record<string, any>) => {
@@ -38,9 +29,7 @@ export function useCart() {
       : (product.name as string) || 'Untitled';
 
     // Calculate actual price (considering discounts)
-    const actualPrice = product.isOnSale && product.originalPrice 
-      ? Number(product.price) 
-      : Number(product.price);
+    const actualPrice = Number(product.price);
 
     const cartItem: CartItem = {
       id: product.id,
@@ -55,42 +44,37 @@ export function useCart() {
       options
     };
 
-    const existingItemIndex = globalCartItems.findIndex(item => item.id === product.id);
+    const existingItemIndex = globalCartItems.findIndex(item => 
+      item.id === product.id && JSON.stringify(item.options) === JSON.stringify(options)
+    );
     
-    let newItems: CartItem[];
     if (existingItemIndex >= 0) {
       // Update existing item
-      newItems = globalCartItems.map((item, index) => 
-        index === existingItemIndex 
-          ? { ...item, quantity: item.quantity + quantity }
-          : item
-      );
+      globalCartItems[existingItemIndex].quantity += quantity;
     } else {
       // Add new item
-      newItems = [...globalCartItems, cartItem];
+      globalCartItems.push(cartItem);
     }
 
-    globalSetCartItems?.(newItems);
+    notifyListeners();
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    const newItems = globalCartItems.filter(item => item.id !== productId);
-    globalSetCartItems?.(newItems);
+    globalCartItems = globalCartItems.filter(item => item.id !== productId);
+    notifyListeners();
   }, []);
 
   const updateQuantity = useCallback((productId: string, delta: number) => {
-    const newItems = globalCartItems.map(item => {
-      if (item.id === productId) {
-        const newQuantity = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    });
-    globalSetCartItems?.(newItems);
+    const item = globalCartItems.find(item => item.id === productId);
+    if (item) {
+      item.quantity = Math.max(1, item.quantity + delta);
+      notifyListeners();
+    }
   }, []);
 
   const clearCart = useCallback(() => {
-    globalSetCartItems?.([]);
+    globalCartItems = [];
+    notifyListeners();
   }, []);
 
   const getCartTotal = useCallback(() => {
@@ -102,7 +86,7 @@ export function useCart() {
   }, []);
 
   return {
-    cartItems,
+    cartItems: [...globalCartItems], // Return a copy to prevent mutations
     addToCart,
     removeFromCart,
     updateQuantity,

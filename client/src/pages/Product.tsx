@@ -47,7 +47,7 @@ export default function ProductPage() {
     // Create a product copy with the current configuration
     const configuredProduct = {
       ...product,
-      price: product.photobookFormat ? calculateTotalPrice() : product.price,
+      price: product.photobookFormat ? calculateTotalPrice().toString() : product.price,
     };
     
     const options: Record<string, any> = {
@@ -190,7 +190,7 @@ export default function ProductPage() {
                 {name}
               </h1>
               
-              <div className="flex items-center space-x-4 mb-4">
+              <div className="flex items-center flex-wrap gap-4 mb-4">
                 <div className="flex items-center space-x-1">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-current text-accent" />
@@ -201,6 +201,11 @@ export default function ProductPage() {
                   <Badge variant="secondary" className="bg-green-500 text-white">В наличии</Badge>
                 ) : (
                   <Badge variant="secondary" className="bg-red-500 text-white">Нет в наличии</Badge>
+                )}
+                {product.isOnSale && product.discountPercentage && product.discountPercentage > 0 && (
+                  <Badge className="bg-red-500 text-white">
+                    -{product.discountPercentage}% скидка
+                  </Badge>
                 )}
                 {product.stockQuantity !== undefined && (
                   <span className="text-sm text-muted-foreground">

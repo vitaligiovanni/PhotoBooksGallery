@@ -14,37 +14,11 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Separator } from "@/components/ui/separator";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/useCart";
 import { apiRequest } from "@/lib/queryClient";
 import { Minus, Plus, X, ShoppingCart, CreditCard } from "lucide-react";
 import type { CartItem } from "@/types";
 
-// Mock cart data - in real app this would come from state management
-const mockCartItems: CartItem[] = [
-  {
-    id: '1',
-    name: 'Премиум фотокнига',
-    price: 2890,
-    quantity: 1,
-    imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    options: { cover: 'Кожаная обложка', pages: '30 страниц' }
-  },
-  {
-    id: '2',
-    name: 'Деревянная рамка',
-    price: 1290,
-    quantity: 2,
-    imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    options: { size: '20x30 см', material: 'Натуральное дерево' }
-  },
-  {
-    id: '3',
-    name: 'Фото-кружка',
-    price: 590,
-    quantity: 1,
-    imageUrl: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150',
-    options: { material: 'Керамика', design: 'Семейное фото' }
-  }
-];
 
 const orderSchema = z.object({
   customerName: z.string().min(2, 'Имя должно содержать минимум 2 символа'),
@@ -59,7 +33,7 @@ export default function Cart() {
   const { t } = useTranslation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [cartItems, setCartItems] = useState(mockCartItems);
+  const { cartItems, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
 
   const form = useForm<OrderFormData>({
     resolver: zodResolver(orderSchema),
@@ -96,7 +70,7 @@ export default function Cart() {
       });
       
       // Clear cart
-      setCartItems([]);
+      clearCart();
       form.reset();
     },
     onError: (error) => {
@@ -108,25 +82,19 @@ export default function Cart() {
     },
   });
 
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(items => items.map(item => {
-      if (item.id === id) {
-        const newQuantity = Math.max(1, item.quantity + delta);
-        return { ...item, quantity: newQuantity };
-      }
-      return item;
-    }));
+  const handleUpdateQuantity = (id: string, delta: number) => {
+    updateQuantity(id, delta);
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
+  const handleRemoveItem = (id: string) => {
+    removeFromCart(id);
     toast({
       title: "Товар удален",
       description: "Товар удален из корзины",
     });
   };
 
-  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = getCartTotal;
   const shipping = total > 3000 ? 0 : 300;
   const finalTotal = total + shipping;
 
@@ -215,16 +183,28 @@ export default function Cart() {
                         )}
                         
                         <div className="flex items-center justify-between mt-3">
-                          <span className="font-semibold text-primary text-lg" data-testid={`text-cart-item-price-${item.id}`}>
-                            ₽{item.price.toLocaleString()}
-                          </span>
+                          <div className="flex flex-col">
+                            {item.discountPercentage && item.originalPrice && (
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground line-through">
+                                  ₽{item.originalPrice.toLocaleString()}
+                                </span>
+                                <span className="text-sm bg-red-500 text-white px-1 py-0.5 rounded text-xs">
+                                  -{item.discountPercentage}%
+                                </span>
+                              </div>
+                            )}
+                            <span className="font-semibold text-primary text-lg" data-testid={`text-cart-item-price-${item.id}`}>
+                              ₽{item.price.toLocaleString()}
+                            </span>
+                          </div>
                           
                           <div className="flex items-center space-x-3">
                             <div className="flex items-center space-x-2">
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => updateQuantity(item.id, -1)}
+                                onClick={() => handleUpdateQuantity(item.id, -1)}
                                 disabled={item.quantity <= 1}
                                 data-testid={`button-decrease-${item.id}`}
                               >
@@ -238,7 +218,7 @@ export default function Cart() {
                               <Button 
                                 size="sm" 
                                 variant="outline"
-                                onClick={() => updateQuantity(item.id, 1)}
+                                onClick={() => handleUpdateQuantity(item.id, 1)}
                                 data-testid={`button-increase-${item.id}`}
                               >
                                 <Plus className="h-3 w-3" />
@@ -248,7 +228,7 @@ export default function Cart() {
                             <Button 
                               size="sm" 
                               variant="ghost"
-                              onClick={() => removeItem(item.id)}
+                              onClick={() => handleRemoveItem(item.id)}
                               data-testid={`button-remove-${item.id}`}
                             >
                               <X className="h-4 w-4" />

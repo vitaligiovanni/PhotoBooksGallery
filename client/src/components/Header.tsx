@@ -13,10 +13,13 @@ import { useState } from "react";
 export function Header() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
-  const { getCartCount } = useCart();
+  const { cartItems } = useCart();
   const [location] = useLocation();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Calculate cart count from cartItems to ensure reactivity
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   return (
     <>
@@ -62,9 +65,9 @@ export function Header() {
                 data-testid="button-cart"
               >
                 <ShoppingCart className="h-5 w-5" />
-                {getCartCount > 0 && (
+                {cartCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    {getCartCount}
+                    {cartCount}
                   </Badge>
                 )}
               </Button>

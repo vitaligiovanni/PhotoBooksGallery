@@ -38,7 +38,7 @@ export function useTheme() {
   // Update theme mutation
   const updateThemeMutation = useMutation({
     mutationFn: async (themeName: string) => {
-      return await apiRequest('/api/user/theme', 'PUT', { 
+      return await apiRequest('PUT', '/api/user/theme', { 
         themeName,
         customColors: null 
       });

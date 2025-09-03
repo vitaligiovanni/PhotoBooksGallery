@@ -20,14 +20,8 @@ import BlogPost from "@/pages/BlogPost";
 import NotFound from "@/pages/not-found";
 
 function HomePage() {
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Показываем Landing страницу пока грузится или если пользователь не авторизован
-  if (isLoading || !isAuthenticated) {
-    return <Landing />;
-  }
-
-  return <Home />;
+  // Всегда показываем Landing страницу - она более красивая
+  return <Landing />;
 }
 
 function Router() {

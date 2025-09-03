@@ -26,6 +26,10 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             alt={name}
             className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
             data-testid={`img-product-${product.id}`}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300';
+            }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
         </div>

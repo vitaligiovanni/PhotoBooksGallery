@@ -1837,8 +1837,12 @@ function CustomersManager() {
   const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState<string>("all");
+  const [selectedCustomer, setSelectedCustomer] = useState<User | null>(null);
+  const [isCustomerDetailsOpen, setIsCustomerDetailsOpen] = useState(false);
 
   const { data: customers = [], isLoading } = useQuery<User[]>({ queryKey: ["/api/users"] });
+  const { data: orders = [] } = useQuery<Order[]>({ queryKey: ["/api/orders"] });
+  const { data: currencies = [] } = useQuery<Currency[]>({ queryKey: ["/api/currencies"] });
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
@@ -1879,6 +1883,38 @@ function CustomersManager() {
   const formatDate = (dateString: string | Date | null) => {
     if (!dateString) return "—";
     return new Date(dateString).toLocaleDateString('ru-RU');
+  };
+
+  const formatPrice = (amount: string | number, currencyId?: string | null) => {
+    const currency = currencies.find(c => c.id === currencyId);
+    const symbol = currency?.symbol || '₽';
+    return `${Number(amount).toLocaleString('ru-RU')} ${symbol}`;
+  };
+
+  // Получить статистику клиента
+  const getCustomerStats = (customerId: string) => {
+    const customerOrders = orders.filter(order => order.userId === customerId);
+    const totalOrders = customerOrders.length;
+    const totalSpent = customerOrders.reduce((sum, order) => sum + Number(order.totalAmount || 0), 0);
+    const completedOrders = customerOrders.filter(order => (order.status || "pending") === "delivered").length;
+    const pendingOrders = customerOrders.filter(order => (order.status || "pending") === "pending").length;
+    const lastOrderDate = customerOrders.length > 0 
+      ? Math.max(...customerOrders.map(o => new Date(o.createdAt || '').getTime()))
+      : null;
+    
+    return { 
+      totalOrders, 
+      totalSpent, 
+      completedOrders, 
+      pendingOrders, 
+      lastOrderDate: lastOrderDate ? new Date(lastOrderDate) : null,
+      orders: customerOrders.sort((a, b) => new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime())
+    };
+  };
+
+  const handleCustomerClick = (customer: User) => {
+    setSelectedCustomer(customer);
+    setIsCustomerDetailsOpen(true);
   };
 
   return (
@@ -1955,92 +1991,122 @@ function CustomersManager() {
                   <TableRow>
                     <TableHead>Пользователь</TableHead>
                     <TableHead>Email</TableHead>
+                    <TableHead>Заказы</TableHead>
+                    <TableHead>Потрачено</TableHead>
                     <TableHead>Роль</TableHead>
-                    <TableHead>Дата регистрации</TableHead>
-                    <TableHead>Последняя активность</TableHead>
+                    <TableHead>Регистрация</TableHead>
                     <TableHead>Действия</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCustomers.map((customer) => (
-                    <TableRow key={customer.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          {customer.profileImageUrl ? (
-                            <img
-                              src={customer.profileImageUrl}
-                              alt="Avatar"
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                              {customer.firstName?.[0] || customer.email?.[0]?.toUpperCase() || 'U'}
+                  {filteredCustomers.map((customer) => {
+                    const stats = getCustomerStats(customer.id);
+                    return (
+                      <TableRow key={customer.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            {customer.profileImageUrl ? (
+                              <img
+                                src={customer.profileImageUrl}
+                                alt="Avatar"
+                                className="w-8 h-8 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                                {customer.firstName?.[0] || customer.email?.[0]?.toUpperCase() || 'U'}
+                              </div>
+                            )}
+                            <div>
+                              <p className="font-medium text-gray-900">
+                                {customer.firstName && customer.lastName
+                                  ? `${customer.firstName} ${customer.lastName}`
+                                  : customer.firstName || customer.lastName || 'Без имени'}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                ID: {customer.id.slice(-8)}
+                              </p>
                             </div>
-                          )}
-                          <div>
-                            <p className="font-medium text-gray-900">
-                              {customer.firstName && customer.lastName
-                                ? `${customer.firstName} ${customer.lastName}`
-                                : customer.firstName || customer.lastName || 'Без имени'}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              ID: {customer.id}
-                            </p>
                           </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">
-                          {customer.email || '—'}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <Select
-                          value={customer.role || "user"}
-                          onValueChange={(newRole) => handleRoleChange(customer.id, newRole)}
-                          disabled={updateRoleMutation.isPending}
-                        >
-                          <SelectTrigger className="w-32" data-testid={`select-role-${customer.id}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="user">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                Пользователь
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-600">
+                            {customer.email || '—'}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium text-gray-900">
+                              {stats.totalOrders} заказов
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {stats.completedOrders} выполнено • {stats.pendingOrders} в ожидании
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium text-green-600">
+                              {formatPrice(stats.totalSpent)}
+                            </div>
+                            {stats.lastOrderDate && (
+                              <div className="text-xs text-muted-foreground">
+                                Последний: {formatDate(stats.lastOrderDate)}
                               </div>
-                            </SelectItem>
-                            <SelectItem value="admin">
-                              <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                Администратор
-                              </div>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">
-                          {formatDate(customer.createdAt)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm text-gray-600">
-                          {formatDate(customer.updatedAt)}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <Badge 
-                            variant={customer.role === 'admin' ? 'destructive' : 'outline'}
-                            className="text-xs"
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={customer.role || "user"}
+                            onValueChange={(newRole) => handleRoleChange(customer.id, newRole)}
+                            disabled={updateRoleMutation.isPending}
                           >
-                            {customer.role === 'admin' ? 'Администратор' : 'Клиент'}
-                          </Badge>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                            <SelectTrigger className="w-32" data-testid={`select-role-${customer.id}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="user">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  Пользователь
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="admin">
+                                <div className="flex items-center gap-2">
+                                  <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                  Администратор
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <span className="text-sm text-gray-600">
+                            {formatDate(customer.createdAt)}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge 
+                              variant={customer.role === 'admin' ? 'destructive' : 'outline'}
+                              className="text-xs"
+                            >
+                              {customer.role === 'admin' ? 'Админ' : 'Клиент'}
+                            </Badge>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleCustomerClick(customer)}
+                              data-testid={`button-customer-details-${customer.id}`}
+                            >
+                              <Eye className="h-4 w-4 mr-1" />
+                              Детали
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </div>
@@ -2057,7 +2123,7 @@ function CustomersManager() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="text-center p-4 bg-blue-50 rounded-lg">
               <div className="text-2xl font-bold text-blue-600">
                 {customers.filter(c => c.role === 'user').length}
@@ -2076,9 +2142,234 @@ function CustomersManager() {
               </div>
               <div className="text-sm text-muted-foreground">Всего пользователей</div>
             </div>
+            <div className="text-center p-4 bg-emerald-50 rounded-lg">
+              <div className="text-2xl font-bold text-emerald-600">
+                {formatPrice(
+                  customers.reduce((total, customer) => 
+                    total + getCustomerStats(customer.id).totalSpent, 0
+                  )
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">Общий доход от клиентов</div>
+            </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Customer Details Dialog */}
+      <Dialog open={isCustomerDetailsOpen} onOpenChange={setIsCustomerDetailsOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-purple-600" />
+              Детали клиента: {selectedCustomer?.firstName} {selectedCustomer?.lastName}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {selectedCustomer && (() => {
+            const customerStats = getCustomerStats(selectedCustomer.id);
+            return (
+              <div className="space-y-6">
+                {/* Customer Info */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Информация о клиенте</h3>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3">
+                        {selectedCustomer.profileImageUrl ? (
+                          <img
+                            src={selectedCustomer.profileImageUrl}
+                            alt="Avatar"
+                            className="w-12 h-12 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 bg-purple-500 rounded-full flex items-center justify-center text-white text-lg font-medium">
+                            {selectedCustomer.firstName?.[0] || selectedCustomer.email?.[0]?.toUpperCase() || 'U'}
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-medium text-lg">
+                            {selectedCustomer.firstName && selectedCustomer.lastName
+                              ? `${selectedCustomer.firstName} ${selectedCustomer.lastName}`
+                              : selectedCustomer.firstName || selectedCustomer.lastName || 'Без имени'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            ID: {selectedCustomer.id}
+                          </p>
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">Email</label>
+                        <p className="font-medium">{selectedCustomer.email || '—'}</p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">Роль</label>
+                        <p className="font-medium">
+                          {selectedCustomer.role === 'admin' ? 'Администратор' : 'Пользователь'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-sm text-muted-foreground">Дата регистрации</label>
+                        <p className="font-medium">{formatDate(selectedCustomer.createdAt)}</p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3">Статистика заказов</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center p-4 bg-blue-50 rounded-lg">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {customerStats.totalOrders}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Всего заказов</div>
+                      </div>
+                      <div className="text-center p-4 bg-green-50 rounded-lg">
+                        <div className="text-2xl font-bold text-green-600">
+                          {formatPrice(customerStats.totalSpent)}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Общая сумма</div>
+                      </div>
+                      <div className="text-center p-4 bg-emerald-50 rounded-lg">
+                        <div className="text-2xl font-bold text-emerald-600">
+                          {customerStats.completedOrders}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Выполнено</div>
+                      </div>
+                      <div className="text-center p-4 bg-yellow-50 rounded-lg">
+                        <div className="text-2xl font-bold text-yellow-600">
+                          {customerStats.pendingOrders}
+                        </div>
+                        <div className="text-sm text-muted-foreground">В ожидании</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Order History */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">История заказов</h3>
+                  {customerStats.orders.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                      <p>У клиента пока нет заказов</p>
+                    </div>
+                  ) : (
+                    <div className="border rounded-md">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>ID заказа</TableHead>
+                            <TableHead>Дата</TableHead>
+                            <TableHead>Сумма</TableHead>
+                            <TableHead>Статус</TableHead>
+                            <TableHead>Товары</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {customerStats.orders.map((order) => (
+                            <TableRow key={order.id}>
+                              <TableCell>
+                                <div className="font-mono text-sm text-blue-600">
+                                  #{order.id.slice(-8)}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm">
+                                  {formatDate(order.createdAt)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                <span className="font-medium text-green-600">
+                                  {formatPrice(order.totalAmount, order.currencyId)}
+                                </span>
+                              </TableCell>
+                              <TableCell>
+                                {(() => {
+                                  const status = order.status || "pending";
+                                  let badgeClass = "bg-gray-100 text-gray-800";
+                                  let statusText = status;
+                                  
+                                  switch (status) {
+                                    case 'pending':
+                                      badgeClass = "bg-yellow-100 text-yellow-800";
+                                      statusText = "Ожидает";
+                                      break;
+                                    case 'processing':
+                                      badgeClass = "bg-blue-100 text-blue-800";
+                                      statusText = "Обрабатывается";
+                                      break;
+                                    case 'shipped':
+                                      badgeClass = "bg-purple-100 text-purple-800";
+                                      statusText = "Отправлен";
+                                      break;
+                                    case 'delivered':
+                                      badgeClass = "bg-green-100 text-green-800";
+                                      statusText = "Доставлен";
+                                      break;
+                                    case 'cancelled':
+                                      badgeClass = "bg-red-100 text-red-800";
+                                      statusText = "Отменен";
+                                      break;
+                                  }
+                                  
+                                  return <Badge className={badgeClass}>{statusText}</Badge>;
+                                })()}
+                              </TableCell>
+                              <TableCell>
+                                <span className="text-sm text-muted-foreground">
+                                  {Array.isArray(order.items) 
+                                    ? `${order.items.length} товаров`
+                                    : 'Товары недоступны'
+                                  }
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </div>
+
+                {/* Customer Analytics */}
+                <div>
+                  <h3 className="text-lg font-semibold mb-3">Аналитика клиента</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">Средний чек</div>
+                      <div className="text-lg font-bold">
+                        {customerStats.totalOrders > 0 
+                          ? formatPrice(customerStats.totalSpent / customerStats.totalOrders)
+                          : formatPrice(0)
+                        }
+                      </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">Конверсия</div>
+                      <div className="text-lg font-bold">
+                        {customerStats.totalOrders > 0 
+                          ? `${Math.round((customerStats.completedOrders / customerStats.totalOrders) * 100)}%`
+                          : '0%'
+                        }
+                      </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="text-sm text-muted-foreground mb-1">Последний заказ</div>
+                      <div className="text-lg font-bold">
+                        {customerStats.lastOrderDate 
+                          ? formatDate(customerStats.lastOrderDate)
+                          : 'Нет заказов'
+                        }
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

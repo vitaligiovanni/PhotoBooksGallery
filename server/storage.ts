@@ -7,6 +7,7 @@ import {
   blogPosts,
   comments,
   settings,
+  userThemes,
   type User,
   type UpsertUser,
   type Category,
@@ -22,6 +23,8 @@ import {
   type Comment,
   type InsertComment,
   type Setting,
+  type UserTheme,
+  type InsertUserTheme,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or, ne, sql } from "drizzle-orm";
@@ -77,6 +80,10 @@ export interface IStorage {
   getSettings(): Promise<Setting[]>;
   getSetting(key: string): Promise<Setting | undefined>;
   updateSetting(key: string, value: string, description?: string): Promise<Setting>;
+
+  // User theme operations
+  getUserTheme(userId: string): Promise<UserTheme | undefined>;
+  upsertUserTheme(userTheme: InsertUserTheme): Promise<UserTheme>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -384,6 +391,36 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedSetting;
+  }
+
+  // User theme operations
+  async getUserTheme(userId: string): Promise<UserTheme | undefined> {
+    const [theme] = await db.select().from(userThemes).where(eq(userThemes.userId, userId));
+    return theme;
+  }
+
+  async upsertUserTheme(userTheme: InsertUserTheme): Promise<UserTheme> {
+    // First try to update existing theme
+    const [updatedTheme] = await db
+      .update(userThemes)
+      .set({ 
+        themeName: userTheme.themeName,
+        customColors: userTheme.customColors,
+        updatedAt: new Date()
+      })
+      .where(eq(userThemes.userId, userTheme.userId))
+      .returning();
+
+    // If no theme was updated, create a new one
+    if (!updatedTheme) {
+      const [newTheme] = await db
+        .insert(userThemes)
+        .values(userTheme)
+        .returning();
+      return newTheme;
+    }
+
+    return updatedTheme;
   }
 }
 

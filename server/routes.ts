@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
-import { insertCategorySchema, insertProductSchema, insertOrderSchema, insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertOrderSchema, insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema, insertUserThemeSchema, BUILT_IN_THEMES } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -638,6 +638,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating setting:", error);
       res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
+  // User theme routes
+  app.get('/api/user/theme', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const theme = await storage.getUserTheme(userId);
+      
+      // Return user theme or default theme if none exists
+      const response = {
+        theme: theme || { themeName: 'default', customColors: null },
+        availableThemes: Object.values(BUILT_IN_THEMES)
+      };
+      
+      res.json(response);
+    } catch (error) {
+      console.error("Error fetching user theme:", error);
+      res.status(500).json({ message: "Failed to fetch user theme" });
+    }
+  });
+
+  app.put('/api/user/theme', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      
+      // Validate request body
+      const validatedData = insertUserThemeSchema.parse({
+        userId,
+        themeName: req.body.themeName,
+        customColors: req.body.customColors || null
+      });
+      
+      const userTheme = await storage.upsertUserTheme(validatedData);
+      res.json(userTheme);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid theme data",
+          errors: error.errors 
+        });
+      }
+      console.error("Error updating user theme:", error);
+      res.status(500).json({ message: "Failed to update user theme" });
     }
   });
 

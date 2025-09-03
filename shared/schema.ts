@@ -190,6 +190,16 @@ export const settings = pgTable("settings", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// User Theme Preferences
+export const userThemes = pgTable("user_themes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id).notNull(),
+  themeName: varchar("theme_name").notNull(), // default, ocean, sunset, forest, purple, etc
+  customColors: jsonb("custom_colors"), // custom color overrides
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Promocodes
 export const promocodes = pgTable("promocodes", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -211,6 +221,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   blogPosts: many(blogPosts),
   comments: many(comments),
   analyticsEvents: many(analyticsEvents),
+  themes: many(userThemes),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -261,6 +272,13 @@ export const commentsRelations = relations(comments, ({ one }) => ({
 export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => ({
   user: one(users, {
     fields: [analyticsEvents.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userThemesRelations = relations(userThemes, ({ one }) => ({
+  user: one(users, {
+    fields: [userThemes.userId],
     references: [users.id],
   }),
 }));
@@ -323,6 +341,12 @@ export const insertPromocodeSchema = createInsertSchema(promocodes).omit({
   createdAt: true,
 });
 
+export const insertUserThemeSchema = createInsertSchema(userThemes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -344,6 +368,8 @@ export type Setting = typeof settings.$inferSelect;
 export type InsertSetting = z.infer<typeof insertSettingSchema>;
 export type Promocode = typeof promocodes.$inferSelect;
 export type InsertPromocode = z.infer<typeof insertPromocodeSchema>;
+export type UserTheme = typeof userThemes.$inferSelect;
+export type InsertUserTheme = z.infer<typeof insertUserThemeSchema>;
 
 // Photobook format types and constants
 export type PhotobookFormat = "album" | "book" | "square";
@@ -386,5 +412,100 @@ export const calculateAdditionalSpreadPrice = (basePrice: number): number => {
 // Helper function to format size as string
 export const formatPhotobookSize = (size: PhotobookSize): string => {
   return `${size.width}x${size.height}`;
+};
+
+// Color theme definitions
+export interface ColorTheme {
+  name: string;
+  label: string;
+  description: string;
+  colors: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    background: string;
+    surface: string;
+    text: string;
+    textMuted: string;
+    border: string;
+  };
+}
+
+export const BUILT_IN_THEMES: Record<string, ColorTheme> = {
+  default: {
+    name: "default",
+    label: "По умолчанию",
+    description: "Стандартная цветовая схема ФотоКрафт",
+    colors: {
+      primary: "hsl(222.2, 84%, 4.9%)",
+      secondary: "hsl(210, 40%, 96%)",
+      accent: "hsl(210, 40%, 94%)",
+      background: "hsl(0, 0%, 100%)",
+      surface: "hsl(0, 0%, 98%)",
+      text: "hsl(222.2, 84%, 4.9%)",
+      textMuted: "hsl(215.4, 16.3%, 46.9%)",
+      border: "hsl(214.3, 31.8%, 91.4%)",
+    },
+  },
+  ocean: {
+    name: "ocean",
+    label: "Океан",
+    description: "Прохладные морские оттенки",
+    colors: {
+      primary: "hsl(200, 95%, 25%)",
+      secondary: "hsl(200, 50%, 95%)",
+      accent: "hsl(190, 70%, 88%)",
+      background: "hsl(0, 0%, 100%)",
+      surface: "hsl(195, 20%, 98%)",
+      text: "hsl(200, 95%, 25%)",
+      textMuted: "hsl(200, 30%, 50%)",
+      border: "hsl(200, 20%, 85%)",
+    },
+  },
+  sunset: {
+    name: "sunset",
+    label: "Закат",
+    description: "Теплые оранжевые и красные тона",
+    colors: {
+      primary: "hsl(15, 85%, 40%)",
+      secondary: "hsl(25, 60%, 95%)",
+      accent: "hsl(35, 80%, 90%)",
+      background: "hsl(0, 0%, 100%)",
+      surface: "hsl(25, 30%, 98%)",
+      text: "hsl(15, 85%, 30%)",
+      textMuted: "hsl(20, 40%, 55%)",
+      border: "hsl(25, 30%, 85%)",
+    },
+  },
+  forest: {
+    name: "forest",
+    label: "Лес",
+    description: "Природные зеленые оттенки",
+    colors: {
+      primary: "hsl(140, 50%, 30%)",
+      secondary: "hsl(120, 40%, 95%)",
+      accent: "hsl(130, 60%, 90%)",
+      background: "hsl(0, 0%, 100%)",
+      surface: "hsl(120, 20%, 98%)",
+      text: "hsl(140, 50%, 25%)",
+      textMuted: "hsl(130, 25%, 50%)",
+      border: "hsl(120, 20%, 85%)",
+    },
+  },
+  purple: {
+    name: "purple",
+    label: "Фиолетовый",
+    description: "Элегантные фиолетовые тона",
+    colors: {
+      primary: "hsl(270, 60%, 40%)",
+      secondary: "hsl(280, 40%, 95%)",
+      accent: "hsl(275, 70%, 90%)",
+      background: "hsl(0, 0%, 100%)",
+      surface: "hsl(280, 20%, 98%)",
+      text: "hsl(270, 60%, 35%)",
+      textMuted: "hsl(275, 30%, 55%)",
+      border: "hsl(280, 20%, 85%)",
+    },
+  },
 };
 

@@ -2,24 +2,50 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useTranslation } from 'react-i18next';
-import { ShoppingCart, User, Menu, Camera } from "lucide-react";
+import { ShoppingCart, User, Menu, Camera, Palette } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ShoppingCart as Cart } from "./ShoppingCart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { useTheme } from "@/hooks/useTheme";
+import { useToast } from "@/hooks/use-toast";
 
 export function Header() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
   const { cartItems } = useCart();
+  const { currentTheme, availableThemes, changeTheme, isLoading: themeLoading } = useTheme();
+  const { toast } = useToast();
   const [location] = useLocation();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Calculate cart count from cartItems to ensure reactivity
   const cartCount = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
+
+  const handleThemeChange = async (themeName: string) => {
+    try {
+      await changeTheme(themeName);
+      toast({
+        title: "Тема изменена",
+        description: `Активирована тема "${availableThemes.find(t => t.name === themeName)?.label}"`,
+      });
+    } catch (error) {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось изменить тему",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <>
@@ -55,6 +81,47 @@ export function Header() {
             <div className="flex items-center space-x-4">
               {/* Language Switcher */}
               <LanguageSwitcher />
+
+              {/* Theme Selector */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={themeLoading}
+                    data-testid="button-theme"
+                  >
+                    <Palette className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  {availableThemes.map((theme) => (
+                    <DropdownMenuItem
+                      key={theme.name}
+                      onClick={() => handleThemeChange(theme.name)}
+                      className="cursor-pointer"
+                      data-testid={`theme-option-${theme.name}`}
+                    >
+                      <div className="flex items-center space-x-3 w-full">
+                        <div className="flex space-x-1">
+                          <div 
+                            className="w-3 h-3 rounded border"
+                            style={{ backgroundColor: theme.colors.primary }}
+                          />
+                          <div 
+                            className="w-3 h-3 rounded border"
+                            style={{ backgroundColor: theme.colors.accent }}
+                          />
+                        </div>
+                        <span className="flex-1">{theme.label}</span>
+                        {currentTheme.name === theme.name && (
+                          <div className="w-2 h-2 bg-primary rounded-full" />
+                        )}
+                      </div>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
 
               {/* Cart */}
               <Button
@@ -134,6 +201,41 @@ export function Header() {
                 <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-contact">
                   {t('contact')}
                 </a>
+                
+                {/* Theme selector for mobile */}
+                <div className="border-t border-border pt-2 mt-2">
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Цветовая тема:</p>
+                  <div className="grid grid-cols-1 gap-1">
+                    {availableThemes.map((theme) => (
+                      <button
+                        key={theme.name}
+                        onClick={() => handleThemeChange(theme.name)}
+                        className={`flex items-center space-x-3 p-2 rounded-md text-left transition-colors ${
+                          currentTheme.name === theme.name 
+                            ? 'bg-accent text-accent-foreground' 
+                            : 'hover:bg-accent/50'
+                        }`}
+                        disabled={themeLoading}
+                        data-testid={`mobile-theme-option-${theme.name}`}
+                      >
+                        <div className="flex space-x-1">
+                          <div 
+                            className="w-3 h-3 rounded border"
+                            style={{ backgroundColor: theme.colors.primary }}
+                          />
+                          <div 
+                            className="w-3 h-3 rounded border"
+                            style={{ backgroundColor: theme.colors.accent }}
+                          />
+                        </div>
+                        <span className="text-sm">{theme.label}</span>
+                        {currentTheme.name === theme.name && (
+                          <div className="w-2 h-2 bg-primary rounded-full ml-auto" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </nav>
             </div>
           )}

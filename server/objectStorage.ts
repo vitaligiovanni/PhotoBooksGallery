@@ -157,8 +157,13 @@ export class ObjectStorageService {
     const privateObjectDir = this.getPrivateObjectDir();
     const { bucketName } = parseObjectPath(privateObjectDir);
     
-    // Add the .private/ prefix to the entity ID
-    const objectName = `.private/${entityId}`;
+    // Check if entityId already has .private/ prefix to avoid duplication
+    let objectName: string;
+    if (entityId.startsWith('.private/')) {
+      objectName = entityId; // Already has the correct prefix
+    } else {
+      objectName = `.private/${entityId}`;
+    }
     console.log('Bucket:', bucketName, 'Object:', objectName); // Debug log
     
     const bucket = objectStorageClient.bucket(bucketName);

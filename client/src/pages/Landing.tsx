@@ -107,7 +107,7 @@ function ReviewsSection() {
       comment: "",
       gender: "male",
       profilePhoto: "",
-      productId: "",
+      productId: "general",
     }
   });
 
@@ -135,7 +135,12 @@ function ReviewsSection() {
   });
 
   const handleSubmitReview = async (data: any) => {
-    createReviewMutation.mutate(data);
+    // Если выбран "общий отзыв", отправляем null как productId
+    const reviewData = {
+      ...data,
+      productId: data.productId === "general" ? null : data.productId
+    };
+    createReviewMutation.mutate(reviewData);
   };
 
   const handlePhotoUpload = async (file: File) => {
@@ -448,7 +453,7 @@ function ReviewsSection() {
                                 <SelectValue placeholder="Выберите товар для отзыва" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="">Общий отзыв о магазине</SelectItem>
+                                <SelectItem value="general">Общий отзыв о магазине</SelectItem>
                                 {(products || []).map((product: any) => (
                                   <SelectItem key={product.id} value={product.id}>
                                     {typeof product.name === 'object' ? product.name.ru || product.name.hy || product.name.en : product.name || 'Untitled'}

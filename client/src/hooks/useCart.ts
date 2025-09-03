@@ -59,13 +59,22 @@ export function useCart() {
       ? (product.name as LocalizedText)?.ru || (product.name as LocalizedText)?.en || 'Untitled'
       : (product.name as string) || 'Untitled';
 
-    const actualPrice = Number(product.price);
+    // Calculate actual price with discount
+    const basePrice = Number(product.price);
+    let actualPrice = basePrice;
+    let originalPrice = product.originalPrice ? Number(product.originalPrice) : basePrice;
+    
+    // If there's a discount, calculate the discounted price
+    if (product.isOnSale && product.discountPercentage && product.discountPercentage > 0) {
+      actualPrice = Math.round(basePrice * (1 - product.discountPercentage / 100));
+      originalPrice = basePrice; // Keep original as the base price
+    }
 
     const newItem: CartItem = {
       id: product.id,
       name: productName,
       price: actualPrice,
-      originalPrice: product.originalPrice ? Number(product.originalPrice) : undefined,
+      originalPrice: originalPrice,
       discountPercentage: product.discountPercentage || undefined,
       quantity,
       imageUrl: (product.images && product.images.length > 0) 

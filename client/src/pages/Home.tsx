@@ -50,7 +50,7 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Header />
       {/* Welcome Section */}
-      <section className="hero-gradient py-16 bg-[#9bb0ba] text-[#ffffff]">
+      <section className="hero-gradient py-16 text-[#ffffff] bg-[#86aab2]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="font-serif text-4xl sm:text-5xl font-bold mb-4" data-testid="text-welcome-title">
             Добро пожаловать, {(user as any)?.firstName || 'друг'}!

@@ -561,16 +561,16 @@ export interface ColorTheme {
 // Currency definitions and helpers
 export const SUPPORTED_CURRENCIES = [
   {
-    code: 'USD' as const,
-    name: { ru: 'Доллар США', hy: 'ԱՄՆ դոլար', en: 'US Dollar' },
-    symbol: '$',
+    code: 'AMD' as const,
+    name: { ru: 'Армянский драм', hy: 'Հայկական դրամ', en: 'Armenian Dram' },
+    symbol: '֏',
     isBaseCurrency: true,
     sortOrder: 1,
   },
   {
-    code: 'AMD' as const,
-    name: { ru: 'Армянский драм', hy: 'Հայկական դրամ', en: 'Armenian Dram' },
-    symbol: '֏',
+    code: 'USD' as const,
+    name: { ru: 'Доллар США', hy: 'ԱՄՆ դոլար', en: 'US Dollar' },
+    symbol: '$',
     isBaseCurrency: false,
     sortOrder: 2,
   },

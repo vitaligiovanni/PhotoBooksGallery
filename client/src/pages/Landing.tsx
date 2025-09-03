@@ -1,13 +1,24 @@
 import { useTranslation } from 'react-i18next';
+import { useState, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CategoryCard } from "@/components/CategoryCard";
-import { useQuery } from "@tanstack/react-query";
+import { ProductCard } from "@/components/ProductCard";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Medal, Truck, Palette, Headphones, Star } from "lucide-react";
-import type { Category } from "@shared/schema";
+import { Medal, Truck, Palette, Headphones, Star, Plus, Upload } from "lucide-react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/useCart";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import type { Category, Product, Review } from "@shared/schema";
 
 function CategoriesGrid() {
   const { t } = useTranslation();
@@ -35,11 +46,327 @@ function CategoriesGrid() {
   );
 }
 
+function ProductsGrid({ onAddToCart }: { onAddToCart: (product: Product) => void }) {
+  const { data: products, isLoading } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {[...Array(8)].map((_, i) => (
+          <Skeleton key={i} className="h-80 w-full" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {(products || []).slice(0, 8).map((product: any) => (
+        <ProductCard 
+          key={product.id} 
+          product={product} 
+          onAddToCart={onAddToCart}
+        />
+      ))}
+    </div>
+  );
+}
+
+function ReviewsSection() {
+  const { toast } = useToast();
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  
+  const { data: reviews, isLoading } = useQuery<Review[]>({
+    queryKey: ["/api/reviews"],
+  });
+
+  const reviewForm = useForm({
+    resolver: zodResolver(z.object({
+      authorName: z.string().min(1, "Имя обязательно"),
+      authorEmail: z.string().email("Некорректный email").optional().or(z.literal("")),
+      rating: z.number().min(1).max(5),
+      comment: z.string().min(10, "Комментарий должен содержать минимум 10 символов"),
+    })),
+    defaultValues: {
+      authorName: "",
+      authorEmail: "",
+      rating: 5,
+      comment: "",
+    }
+  });
+
+  const createReviewMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/reviews", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reviews"] });
+      reviewForm.reset();
+      setShowReviewForm(false);
+      toast({
+        title: "Спасибо за отзыв!",
+        description: "Ваш отзыв отправлен на модерацию и скоро появится на сайте.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось отправить отзыв. Попробуйте снова.",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSubmitReview = async (data: any) => {
+    createReviewMutation.mutate(data);
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex text-yellow-400">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating ? 'fill-current' : 'text-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <section className="py-16 bg-background">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-12">
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">Отзывы клиентов</h2>
+          <p className="text-muted-foreground text-lg">Что говорят о нас наши клиенты</p>
+        </div>
+
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(3)].map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {(reviews || []).slice(0, 6).map((review: any) => (
+              <Card key={review.id} className="border border-border">
+                <CardContent className="p-6">
+                  <div className="flex items-center mb-4">
+                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mr-4">
+                      <span className="text-primary font-semibold">{review.authorName[0]}</span>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-foreground">{review.authorName}</h4>
+                      {renderStars(review.rating)}
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground italic">"{review.comment}"</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center mt-12">
+          {!showReviewForm ? (
+            <Button onClick={() => setShowReviewForm(true)} size="lg">
+              <Plus className="h-4 w-4 mr-2" />
+              Оставить отзыв
+            </Button>
+          ) : (
+            <Card className="max-w-2xl mx-auto">
+              <CardContent className="p-6">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-xl font-semibold">Оставить отзыв</h3>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowReviewForm(false)}
+                  >
+                    ×
+                  </Button>
+                </div>
+                
+                <Form {...reviewForm}>
+                  <form onSubmit={reviewForm.handleSubmit(handleSubmitReview)} className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={reviewForm.control}
+                        name="authorName"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Ваше имя</FormLabel>
+                            <FormControl>
+                              <Input placeholder="Введите ваше имя" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      
+                      <FormField
+                        control={reviewForm.control}
+                        name="authorEmail"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Email (необязательно)</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder="your@email.com" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <FormField
+                      control={reviewForm.control}
+                      name="rating"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Оценка</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-1">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <button
+                                  key={star}
+                                  type="button"
+                                  onClick={() => field.onChange(star)}
+                                  className="text-2xl hover:scale-110 transition-transform"
+                                >
+                                  <Star
+                                    className={`h-6 w-6 ${
+                                      star <= field.value
+                                        ? 'fill-yellow-400 text-yellow-400'
+                                        : 'text-gray-300 hover:text-yellow-400'
+                                    }`}
+                                  />
+                                </button>
+                              ))}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={reviewForm.control}
+                      name="comment"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ваш отзыв</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder="Расскажите о вашем опыте использования наших услуг..."
+                              className="min-h-24"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <div className="flex gap-3">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setShowReviewForm(false)}
+                      >
+                        Отмена
+                      </Button>
+                      <Button type="submit" disabled={createReviewMutation.isPending}>
+                        {createReviewMutation.isPending ? "Отправляем..." : "Отправить отзыв"}
+                      </Button>
+                    </div>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function Landing() {
   const { t } = useTranslation();
+  const { toast } = useToast();
+  const { addToCart } = useCart();
+  const [dragActive, setDragActive] = useState(false);
 
   const scrollToEditor = () => {
     document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  const handleAddToCart = (product: Product) => {
+    addToCart(product, 1);
+    const productName = typeof product.name === 'object' 
+      ? (product.name as any)?.ru || (product.name as any)?.en || 'Товар'
+      : product.name || 'Товар';
+    toast({
+      title: "Добавлено в корзину",
+      description: `${productName} добавлен в корзину`,
+    });
+  };
+
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files || []);
+    if (files.length > 0) {
+      toast({
+        title: "Фото загружены!",
+        description: `Загружено ${files.length} фото. Перенаправляем в редактор...`,
+      });
+      // Redirect to editor with photos
+      setTimeout(() => {
+        window.location.href = '/editor';
+      }, 1000);
+    }
+  }, [toast]);
+
+  const handleDrop = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    setDragActive(false);
+    const files = Array.from(event.dataTransfer.files).filter(file => 
+      file.type.startsWith('image/')
+    );
+    
+    if (files.length > 0) {
+      toast({
+        title: "Фото загружены!",
+        description: `Загружено ${files.length} фото. Перенаправляем в редактор...`,
+      });
+      setTimeout(() => {
+        window.location.href = '/editor';
+      }, 1000);
+    }
+  }, [toast]);
+
+  const handleDragOver = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    setDragActive(true);
+  }, []);
+
+  const handleDragLeave = useCallback((event: React.DragEvent) => {
+    event.preventDefault();
+    setDragActive(false);
+  }, []);
+
+  const handleClick = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.multiple = true;
+    input.accept = 'image/*';
+    input.onchange = handleFileUpload as any;
+    input.click();
   };
 
   return (
@@ -110,6 +437,24 @@ export default function Landing() {
           <CategoriesGrid />
         </div>
       </section>
+      {/* Featured Products */}
+      <section className="py-16 bg-background">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between mb-12">
+            <div>
+              <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-2" data-testid="text-popular-products">
+                {t('popularProducts')}
+              </h2>
+              <p className="text-muted-foreground">Выбор наших клиентов</p>
+            </div>
+            <Button variant="ghost" onClick={() => window.location.href = '/catalog'} data-testid="button-view-all-products">
+              {t('viewAll')}
+            </Button>
+          </div>
+
+          <ProductsGrid onAddToCart={handleAddToCart} />
+        </div>
+      </section>
       {/* Photo Editor Section */}
       <section id="editor" className="py-16 bg-card">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -159,15 +504,36 @@ export default function Landing() {
             </div>
 
             <div className="relative">
-              <Card className="border-2 border-dashed border-border">
+              <Card 
+                className={`border-2 border-dashed cursor-pointer transition-all duration-200 ${
+                  dragActive 
+                    ? 'border-primary bg-primary/5 scale-105' 
+                    : 'border-border hover:border-primary/50 hover:bg-primary/2'
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onClick={handleClick}
+              >
                 <CardContent className="p-8 text-center space-y-6">
-                  <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto">
-                    <Palette className="text-primary text-2xl" />
+                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto transition-colors ${
+                    dragActive ? 'bg-primary text-white' : 'bg-primary/20 text-primary'
+                  }`}>
+                    <Upload className="text-2xl h-8 w-8" />
                   </div>
                   <div>
-                    <h3 className="font-semibold text-foreground mb-2">Перетащите фото сюда</h3>
-                    <p className="text-muted-foreground text-sm">или нажмите для выбора файлов</p>
+                    <h3 className="font-semibold text-foreground mb-2">
+                      {dragActive ? 'Отпустите фото здесь' : 'Перетащите фото сюда'}
+                    </h3>
+                    <p className="text-muted-foreground text-sm">
+                      {dragActive ? 'Загружаем ваши фото...' : 'или нажмите для выбора файлов'}
+                    </p>
                   </div>
+                  {!dragActive && (
+                    <Button variant="outline" size="sm">
+                      Выбрать файлы
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -217,40 +583,7 @@ export default function Landing() {
           </div>
         </div>
       </section>
-      {/* Testimonials */}
-      <section className="py-16 bg-background">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">Отзывы клиентов</h2>
-            <p className="text-muted-foreground text-lg">Что говорят о нас наши клиенты</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              { name: 'Анна Петрова', review: 'Заказывала свадебную фотокнигу - качество печати превзошло все ожидания! Редактор очень удобный, создала книгу за час.' },
-              { name: 'Михаил Иванов', review: 'Быстрая доставка и отличная упаковка. Фотокнига о путешествии получилась просто шикарной. Обязательно закажу еще!' },
-              { name: 'Елена Смирнова', review: 'Заказывала детский фотоальбом. Качество бумаги и печати на высоте. Ребенок в восторге от своей книжки!' }
-            ].map((testimonial, index) => (
-              <Card key={index} className="border border-border">
-                <CardContent className="p-6">
-                  <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-primary font-semibold">{testimonial.name[0]}</span>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-foreground">{testimonial.name}</h4>
-                      <div className="flex text-accent">
-                        {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 fill-current" />)}
-                      </div>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground italic">"{testimonial.review}"</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
+      <ReviewsSection />
       {/* Call to Action */}
       <section className="py-20 hero-gradient text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">

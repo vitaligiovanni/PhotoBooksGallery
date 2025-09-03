@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import type { ReactNode } from "react";
+import { useTranslation } from 'react-i18next';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, X } from "lucide-react";
@@ -24,6 +25,7 @@ export function ObjectUploader({
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
+  const { t } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,7 +42,7 @@ export function ObjectUploader({
 
     // Check file type
     if (!file.type.startsWith('image/')) {
-      alert('Можно загружать только изображения');
+      alert(t('onlyImages'));
       return;
     }
 
@@ -74,7 +76,7 @@ export function ObjectUploader({
       }
     } catch (error) {
       console.error('Upload error:', error);
-      alert('Ошибка загрузки файла');
+      alert(t('uploadError'));
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) {

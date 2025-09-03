@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +13,7 @@ interface ThemeSelectorProps {
 }
 
 export default function ThemeSelector({ currentTheme = 'default', onThemeSelect, isLoading }: ThemeSelectorProps) {
+  const { t } = useTranslation();
   const [selectedTheme, setSelectedTheme] = useState(currentTheme);
 
   const handleThemeSelect = (themeName: string) => {
@@ -26,17 +28,17 @@ export default function ThemeSelector({ currentTheme = 'default', onThemeSelect,
         <div 
           className="w-4 h-4 rounded border border-border"
           style={{ backgroundColor: theme.colors.primary }}
-          title="Основной цвет"
+          title={t('primaryColor')}
         />
         <div 
           className="w-4 h-4 rounded border border-border"
           style={{ backgroundColor: theme.colors.accent }}
-          title="Акцентный цвет"
+          title={t('accentColor')}
         />
         <div 
           className="w-4 h-4 rounded border border-border"
           style={{ backgroundColor: theme.colors.secondary }}
-          title="Вторичный цвет"
+          title={t('secondaryColor')}
         />
       </div>
       
@@ -109,7 +111,7 @@ export default function ThemeSelector({ currentTheme = 'default', onThemeSelect,
                   disabled={isLoading}
                   data-testid="button-save-theme"
                 >
-                  {isLoading ? 'Сохранение...' : 'Сохранить'}
+                  {isLoading ? t('saving') : t('save')}
                 </Button>
               </div>
             </div>

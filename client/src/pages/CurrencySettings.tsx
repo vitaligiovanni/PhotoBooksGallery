@@ -39,14 +39,14 @@ export function CurrencySettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currencies/base'] });
       toast({
-        title: 'Базовая валюта обновлена',
-        description: 'Базовая валюта успешно изменена',
+        title: t('baseCurrencyUpdated'),
+        description: t('baseCurrencySuccess'),
       });
     },
     onError: () => {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить базовую валюту',
+        title: t('error'),
+        description: t('failedToUpdateBaseCurrency'),
         variant: 'destructive',
       });
     }
@@ -61,14 +61,14 @@ export function CurrencySettings() {
       setEditingRateId(null);
       setEditingRate('');
       toast({
-        title: 'Курс обновлён',
-        description: 'Курс валюты успешно обновлён',
+        title: t('exchangeRateUpdated'),
+        description: t('exchangeRateSuccess'),
       });
     },
     onError: () => {
       toast({
-        title: 'Ошибка',
-        description: 'Не удалось обновить курс валюты',
+        title: t('error'),
+        description: t('failedToUpdateRate'),
         variant: 'destructive',
       });
     }
@@ -87,8 +87,8 @@ export function CurrencySettings() {
     const rate = parseFloat(editingRate);
     if (isNaN(rate) || rate <= 0) {
       toast({
-        title: 'Ошибка',
-        description: 'Введите корректный курс валюты',
+        title: t('error'),
+        description: t('invalidRate'),
         variant: 'destructive',
       });
       return;
@@ -134,7 +134,7 @@ export function CurrencySettings() {
               disabled={updateBaseCurrencyMutation.isPending}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Выберите базовую валюту">
+                <SelectValue placeholder={t('selectBaseCurrency')}>
                   {baseCurrency && (
                     <span className="flex items-center gap-2">
                       <Badge variant="secondary">{baseCurrency.code}</Badge>
@@ -194,7 +194,7 @@ export function CurrencySettings() {
                         value={editingRate}
                         onChange={(e) => setEditingRate(e.target.value)}
                         className="w-24"
-                        placeholder="Курс"
+                        placeholder={t('rate')}
                       />
                       <Button
                         size="sm"

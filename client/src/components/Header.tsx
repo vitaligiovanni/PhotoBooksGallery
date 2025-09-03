@@ -36,13 +36,13 @@ export function Header() {
     try {
       await changeTheme(themeName);
       toast({
-        title: "Тема изменена",
+        title: t('themeChanged'),
         description: `Активирована тема "${availableThemes.find(t => t.name === themeName)?.label}"`,
       });
     } catch (error) {
       toast({
-        title: "Ошибка",
-        description: "Не удалось изменить тему",
+        title: t('error'),
+        description: t('failedToChangeTheme'),
         variant: "destructive",
       });
     }

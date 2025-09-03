@@ -64,7 +64,38 @@ const resources = {
       uploadPhotos: "Загрузите фотографии",
       autoLayout: "Автоматическая раскладка",
       personalize: "Персонализация",
-      startCreating: "Начать создание"
+      startCreating: "Начать создание",
+      
+      // Theme & UI
+      themeChanged: "Тема изменена",
+      error: "Ошибка",
+      failedToChangeTheme: "Не удалось изменить тему",
+      onlyImages: "Можно загружать только изображения",
+      uploadError: "Ошибка загрузки файла",
+      primaryColor: "Основной цвет",
+      accentColor: "Акцентный цвет",
+      secondaryColor: "Вторичный цвет",
+      saving: "Сохранение...",
+      
+      // Currency Settings
+      baseCurrencyUpdated: "Базовая валюта обновлена",
+      baseCurrencySuccess: "Базовая валюта успешно изменена",
+      failedToUpdateBaseCurrency: "Не удалось обновить базовую валюту",
+      exchangeRateUpdated: "Курс обновлён",
+      exchangeRateSuccess: "Курс валюты успешно обновлён",
+      failedToUpdateRate: "Не удалось обновить курс валюты",
+      invalidRate: "Введите корректный курс валюты",
+      selectBaseCurrency: "Выберите базовую валюту",
+      rate: "Курс",
+      
+      // Admin Panel
+      categories: "Категории",
+      products: "Товары",
+      orders: "Заказы",
+      customers: "Клиенты",
+      reviews: "Отзывы",
+      currencies: "Валюты",
+      analytics: "Аналитика"
     }
   },
   hy: {
@@ -129,7 +160,38 @@ const resources = {
       uploadPhotos: "Վերբեռնեք լուսանկարները",
       autoLayout: "Ավտոմատ դասավորություն",
       personalize: "Անհատականացում",
-      startCreating: "Սկսել ստեղծումը"
+      startCreating: "Սկսել ստեղծումը",
+      
+      // Theme & UI
+      themeChanged: "Թեման փոխվեց",
+      error: "Սխալ",
+      failedToChangeTheme: "Չհաջողվեց փոխել թեման",
+      onlyImages: "Միայն նկարներ կարելի է վերբեռնել",
+      uploadError: "Ֆայլի վերբեռնման սխալ",
+      primaryColor: "Հիմնական գույն",
+      accentColor: "Շեշտակի գույն",
+      secondaryColor: "Երկրորդային գույն",
+      saving: "Պահպանվում է...",
+      
+      // Currency Settings
+      baseCurrencyUpdated: "Հիմնական արժույթը թարմացվեց",
+      baseCurrencySuccess: "Հիմնական արժույթը հաջողությամբ փոխվեց",
+      failedToUpdateBaseCurrency: "Չհաջողվեց թարմացնել հիմնական արժույթը",
+      exchangeRateUpdated: "Փոխարժեքը թարմացվեց",
+      exchangeRateSuccess: "Արժույթի փոխարժեքը հաջողությամբ թարմացվեց",
+      failedToUpdateRate: "Չհաջողվեց թարմացնել փոխարժեքը",
+      invalidRate: "Մուտքագրեք ճիշտ փոխարժեք",
+      selectBaseCurrency: "Ընտրեք հիմնական արժույթ",
+      rate: "Փոխարժեք",
+      
+      // Admin Panel
+      categories: "Կատեգորիաներ",
+      products: "Ապրանքներ",
+      orders: "Պատվերներ",
+      customers: "Հաճախորդներ",
+      reviews: "Գնահատականներ",
+      currencies: "Արժույթներ",
+      analytics: "Վերլուծություն"
     }
   },
   en: {
@@ -194,7 +256,38 @@ const resources = {
       uploadPhotos: "Upload Photos",
       autoLayout: "Auto Layout",
       personalize: "Personalize",
-      startCreating: "Start Creating"
+      startCreating: "Start Creating",
+      
+      // Theme & UI
+      themeChanged: "Theme Changed",
+      error: "Error",
+      failedToChangeTheme: "Failed to change theme",
+      onlyImages: "Only images can be uploaded",
+      uploadError: "File upload error",
+      primaryColor: "Primary Color",
+      accentColor: "Accent Color",
+      secondaryColor: "Secondary Color",
+      saving: "Saving...",
+      
+      // Currency Settings
+      baseCurrencyUpdated: "Base Currency Updated",
+      baseCurrencySuccess: "Base currency successfully changed",
+      failedToUpdateBaseCurrency: "Failed to update base currency",
+      exchangeRateUpdated: "Exchange Rate Updated",
+      exchangeRateSuccess: "Currency exchange rate successfully updated",
+      failedToUpdateRate: "Failed to update exchange rate",
+      invalidRate: "Enter a valid exchange rate",
+      selectBaseCurrency: "Select base currency",
+      rate: "Rate",
+      
+      // Admin Panel
+      categories: "Categories",
+      products: "Products",
+      orders: "Orders",
+      customers: "Customers",
+      reviews: "Reviews",
+      currencies: "Currencies",
+      analytics: "Analytics"
     }
   }
 };

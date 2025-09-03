@@ -42,18 +42,18 @@ import { ObjectUploader } from "@/components/ObjectUploader";
 import { CurrencySettings } from "./CurrencySettings";
 import type { UploadResult } from "@uppy/core";
 
-// Navigation items
-const navigationItems = [
+// Function to get navigation items with translations
+const getNavigationItems = (t: any) => [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, color: 'text-blue-600' },
-  { id: 'categories', label: 'Категории', icon: Tag, color: 'text-teal-600' },
-  { id: 'products', label: 'Товары', icon: Package, color: 'text-green-600' },
-  { id: 'orders', label: 'Заказы', icon: ShoppingCart, color: 'text-orange-600' },
-  { id: 'customers', label: 'Клиенты', icon: Users, color: 'text-purple-600' },
-  { id: 'reviews', label: 'Отзывы', icon: Star, color: 'text-yellow-600' },
-  { id: 'blog', label: 'Блог', icon: FileText, color: 'text-pink-600' },
-  { id: 'currencies', label: 'Валюты', icon: DollarSign, color: 'text-emerald-600' },
-  { id: 'analytics', label: 'Аналитика', icon: BarChart3, color: 'text-indigo-600' },
-  { id: 'settings', label: 'Настройки', icon: Settings, color: 'text-gray-600' },
+  { id: 'categories', label: t('categories'), icon: Tag, color: 'text-teal-600' },
+  { id: 'products', label: t('products'), icon: Package, color: 'text-green-600' },
+  { id: 'orders', label: t('orders'), icon: ShoppingCart, color: 'text-orange-600' },
+  { id: 'customers', label: t('customers'), icon: Users, color: 'text-purple-600' },
+  { id: 'reviews', label: t('reviews'), icon: Star, color: 'text-yellow-600' },
+  { id: 'blog', label: t('blog'), icon: FileText, color: 'text-pink-600' },
+  { id: 'currencies', label: t('currencies'), icon: DollarSign, color: 'text-emerald-600' },
+  { id: 'analytics', label: t('analytics'), icon: BarChart3, color: 'text-indigo-600' },
+  { id: 'settings', label: 'Settings', icon: Settings, color: 'text-gray-600' },
 ];
 
 // Categories Manager Component
@@ -2951,7 +2951,7 @@ export default function Admin() {
             <p className="text-sm text-gray-500 mt-1">CRM Панель</p>
           </div>
           <nav className="p-4 space-y-2">
-            {navigationItems.map((item) => (
+            {getNavigationItems(t).map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}

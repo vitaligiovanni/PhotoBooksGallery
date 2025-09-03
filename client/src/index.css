@@ -6,7 +6,7 @@
 @tailwind utilities;
 
 :root {
-  --background: hsl(189, 46%, 52%);
+  --background: hsl(45, 15%, 98%);
   --foreground: hsl(220, 9%, 15%);
   --card: hsl(0, 0%, 100%);
   --card-foreground: hsl(220, 9%, 15%);
@@ -65,7 +65,7 @@
 }
 
 .dark {
-  --background: hsl(189, 46%, 35%);
+  --background: hsl(220, 15%, 8%);
   --foreground: hsl(210, 40%, 98%);
   --card: hsl(220, 15%, 12%);
   --card-foreground: hsl(210, 40%, 98%);
@@ -165,4 +165,9 @@
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+/* Page background class */
+.page-bg {
+  background-color: #4ab0c3;
 }

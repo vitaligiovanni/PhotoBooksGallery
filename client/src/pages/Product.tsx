@@ -71,7 +71,7 @@ export default function ProductPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen page-bg">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -90,7 +90,7 @@ export default function ProductPage() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen page-bg">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="text-center py-12">
@@ -111,7 +111,7 @@ export default function ProductPage() {
   const options = (product.options as Record<string, any>) || {};
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen page-bg">
       <Header />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

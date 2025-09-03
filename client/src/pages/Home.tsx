@@ -36,7 +36,7 @@ export default function Home() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen page-bg">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <Skeleton className="h-32 w-full mb-8" />
@@ -47,7 +47,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen page-bg">
       <Header />
       {/* Welcome Section */}
       <section className="hero-gradient py-16 text-[#ffffff] bg-[#86aab2]">

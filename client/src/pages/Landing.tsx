@@ -43,7 +43,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen page-bg">
       <Header />
       {/* Hero Section */}
       <section className="hero-gradient text-white py-20 lg:py-32 bg-[#5c6d91]">

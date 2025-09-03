@@ -31,7 +31,7 @@ export default function Editor() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen page-bg">
         <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="animate-pulse space-y-4">
@@ -44,7 +44,7 @@ export default function Editor() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen page-bg">
       <Header />
 
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">

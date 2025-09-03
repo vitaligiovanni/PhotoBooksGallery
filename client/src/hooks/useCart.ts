@@ -1,27 +1,41 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import type { Product } from '@shared/schema';
 import type { CartItem, LocalizedText } from '@/types';
 
-// Simple global state management
-let globalCartItems: CartItem[] = [];
-let listeners: Array<() => void> = [];
+// Storage key for localStorage
+const CART_STORAGE_KEY = 'photocraft-cart';
 
-const notifyListeners = () => {
-  listeners.forEach(listener => listener());
+// Load initial cart from localStorage
+const loadCartFromStorage = (): CartItem[] => {
+  try {
+    const stored = localStorage.getItem(CART_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+// Save cart to localStorage
+const saveCartToStorage = (items: CartItem[]) => {
+  try {
+    localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(items));
+  } catch {
+    // Ignore storage errors
+  }
 };
 
 export function useCart() {
-  const [, forceUpdate] = useState({});
+  const [cartItems, setCartItems] = useState<CartItem[]>(() => {
+    const loaded = loadCartFromStorage();
+    return Array.isArray(loaded) ? loaded : [];
+  });
   
-  // Force component re-render
-  const updateComponent = useCallback(() => {
-    forceUpdate({});
-  }, []);
-
-  // Register listener on mount, unregister on unmount
-  if (!listeners.includes(updateComponent)) {
-    listeners.push(updateComponent);
-  }
+  // Save to localStorage whenever cart changes
+  useEffect(() => {
+    if (Array.isArray(cartItems)) {
+      saveCartToStorage(cartItems);
+    }
+  }, [cartItems]);
 
   const addToCart = useCallback((product: Product, quantity: number = 1, options?: Record<string, any>) => {
     const productName = typeof product.name === 'object' 
@@ -31,7 +45,7 @@ export function useCart() {
     // Calculate actual price (considering discounts)
     const actualPrice = Number(product.price);
 
-    const cartItem: CartItem = {
+    const newItem: CartItem = {
       id: product.id,
       name: productName,
       price: actualPrice,
@@ -44,49 +58,55 @@ export function useCart() {
       options
     };
 
-    const existingItemIndex = globalCartItems.findIndex(item => 
-      item.id === product.id && JSON.stringify(item.options) === JSON.stringify(options)
-    );
-    
-    if (existingItemIndex >= 0) {
-      // Update existing item
-      globalCartItems[existingItemIndex].quantity += quantity;
-    } else {
-      // Add new item
-      globalCartItems.push(cartItem);
-    }
-
-    notifyListeners();
+    setCartItems(currentItems => {
+      const existingItemIndex = currentItems.findIndex(item => 
+        item.id === product.id && JSON.stringify(item.options) === JSON.stringify(options)
+      );
+      
+      if (existingItemIndex >= 0) {
+        // Update existing item
+        const updatedItems = [...currentItems];
+        updatedItems[existingItemIndex].quantity += quantity;
+        return updatedItems;
+      } else {
+        // Add new item
+        return [...currentItems, newItem];
+      }
+    });
   }, []);
 
   const removeFromCart = useCallback((productId: string) => {
-    globalCartItems = globalCartItems.filter(item => item.id !== productId);
-    notifyListeners();
+    setCartItems(currentItems => currentItems.filter(item => item.id !== productId));
   }, []);
 
   const updateQuantity = useCallback((productId: string, delta: number) => {
-    const item = globalCartItems.find(item => item.id === productId);
-    if (item) {
-      item.quantity = Math.max(1, item.quantity + delta);
-      notifyListeners();
-    }
+    setCartItems(currentItems => 
+      currentItems.map(item => {
+        if (item.id === productId) {
+          const newQuantity = Math.max(1, item.quantity + delta);
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      })
+    );
   }, []);
 
   const clearCart = useCallback(() => {
-    globalCartItems = [];
-    notifyListeners();
+    setCartItems([]);
   }, []);
 
   const getCartTotal = useCallback(() => {
-    return globalCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  }, []);
+    if (!Array.isArray(cartItems)) return 0;
+    return cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }, [cartItems]);
 
   const getCartCount = useCallback(() => {
-    return globalCartItems.reduce((sum, item) => sum + item.quantity, 0);
-  }, []);
+    if (!Array.isArray(cartItems)) return 0;
+    return cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  }, [cartItems]);
 
   return {
-    cartItems: [...globalCartItems], // Return a copy to prevent mutations
+    cartItems,
     addToCart,
     removeFromCart,
     updateQuantity,

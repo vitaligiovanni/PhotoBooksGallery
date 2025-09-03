@@ -97,6 +97,21 @@ export async function setupAuth(app: Express) {
     );
     passport.use(strategy);
   }
+  
+  // Also setup for localhost/127.0.0.1 in development
+  const devHosts = ['localhost', '127.0.0.1'];
+  for (const host of devHosts) {
+    const strategy = new Strategy(
+      {
+        name: `replitauth:${host}`,
+        config,
+        scope: "openid email profile offline_access",
+        callbackURL: `http://${host}:5000/api/callback`,
+      },
+      verify,
+    );
+    passport.use(strategy);
+  }
 
   passport.serializeUser((user: Express.User, cb) => cb(null, user));
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));

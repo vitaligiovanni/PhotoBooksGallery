@@ -34,6 +34,7 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { insertProductSchema, insertBlogPostSchema, insertBlogCategorySchema, insertCategorySchema, PHOTOBOOK_SIZES, PHOTOBOOK_FORMAT_LABELS, calculateAdditionalSpreadPrice, formatPhotobookSize } from "@shared/schema";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, Category, Order, User, PhotobookFormat, BlogPost, BlogCategory } from "@shared/schema";
@@ -47,6 +48,7 @@ const navigationItems = [
   { id: 'products', label: 'Товары', icon: Package, color: 'text-green-600' },
   { id: 'orders', label: 'Заказы', icon: ShoppingCart, color: 'text-orange-600' },
   { id: 'customers', label: 'Клиенты', icon: Users, color: 'text-purple-600' },
+  { id: 'reviews', label: 'Отзывы', icon: Star, color: 'text-yellow-600' },
   { id: 'blog', label: 'Блог', icon: FileText, color: 'text-pink-600' },
   { id: 'analytics', label: 'Аналитика', icon: BarChart3, color: 'text-indigo-600' },
   { id: 'settings', label: 'Настройки', icon: Settings, color: 'text-gray-600' },
@@ -1309,6 +1311,354 @@ function SettingsManager() {
   );
 }
 
+// Reviews Manager Component  
+function ReviewsManager() {
+  const { toast } = useToast();
+  const [isReviewDialogOpen, setIsReviewDialogOpen] = useState(false);
+  const [editingReview, setEditingReview] = useState<any>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isPromoDialogOpen, setIsPromoDialogOpen] = useState(false);
+
+  const { data: reviews = [] } = useQuery({ 
+    queryKey: ["/api/admin/reviews", statusFilter === 'all' ? undefined : statusFilter] 
+  });
+
+  const reviewForm = useForm({
+    resolver: zodResolver(z.object({
+      authorName: z.string().min(1, "Имя автора обязательно"),
+      authorEmail: z.string().email("Некорректный email").optional().or(z.literal("")),
+      rating: z.number().min(1).max(5),
+      comment: z.string().min(10, "Комментарий должен содержать минимум 10 символов"),
+      sortOrder: z.number().default(0)
+    })),
+    defaultValues: {
+      authorName: "",
+      authorEmail: "",
+      rating: 5,
+      comment: "",
+      sortOrder: 0
+    }
+  });
+
+  const approveReviewMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("PUT", `/api/admin/reviews/${id}/approve`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      toast({
+        title: "Успех",
+        description: "Отзыв одобрен",
+      });
+    }
+  });
+
+  const rejectReviewMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("PUT", `/api/admin/reviews/${id}/reject`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      toast({
+        title: "Успех",
+        description: "Отзыв отклонен",
+      });
+    }
+  });
+
+  const deleteReviewMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return await apiRequest("DELETE", `/api/admin/reviews/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      toast({
+        title: "Успех",
+        description: "Отзыв удален",
+      });
+    }
+  });
+
+  const createPromoReviewMutation = useMutation({
+    mutationFn: async (data: any) => {
+      return await apiRequest("POST", "/api/admin/reviews", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      setIsPromoDialogOpen(false);
+      reviewForm.reset();
+      toast({
+        title: "Успех",
+        description: "Промо-отзыв создан",
+      });
+    }
+  });
+
+  const handlePromoSubmit = async (data: any) => {
+    createPromoReviewMutation.mutate(data);
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return <Badge className="bg-green-100 text-green-800">Одобрен</Badge>;
+      case 'rejected':
+        return <Badge className="bg-red-100 text-red-800">Отклонен</Badge>;
+      case 'pending':
+        return <Badge className="bg-yellow-100 text-yellow-800">На модерации</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const renderStars = (rating: number) => {
+    return (
+      <div className="flex">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`h-4 w-4 ${
+              star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Отзывы</h1>
+          <p className="text-muted-foreground mt-2">Управление отзывами и модерация</p>
+        </div>
+        <Button onClick={() => setIsPromoDialogOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Создать промо-отзыв
+        </Button>
+      </div>
+
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <div className="flex justify-between items-center">
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Управление отзывами
+            </CardTitle>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-48">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все отзывы</SelectItem>
+                <SelectItem value="pending">На модерации</SelectItem>
+                <SelectItem value="approved">Одобренные</SelectItem>
+                <SelectItem value="rejected">Отклоненные</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {reviews.length === 0 ? (
+            <p className="text-center text-muted-foreground py-8">Отзывов нет</p>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review: any) => (
+                <Card key={review.id} className="p-4">
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium">{review.authorName}</h4>
+                          {review.isPromoted && (
+                            <Badge variant="outline" className="text-xs">
+                              Промо
+                            </Badge>
+                          )}
+                        </div>
+                        {review.authorEmail && (
+                          <p className="text-sm text-muted-foreground">{review.authorEmail}</p>
+                        )}
+                        {renderStars(review.rating)}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(review.status)}
+                        <div className="flex gap-1">
+                          {review.status === 'pending' && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 border-green-200 hover:bg-green-50"
+                                onClick={() => approveReviewMutation.mutate(review.id)}
+                              >
+                                Одобрить
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 border-red-200 hover:bg-red-50"
+                                onClick={() => rejectReviewMutation.mutate(review.id)}
+                              >
+                                Отклонить
+                              </Button>
+                            </>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => deleteReviewMutation.mutate(review.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                    <p className="text-sm">{review.comment}</p>
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>Создан: {new Date(review.createdAt).toLocaleDateString()}</span>
+                      {review.sortOrder !== 0 && (
+                        <span>Приоритет: {review.sortOrder}</span>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={isPromoDialogOpen} onOpenChange={setIsPromoDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Создать промо-отзыв</DialogTitle>
+            <DialogDescription>
+              Создайте отзыв от имени администрации. Такой отзыв будет сразу одобрен.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...reviewForm}>
+            <form onSubmit={reviewForm.handleSubmit(handlePromoSubmit)} className="space-y-4">
+              <FormField
+                control={reviewForm.control}
+                name="authorName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Имя автора</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Введите имя автора отзыва" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={reviewForm.control}
+                name="authorEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email автора (необязательно)</FormLabel>
+                    <FormControl>
+                      <Input placeholder="author@example.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={reviewForm.control}
+                name="rating"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Рейтинг</FormLabel>
+                    <FormControl>
+                      <Select value={field.value?.toString()} onValueChange={(value) => field.onChange(Number(value))}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[5, 4, 3, 2, 1].map((rating) => (
+                            <SelectItem key={rating} value={rating.toString()}>
+                              <div className="flex items-center gap-2">
+                                <span>{rating}</span>
+                                <div className="flex">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      className={`h-3 w-3 ${
+                                        star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
+                                      }`}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={reviewForm.control}
+                name="comment"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Текст отзыва</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Напишите содержательный отзыв..."
+                        className="min-h-24"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={reviewForm.control}
+                name="sortOrder"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Приоритет показа (чем выше, тем раньше отображается)</FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        placeholder="0" 
+                        {...field} 
+                        onChange={(e) => field.onChange(Number(e.target.value))}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="flex justify-end gap-3">
+                <Button type="button" variant="outline" onClick={() => setIsPromoDialogOpen(false)}>
+                  Отмена
+                </Button>
+                <Button type="submit" disabled={createPromoReviewMutation.isPending}>
+                  Создать отзыв
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 // Products Manager Component
 function ProductsManager() {
   const { toast } = useToast();
@@ -2397,6 +2747,8 @@ export default function Admin() {
         return <CategoriesManager />;
       case 'products':
         return <ProductsManager />;
+      case 'reviews':
+        return <ReviewsManager />;
       case 'blog':
         return <BlogManager />;
       case 'settings':

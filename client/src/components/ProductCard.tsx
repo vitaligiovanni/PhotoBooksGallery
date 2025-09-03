@@ -45,12 +45,12 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             )}
             {product.inStock && (
               <Badge variant="secondary" className="text-xs bg-green-500 text-white">
-                В наличии
+                {t('inStock')}
               </Badge>
             )}
             {!product.inStock && (
               <Badge variant="secondary" className="text-xs bg-red-500 text-white">
-                Нет в наличии
+                {t('outOfStock')}
               </Badge>
             )}
           </div>
@@ -73,17 +73,17 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         {(product.productionTime || product.shippingTime) && (
           <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
             {product.productionTime && (
-              <span>Изготовление: {product.productionTime} дн.</span>
+              <span>{t('manufacturing')}: {product.productionTime} {t('days')}</span>
             )}
             {product.shippingTime && (
-              <span>Доставка: {product.shippingTime} дн.</span>
+              <span>{t('delivery')}: {product.shippingTime} {t('days')}</span>
             )}
           </div>
         )}
         
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground uppercase tracking-wide">Цена</span>
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">{t('price')}</span>
             <PriceDisplay
               price={Number(product.price)}
               originalPrice={product.originalPrice ? Number(product.originalPrice) : undefined}

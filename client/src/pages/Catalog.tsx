@@ -133,17 +133,17 @@ export default function Catalog() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Filter className="h-5 w-5" />
-                  Фильтры
+                  {t('filters')}
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Search */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Поиск</label>
+                  <label className="text-sm font-medium mb-2 block">{t('search')}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Найти товар..."
+                      placeholder={t('searchPlaceholder')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10"
@@ -154,7 +154,7 @@ export default function Catalog() {
 
                 {/* Price Range */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Цена</label>
+                  <label className="text-sm font-medium mb-2 block">{t('price')}</label>
                   <Select value={priceRange} onValueChange={setPriceRange}>
                     <SelectTrigger data-testid="select-price-range">
                       <SelectValue />
@@ -170,15 +170,15 @@ export default function Catalog() {
 
                 {/* Sort */}
                 <div>
-                  <label className="text-sm font-medium mb-2 block">Сортировка</label>
+                  <label className="text-sm font-medium mb-2 block">{t('sorting')}</label>
                   <Select value={sortBy} onValueChange={setSortBy}>
                     <SelectTrigger data-testid="select-sort">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="name">По названию</SelectItem>
-                      <SelectItem value="price-low">Цена: по возрастанию</SelectItem>
-                      <SelectItem value="price-high">Цена: по убыванию</SelectItem>
+                      <SelectItem value="price-low">{t('priceLow')}</SelectItem>
+                      <SelectItem value="price-high">{t('priceHigh')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -191,7 +191,7 @@ export default function Catalog() {
             {/* Results Info */}
             <div className="flex items-center justify-between mb-6">
               <p className="text-muted-foreground" data-testid="text-results-count">
-                {isLoading || isSearching ? "Загрузка..." : 
+                {isLoading || isSearching ? t('loading') : 
                  `Найдено ${processedProducts?.length || 0} товаров`}
               </p>
             </div>

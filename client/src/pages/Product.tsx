@@ -200,9 +200,9 @@ export default function ProductPage() {
                   <span className="text-sm text-muted-foreground ml-2">(24 отзыва)</span>
                 </div>
                 {product.inStock ? (
-                  <Badge variant="secondary" className="bg-green-500 text-white">В наличии</Badge>
+                  <Badge variant="secondary" className="bg-green-500 text-white">{t('inStock')}</Badge>
                 ) : (
-                  <Badge variant="secondary" className="bg-red-500 text-white">Нет в наличии</Badge>
+                  <Badge variant="secondary" className="bg-red-500 text-white">{t('outOfStock')}</Badge>
                 )}
                 {product.isOnSale && product.discountPercentage && product.discountPercentage > 0 && (
                   <Badge className="bg-red-500 text-white">
@@ -400,7 +400,7 @@ export default function ProductPage() {
                       </div>
                     ) : (
                       <div className="text-muted-foreground">
-                        Доставка: ₽300 (бесплатно от ₽{getFreeShippingThreshold().toLocaleString()})
+                        {t('delivery')}: ₽300 ({t('freeShipping')} ₽{getFreeShippingThreshold().toLocaleString()})
                         <div className="text-xs">
                           До бесплатной доставки: ₽{(getFreeShippingThreshold() - calculateTotalPrice() * quantity).toLocaleString()}
                         </div>
@@ -415,7 +415,7 @@ export default function ProductPage() {
                       </div>
                     ) : (
                       <div className="text-muted-foreground">
-                        Доставка: ₽300 (бесплатно от ₽{getFreeShippingThreshold().toLocaleString()})
+                        {t('delivery')}: ₽300 ({t('freeShipping')} ₽{getFreeShippingThreshold().toLocaleString()})
                         <div className="text-xs">
                           До бесплатной доставки: ₽{(getFreeShippingThreshold() - Number(product.price) * quantity).toLocaleString()}
                         </div>
@@ -441,7 +441,7 @@ export default function ProductPage() {
                   onClick={handleBuyNow}
                   data-testid="button-buy-now"
                 >
-                  Купить сейчас
+                  {t('buyNow')}
                 </Button>
                 
                 <Button 
@@ -458,7 +458,7 @@ export default function ProductPage() {
               
               <Button variant="ghost" className="w-full" data-testid="button-add-to-wishlist">
                 <Heart className="h-4 w-4 mr-2" />
-                Добавить в избранное
+                {t('addToWishlist')}
               </Button>
             </div>
 
@@ -467,7 +467,7 @@ export default function ProductPage() {
               <CardContent className="p-4 space-y-2 text-sm">
                 {product.shippingTime && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Доставка:</span>
+                    <span className="text-muted-foreground">{t('delivery')}:</span>
                     <span className="font-medium">{product.shippingTime} {product.shippingTime === 1 ? 'день' : product.shippingTime < 5 ? 'дня' : 'дней'}</span>
                   </div>
                 )}

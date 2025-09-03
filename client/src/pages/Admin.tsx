@@ -2930,10 +2930,10 @@ export default function Admin() {
       default:
         return (
           <div className="space-y-6">
-            <h1 className="text-3xl font-bold text-foreground">Раздел в разработке</h1>
+            <h1 className="text-3xl font-bold text-foreground">{t('sectionInDevelopment')}</h1>
             <Card className="border-0 shadow-lg">
               <CardContent className="p-6">
-                <p className="text-center text-muted-foreground py-8">Этот раздел скоро будет доступен</p>
+                <p className="text-center text-muted-foreground py-8">{t('sectionComingSoon')}</p>
               </CardContent>
             </Card>
           </div>
@@ -2948,7 +2948,7 @@ export default function Admin() {
         <div className="w-64 bg-white shadow-lg border-r border-gray-200 min-h-screen">
           <div className="p-6 border-b border-gray-200">
             <h2 className="text-xl font-bold text-gray-800">ФотоКрафт</h2>
-            <p className="text-sm text-gray-500 mt-1">CRM Панель</p>
+            <p className="text-sm text-gray-500 mt-1">{t('crmPanel')}</p>
           </div>
           <nav className="p-4 space-y-2">
             {getNavigationItems(t).map((item) => (
@@ -2974,7 +2974,7 @@ export default function Admin() {
               </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">{(user as any)?.firstName || 'Admin'}</p>
-                <p className="text-xs text-gray-500">Администратор</p>
+                <p className="text-xs text-gray-500">{t('administrator')}</p>
               </div>
             </div>
           </div>

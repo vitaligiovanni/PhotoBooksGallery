@@ -95,7 +95,45 @@ const resources = {
       customers: "Клиенты",
       reviews: "Отзывы",
       currencies: "Валюты",
-      analytics: "Аналитика"
+      analytics: "Аналитика",
+      
+      // Product Details
+      manufacturing: "Изготовление",
+      delivery: "Доставка",
+      days: "дн.",
+      buyNow: "Купить сейчас",
+      freeShipping: "бесплатно от",
+      
+      // Sorting
+      sortBy: "Сортировать по",
+      priceLow: "Цена: по возрастанию",
+      priceHigh: "Цена: по убыванию",
+      
+      // Loading states
+      loading: "Загрузка...",
+      loadingAdminPanel: "Загрузка админ панели...",
+      loadingSettings: "Загрузка настроек валют...",
+      
+      // Price labels
+      priceMinimum: "Цена (за минимальное количество разворотов)",
+      priceAdditional: "Цена за доп. разворот (автоматически: 10%)",
+      
+      // Product status
+      inStock: "В наличии",
+      outOfStock: "Нет в наличии",
+      addToWishlist: "Добавить в избранное",
+      
+      // Filters and search
+      filters: "Фильтры",
+      search: "Поиск",
+      searchPlaceholder: "Найти товар...",
+      sorting: "Сортировка",
+      
+      // Admin panel UI
+      crmPanel: "CRM Панель",
+      administrator: "Администратор",
+      sectionInDevelopment: "Раздел в разработке",
+      sectionComingSoon: "Этот раздел скоро будет доступен"
     }
   },
   hy: {
@@ -191,7 +229,45 @@ const resources = {
       customers: "Հաճախորդներ",
       reviews: "Գնահատականներ",
       currencies: "Արժույթներ",
-      analytics: "Վերլուծություն"
+      analytics: "Վերլուծություն",
+      
+      // Product Details
+      manufacturing: "Արտադրություն",
+      delivery: "Առաքում",
+      days: "օր",
+      buyNow: "Գնել հիմա",
+      freeShipping: "անվճար",
+      
+      // Sorting
+      sortBy: "Դասակարգել ըստ",
+      priceLow: "Գին: աճող",
+      priceHigh: "Գին: նվազող",
+      
+      // Loading states
+      loading: "Բեռնվում է...",
+      loadingAdminPanel: "Ադմինիստրատորի վահանակը բեռնվում է...",
+      loadingSettings: "Արժույթի կարգավորումները բեռնվում են...",
+      
+      // Price labels
+      priceMinimum: "Գին (նվազագույն էջերի քանակի համար)",
+      priceAdditional: "Լրացուցիչ էջի գին (ավտոմատ՝ 10%)",
+      
+      // Product status
+      inStock: "Պահեստում կա",
+      outOfStock: "Պահեստում չկա",
+      addToWishlist: "Ավելացնել ցանկությունների մեջ",
+      
+      // Filters and search
+      filters: "Զտիչներ",
+      search: "Որոնել",
+      searchPlaceholder: "Գտնել ապրանք...",
+      sorting: "Դասակարգում",
+      
+      // Admin panel UI
+      crmPanel: "CRM վահանակ",
+      administrator: "Ադմինիստրատոր",
+      sectionInDevelopment: "Բաժինը զարգացման փուլում է",
+      sectionComingSoon: "Այս բաժինը շուտով հասանելի կլինի"
     }
   },
   en: {
@@ -287,7 +363,45 @@ const resources = {
       customers: "Customers",
       reviews: "Reviews",
       currencies: "Currencies",
-      analytics: "Analytics"
+      analytics: "Analytics",
+      
+      // Product Details
+      manufacturing: "Manufacturing",
+      delivery: "Delivery",
+      days: "days",
+      buyNow: "Buy Now",
+      freeShipping: "free from",
+      
+      // Sorting
+      sortBy: "Sort by",
+      priceLow: "Price: Low to High",
+      priceHigh: "Price: High to Low",
+      
+      // Loading states
+      loading: "Loading...",
+      loadingAdminPanel: "Loading admin panel...",
+      loadingSettings: "Loading currency settings...",
+      
+      // Price labels
+      priceMinimum: "Price (for minimum page count)",
+      priceAdditional: "Additional page price (auto: 10%)",
+      
+      // Product status
+      inStock: "In Stock",
+      outOfStock: "Out of Stock",
+      addToWishlist: "Add to Wishlist",
+      
+      // Filters and search
+      filters: "Filters",
+      search: "Search",
+      searchPlaceholder: "Find product...",
+      sorting: "Sorting",
+      
+      // Admin panel UI
+      crmPanel: "CRM Panel",
+      administrator: "Administrator",
+      sectionInDevelopment: "Section in Development",
+      sectionComingSoon: "This section will be available soon"
     }
   }
 };

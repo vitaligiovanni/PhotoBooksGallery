@@ -76,6 +76,7 @@ function ProductsGrid({ onAddToCart }: { onAddToCart: (product: Product) => void
 }
 
 function ReviewsSection() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
@@ -259,8 +260,8 @@ function ReviewsSection() {
     <section className="py-16 bg-background">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">Отзывы клиентов</h2>
-          <p className="text-muted-foreground text-lg">Что говорят о нас наши клиенты</p>
+          <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4">{t('customerReviews')}</h2>
+          <p className="text-muted-foreground text-lg">{t('whatClientsSay')}</p>
         </div>
 
         {isLoading ? (
@@ -294,13 +295,13 @@ function ReviewsSection() {
           {!showReviewForm ? (
             <Button onClick={() => setShowReviewForm(true)} size="lg">
               <Plus className="h-4 w-4 mr-2" />
-              Оставить отзыв
+              {t('leaveReview')}
             </Button>
           ) : (
             <Card className="max-w-2xl mx-auto">
               <CardContent className="p-6">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-xl font-semibold">Оставить отзыв</h3>
+                  <h3 className="text-xl font-semibold">{t('leaveReview')}</h3>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -318,9 +319,9 @@ function ReviewsSection() {
                         name="authorName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Ваше имя</FormLabel>
+                            <FormLabel>{t('yourName')}</FormLabel>
                             <FormControl>
-                              <Input placeholder="Введите ваше имя" {...field} />
+                              <Input placeholder={t('enterYourName')} {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -332,7 +333,7 @@ function ReviewsSection() {
                         name="authorEmail"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email (необязательно)</FormLabel>
+                            <FormLabel>{t('emailOptional')}</FormLabel>
                             <FormControl>
                               <Input type="email" placeholder="your@email.com" {...field} />
                             </FormControl>
@@ -348,15 +349,15 @@ function ReviewsSection() {
                         name="gender"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Пол</FormLabel>
+                            <FormLabel>{t('gender')}</FormLabel>
                             <FormControl>
                               <Select onValueChange={field.onChange} value={field.value}>
                                 <SelectTrigger>
                                   <SelectValue placeholder="Выберите пол" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="male">Мужской</SelectItem>
-                                  <SelectItem value="female">Женский</SelectItem>
+                                  <SelectItem value="male">{t('male')}</SelectItem>
+                                  <SelectItem value="female">{t('female')}</SelectItem>
                                 </SelectContent>
                               </Select>
                             </FormControl>
@@ -401,7 +402,7 @@ function ReviewsSection() {
                                 onClick={handlePhotoSelect}
                                 disabled={uploadingPhoto}
                               >
-                                {uploadingPhoto ? "Загружается..." : "Загрузить фото"}
+                                {uploadingPhoto ? t('uploading') : t('uploadPhoto')}
                               </Button>
                             </div>
                           )}
@@ -445,10 +446,10 @@ function ReviewsSection() {
                       name="comment"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Ваш отзыв</FormLabel>
+                          <FormLabel>{t('yourReview')}</FormLabel>
                           <FormControl>
                             <Textarea
-                              placeholder="Расскажите о вашем опыте использования наших услуг..."
+                              placeholder={t('reviewPlaceholder')}
                               className="min-h-24"
                               {...field}
                             />
@@ -468,10 +469,10 @@ function ReviewsSection() {
                           reviewForm.reset();
                         }}
                       >
-                        Отмена
+                        {t('cancel')}
                       </Button>
                       <Button type="submit" disabled={createReviewMutation.isPending}>
-                        {createReviewMutation.isPending ? "Отправляем..." : "Отправить отзыв"}
+                        {createReviewMutation.isPending ? t('sending') : t('submitReview')}
                       </Button>
                     </div>
                   </form>
@@ -776,11 +777,10 @@ export default function Landing() {
       <section className="py-20 hero-gradient text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-serif text-3xl sm:text-4xl font-bold mb-4">
-            Готовы создать свою фотокнигу?
+            {t('readyToCreate')}
           </h2>
           <p className="text-xl opacity-90 mb-8 max-w-2xl mx-auto">
-            Сохраните ваши воспоминания в красивой фотокниге. 
-            Начните прямо сейчас и получите скидку 15% на первый заказ!
+            {t('saveMemories')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -797,7 +797,7 @@ export default function Landing() {
               className="border-white text-white hover:bg-white hover:text-primary"
               data-testid="button-cta-contact"
             >
-              Связаться с нами
+              {t('contactUs')}
             </Button>
           </div>
         </div>

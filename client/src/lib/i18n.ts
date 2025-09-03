@@ -43,7 +43,7 @@ const resources = {
       phone: "Телефон",
       address: "Адрес",
       submit: "Отправить",
-      cancel: "Отмена",
+
       save: "Сохранить",
       delete: "Удалить",
       edit: "Редактировать",
@@ -153,7 +153,47 @@ const resources = {
       easyEditor: "Легкий редактор",
       easyEditorDesc: "Интуитивный интерфейс для создания фотокниг",
       support247: "Поддержка 24/7",
-      support247Desc: "Всегда готовы помочь с вашими вопросами"
+      support247Desc: "Всегда готовы помочь с вашими вопросами",
+      
+      // Reviews section
+      customerReviews: "Отзывы клиентов",
+      whatClientsSay: "Что говорят о нас наши клиенты",
+      leaveReview: "Оставить отзыв",
+      yourName: "Ваше имя",
+      enterYourName: "Введите ваше имя",
+      emailOptional: "Email (необязательно)",
+      gender: "Пол",
+      male: "Мужской",
+      female: "Женский",
+      profilePhotoOptional: "Фото профиля (необязательно)",
+      uploadPhoto: "Загрузить фото",
+      rating: "Оценка",
+      yourReview: "Ваш отзыв",
+      reviewPlaceholder: "Расскажите о вашем опыте использования наших услуг...",
+      submitReview: "Отправить отзыв",
+      
+      // Call to Action
+      readyToCreate: "Готовы создать свою фотокнигу?",
+      saveMemories: "Сохраните ваши воспоминания в красивой фотокниге. Начните прямо сейчас и получите скидку 15% на первый заказ!",
+      contactUs: "Связаться с нами",
+      
+      // Form actions
+      cancel: "Отмена",
+      uploading: "Загружается...",
+      sending: "Отправляем...",
+      
+      // Footer
+      companyDescription: "Создаем качественные фотокниги и сувениры для сохранения ваших драгоценных воспоминаний.",
+      footerCategories: "Категории",
+      support: "Поддержка",
+      contacts: "Контакты",
+      help: "Помощь",
+      shipping: "Доставка",
+      returns: "Возврат",
+      qualityGuarantee: "Гарантия качества",
+      allRightsReserved: "Все права защищены",
+      privacyPolicy: "Политика конфиденциальности",
+      termsOfService: "Условия использования"
     }
   },
   hy: {
@@ -197,7 +237,7 @@ const resources = {
       phone: "Հեռախոս",
       address: "Հասցե",
       submit: "Ուղարկել",
-      cancel: "Չեղարկել",
+
       save: "Պահպանել",
       delete: "Ջնջել",
       edit: "Խմբագրել",
@@ -307,7 +347,47 @@ const resources = {
       easyEditor: "Հեշտ խմբագիր",
       easyEditorDesc: "Ինտուիտիվ ինտերֆեյս լուսանկարների գրքեր ստեղծելու համար",
       support247: "Աջակցություն 24/7",
-      support247Desc: "Միշտ պատրաստ ենք օգնել ձեր հարցերում"
+      support247Desc: "Միշտ պատրաստ ենք օգնել ձեր հարցերում",
+      
+      // Reviews section
+      customerReviews: "Հաճախորդների գնահատականներ",
+      whatClientsSay: "Ինչ են ասում մեր մասին մեր հաճախորդները",
+      leaveReview: "Թողնել գնահատական",
+      yourName: "Ձեր անունը",
+      enterYourName: "Մուտքագրեք ձեր անունը",
+      emailOptional: "Էլ. փոստ (ոչ պարտադիր)",
+      gender: "Սեռ",
+      male: "Տղամարդ",
+      female: "Կին",
+      profilePhotoOptional: "Պրոֆիլի նկար (ոչ պարտադիր)",
+      uploadPhoto: "Վերբեռնել նկար",
+      rating: "Գնահատական",
+      yourReview: "Ձեր գնահատականը",
+      reviewPlaceholder: "Պատմեք մեր ծառայություններից օգտվելու ձեր փորձի մասին...",
+      submitReview: "Ուղարկել գնահատականը",
+      
+      // Call to Action
+      readyToCreate: "Պատրա՞ստ եք ստեղծել ձեր լուսանկարների գիրքը:",
+      saveMemories: "Պահպանեք ձեր հիշողությունները գեղեցիկ լուսանկարների գրքում: Սկսեք հենց հիմա և ստացեք 15% զեղչ առաջին պատվերի համար:",
+      contactUs: "Կապ մեզ հետ",
+      
+      // Form actions
+      cancel: "Չեղարկել",
+      uploading: "Վերբեռնվում է...",
+      sending: "Ուղարկվում է...",
+      
+      // Footer
+      companyDescription: "Ստեղծում ենք որակավոր լուսանկարների գրքեր և հիշատակարաններ ձեր արժեքավոր հիշողությունների պահպանության համար:",
+      footerCategories: "Կատեգորիաներ",
+      support: "Աջակցություն",
+      contacts: "Կապեր",
+      help: "Օգնություն",
+      shipping: "Առաքում",
+      returns: "Վերադարձում",
+      qualityGuarantee: "Որակի երաշխիք",
+      allRightsReserved: "Բոլոր իրավունքներն ապահովված են",
+      privacyPolicy: "Գաղտնիության քաղաքականություն",
+      termsOfService: "Օգտագоրծման պայմաններ"
     }
   },
   en: {
@@ -351,7 +431,7 @@ const resources = {
       phone: "Phone",
       address: "Address",
       submit: "Submit",
-      cancel: "Cancel",
+
       save: "Save",
       delete: "Delete",
       edit: "Edit",
@@ -461,7 +541,47 @@ const resources = {
       easyEditor: "Easy Editor",
       easyEditorDesc: "Intuitive interface for creating photobooks",
       support247: "24/7 Support",
-      support247Desc: "Always ready to help with your questions"
+      support247Desc: "Always ready to help with your questions",
+      
+      // Reviews section
+      customerReviews: "Customer Reviews",
+      whatClientsSay: "What our clients say about us",
+      leaveReview: "Leave Review",
+      yourName: "Your Name",
+      enterYourName: "Enter your name",
+      emailOptional: "Email (optional)",
+      gender: "Gender",
+      male: "Male",
+      female: "Female",
+      profilePhotoOptional: "Profile photo (optional)",
+      uploadPhoto: "Upload Photo",
+      rating: "Rating",
+      yourReview: "Your Review",
+      reviewPlaceholder: "Tell us about your experience using our services...",
+      submitReview: "Submit Review",
+      
+      // Call to Action
+      readyToCreate: "Ready to create your photobook?",
+      saveMemories: "Save your memories in a beautiful photobook. Start now and get 15% off your first order!",
+      contactUs: "Contact Us",
+      
+      // Form actions
+      cancel: "Cancel",
+      uploading: "Uploading...",
+      sending: "Sending...",
+      
+      // Footer
+      companyDescription: "Creating quality photobooks and souvenirs to preserve your precious memories.",
+      categories: "Categories",
+      support: "Support",
+      contacts: "Contacts",
+      help: "Help",
+      shipping: "Shipping",
+      returns: "Returns",
+      qualityGuarantee: "Quality Guarantee",
+      allRightsReserved: "All rights reserved",
+      privacyPolicy: "Privacy Policy",
+      termsOfService: "Terms of Service"
     }
   }
 };

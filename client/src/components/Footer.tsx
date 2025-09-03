@@ -15,7 +15,7 @@ export function Footer() {
               <span className="font-serif font-bold text-xl">ФотоКрафт</span>
             </div>
             <p className="text-background/80 text-sm leading-relaxed">
-              Создаем качественные фотокниги и сувениры для сохранения ваших драгоценных воспоминаний.
+              {t('companyDescription')}
             </p>
             <div className="flex space-x-4">
               <Instagram className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
@@ -26,29 +26,29 @@ export function Footer() {
 
           {/* Categories */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Категории</h3>
+            <h3 className="font-semibold text-lg">{t('categories')}</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="/catalog/photobooks" className="text-background/80 hover:text-primary transition-colors">Фотокниги</a></li>
-              <li><a href="/catalog/frames" className="text-background/80 hover:text-primary transition-colors">Фоторамки</a></li>
-              <li><a href="/catalog/boxes" className="text-background/80 hover:text-primary transition-colors">Подарочные коробки</a></li>
-              <li><a href="/catalog/souvenirs" className="text-background/80 hover:text-primary transition-colors">Фото-сувениры</a></li>
+              <li><a href="/catalog/photobooks" className="text-background/80 hover:text-primary transition-colors">{t('photobooks')}</a></li>
+              <li><a href="/catalog/frames" className="text-background/80 hover:text-primary transition-colors">{t('photoframes')}</a></li>
+              <li><a href="/catalog/boxes" className="text-background/80 hover:text-primary transition-colors">{t('giftBoxes')}</a></li>
+              <li><a href="/catalog/souvenirs" className="text-background/80 hover:text-primary transition-colors">{t('photoSouvenirs')}</a></li>
             </ul>
           </div>
 
           {/* Support */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Поддержка</h3>
+            <h3 className="font-semibold text-lg">{t('support')}</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">Помощь</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">Доставка</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">Возврат</a></li>
-              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">Гарантия качества</a></li>
+              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">{t('help')}</a></li>
+              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">{t('shipping')}</a></li>
+              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">{t('returns')}</a></li>
+              <li><a href="#" className="text-background/80 hover:text-primary transition-colors">{t('qualityGuarantee')}</a></li>
             </ul>
           </div>
 
           {/* Contact */}
           <div className="space-y-4">
-            <h3 className="font-semibold text-lg">Контакты</h3>
+            <h3 className="font-semibold text-lg">{t('contacts')}</h3>
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-2">
                 <Phone className="text-primary h-4 w-4" />
@@ -68,9 +68,9 @@ export function Footer() {
 
         <div className="border-t border-background/20 mt-12 pt-8 text-center">
           <p className="text-background/60 text-sm">
-            © 2024 ФотоКрафт. Все права защищены. | 
-            <a href="#" className="hover:text-primary transition-colors ml-1">Политика конфиденциальности</a> | 
-            <a href="#" className="hover:text-primary transition-colors ml-1">Условия использования</a>
+            © 2024 ФотоКрафт. {t('allRightsReserved')}. | 
+            <a href="#" className="hover:text-primary transition-colors ml-1">{t('privacyPolicy')}</a> | 
+            <a href="#" className="hover:text-primary transition-colors ml-1">{t('termsOfService')}</a>
           </p>
         </div>
       </div>

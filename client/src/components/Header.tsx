@@ -8,7 +8,7 @@ import { ShoppingCart as Cart } from "./ShoppingCart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function Header() {
   const { t } = useTranslation();
@@ -19,7 +19,7 @@ export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // Calculate cart count from cartItems to ensure reactivity
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
 
   return (
     <>

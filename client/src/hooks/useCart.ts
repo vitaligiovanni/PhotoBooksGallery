@@ -63,15 +63,19 @@ export function useCart() {
         item.id === product.id && JSON.stringify(item.options) === JSON.stringify(options)
       );
       
+      let updatedItems;
       if (existingItemIndex >= 0) {
         // Update existing item
-        const updatedItems = [...currentItems];
+        updatedItems = [...currentItems];
         updatedItems[existingItemIndex].quantity += quantity;
-        return updatedItems;
       } else {
         // Add new item
-        return [...currentItems, newItem];
+        updatedItems = [...currentItems, newItem];
       }
+      
+      // Force save to localStorage immediately
+      setTimeout(() => saveCartToStorage(updatedItems), 0);
+      return updatedItems;
     });
   }, []);
 

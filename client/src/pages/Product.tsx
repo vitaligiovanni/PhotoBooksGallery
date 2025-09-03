@@ -174,7 +174,16 @@ export default function ProductPage() {
                   ))}
                   <span className="text-sm text-muted-foreground ml-2">(24 отзыва)</span>
                 </div>
-                <Badge variant="secondary">В наличии</Badge>
+                {product.inStock ? (
+                  <Badge variant="secondary" className="bg-green-500 text-white">В наличии</Badge>
+                ) : (
+                  <Badge variant="secondary" className="bg-red-500 text-white">Нет в наличии</Badge>
+                )}
+                {product.stockQuantity !== undefined && (
+                  <span className="text-sm text-muted-foreground">
+                    Осталось: {product.stockQuantity} шт.
+                  </span>
+                )}
               </div>
 
               <p className="text-muted-foreground text-lg leading-relaxed" data-testid="text-product-description">
@@ -207,6 +216,45 @@ export default function ProductPage() {
                     <div>
                       <span className="text-muted-foreground">Доп. разворот:</span>
                       <span className="ml-2 font-medium">₽{Number(product.additionalSpreadPrice).toLocaleString()}</span>
+                    </div>
+                  )}
+                  {product.paperType && (
+                    <div>
+                      <span className="text-muted-foreground">Тип бумаги:</span>
+                      <span className="ml-2 font-medium">
+                        {product.paperType === 'matte' ? 'Матовая' : 
+                         product.paperType === 'glossy' ? 'Глянцевая' : 
+                         product.paperType === 'satin' ? 'Сатиновая' : 
+                         product.paperType === 'premium' ? 'Премиум' : product.paperType}
+                      </span>
+                    </div>
+                  )}
+                  {product.coverMaterial && (
+                    <div>
+                      <span className="text-muted-foreground">Обложка:</span>
+                      <span className="ml-2 font-medium">
+                        {product.coverMaterial === 'hardcover' ? 'Твердая' : 
+                         product.coverMaterial === 'softcover' ? 'Мягкая' : 
+                         product.coverMaterial === 'leatherette' ? 'Кожзам' : 
+                         product.coverMaterial === 'fabric' ? 'Ткань' : product.coverMaterial}
+                      </span>
+                    </div>
+                  )}
+                  {product.bindingType && (
+                    <div>
+                      <span className="text-muted-foreground">Переплет:</span>
+                      <span className="ml-2 font-medium">
+                        {product.bindingType === 'spiral' ? 'Спираль' : 
+                         product.bindingType === 'perfect' ? 'Клеевой' : 
+                         product.bindingType === 'saddle-stitch' ? 'Скрепка' : 
+                         product.bindingType === 'ring' ? 'Кольца' : product.bindingType}
+                      </span>
+                    </div>
+                  )}
+                  {product.allowCustomization && (
+                    <div>
+                      <span className="text-muted-foreground">Кастомизация:</span>
+                      <span className="ml-2 font-medium text-green-600">Доступна</span>
                     </div>
                   )}
                 </div>
@@ -243,12 +291,15 @@ export default function ProductPage() {
                 <span className="font-bold text-3xl text-primary" data-testid="text-product-price">
                   ₽{product.photobookFormat ? calculateTotalPrice().toLocaleString() : Number(product.price).toLocaleString()}
                 </span>
-                {!product.photobookFormat && (
+                {/* Show original price and discount if product is on sale */}
+                {product.isOnSale && product.originalPrice && Number(product.originalPrice) > Number(product.price) && (
                   <>
                     <span className="text-muted-foreground line-through">
-                      ₽{Math.round(Number(product.price) * 1.2).toLocaleString()}
+                      ₽{Number(product.originalPrice).toLocaleString()}
                     </span>
-                    <Badge className="bg-secondary text-secondary-foreground">-15%</Badge>
+                    {product.discountPercentage && product.discountPercentage > 0 && (
+                      <Badge className="bg-red-500 text-white">-{product.discountPercentage}%</Badge>
+                    )}
                   </>
                 )}
                 {product.photobookFormat && spreads > (product.minSpreads || 10) && (
@@ -337,10 +388,18 @@ export default function ProductPage() {
             {/* Additional Info */}
             <Card>
               <CardContent className="p-4 space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Доставка:</span>
-                  <span className="font-medium">3-5 рабочих дней</span>
-                </div>
+                {product.shippingTime && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Доставка:</span>
+                    <span className="font-medium">{product.shippingTime} {product.shippingTime === 1 ? 'день' : product.shippingTime < 5 ? 'дня' : 'дней'}</span>
+                  </div>
+                )}
+                {product.productionTime && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Срок изготовления:</span>
+                    <span className="font-medium">{product.productionTime} {product.productionTime === 1 ? 'день' : product.productionTime < 5 ? 'дня' : 'дней'}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Гарантия:</span>
                   <span className="font-medium">12 месяцев</span>
@@ -349,6 +408,12 @@ export default function ProductPage() {
                   <span className="text-muted-foreground">Возврат:</span>
                   <span className="font-medium">30 дней</span>
                 </div>
+                {product.weight && Number(product.weight) > 0 && (
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Вес:</span>
+                    <span className="font-medium">{Number(product.weight).toLocaleString()} кг</span>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

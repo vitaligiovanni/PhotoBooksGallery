@@ -23,7 +23,10 @@ import {
   Plus,
   Edit,
   Trash2,
-  Tag
+  Tag,
+  Calculator,
+  Banknote,
+  Coins
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -52,6 +55,7 @@ const getNavigationItems = (t: any) => [
   { id: 'reviews', label: t('reviews'), icon: Star, color: 'text-yellow-600' },
   { id: 'blog', label: t('blog'), icon: FileText, color: 'text-pink-600' },
   { id: 'currencies', label: t('currencies'), icon: DollarSign, color: 'text-emerald-600' },
+  { id: 'finances', label: 'Финансы', icon: Calculator, color: 'text-green-600' },
   { id: 'analytics', label: t('analytics'), icon: BarChart3, color: 'text-indigo-600' },
   { id: 'settings', label: 'Settings', icon: Settings, color: 'text-gray-600' },
 ];
@@ -3780,6 +3784,268 @@ function DashboardStats() {
   );
 }
 
+// Finances Manager Component  
+function FinancesManager() {
+  const { data: products } = useQuery({ queryKey: ['/api/products'] });
+  const { data: orders } = useQuery({ queryKey: ['/api/orders'] });
+  const { data: currencies } = useQuery({ queryKey: ['/api/currencies'] });
+  const { data: baseCurrency } = useQuery({ queryKey: ['/api/currencies/base'] });
+
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Calculate financial metrics
+  const calculateFinancialMetrics = () => {
+    if (!products || !orders) return { totalRevenue: 0, totalCosts: 0, totalProfit: 0, profitMargin: 0 };
+    
+    let totalRevenue = 0;
+    let totalCosts = 0;
+
+    // Calculate total revenue from orders
+    orders.forEach((order: any) => {
+      totalRevenue += parseFloat(order.totalAmount || '0');
+    });
+
+    // Calculate total costs from products
+    products.forEach((product: any) => {
+      const costPrice = parseFloat(product.costPrice || '0');
+      const materialCosts = parseFloat(product.materialCosts || '0');
+      const laborCosts = parseFloat(product.laborCosts || '0');
+      const overheadCosts = parseFloat(product.overheadCosts || '0');
+      const shippingCosts = parseFloat(product.shippingCosts || '0');
+      const otherCosts = parseFloat(product.otherCosts || '0');
+      
+      const productTotalCost = costPrice + materialCosts + laborCosts + overheadCosts + shippingCosts + otherCosts;
+      
+      // Find orders containing this product to calculate actual costs
+      orders?.forEach((order: any) => {
+        if (Array.isArray(order.items)) {
+          order.items.forEach((item: any) => {
+            if (item.productId === product.id) {
+              totalCosts += productTotalCost * (item.quantity || 1);
+            }
+          });
+        }
+      });
+    });
+
+    const totalProfit = totalRevenue - totalCosts;
+    const profitMargin = totalRevenue > 0 ? (totalProfit / totalRevenue) * 100 : 0;
+
+    return { totalRevenue, totalCosts, totalProfit, profitMargin };
+  };
+
+  const metrics = calculateFinancialMetrics();
+
+  const formatPrice = (price: number | string, currencyId?: string) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
+    if (isNaN(numPrice)) return '0';
+    
+    const currency = currencies?.find(c => c.id === currencyId) || baseCurrency;
+    const symbol = currency?.symbol || '₽';
+    
+    return `${numPrice.toLocaleString()} ${symbol}`;
+  };
+
+  const getProductProfit = (product: any) => {
+    const sellPrice = parseFloat(product.price || '0');
+    const costPrice = parseFloat(product.costPrice || '0');
+    const materialCosts = parseFloat(product.materialCosts || '0');
+    const laborCosts = parseFloat(product.laborCosts || '0');
+    const overheadCosts = parseFloat(product.overheadCosts || '0');
+    const shippingCosts = parseFloat(product.shippingCosts || '0');
+    const otherCosts = parseFloat(product.otherCosts || '0');
+    
+    const totalCost = costPrice + materialCosts + laborCosts + overheadCosts + shippingCosts + otherCosts;
+    const profit = sellPrice - totalCost;
+    const profitMargin = sellPrice > 0 ? (profit / sellPrice) * 100 : 0;
+    
+    return { profit, profitMargin, totalCost };
+  };
+
+  // Render financial overview
+  const renderOverview = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Финансовая аналитика</h2>
+        <p className="text-muted-foreground">Управление себестоимостью и анализ прибыли</p>
+      </div>
+
+      {/* Financial Metrics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Общая выручка</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatPrice(metrics.totalRevenue)}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-green-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Общие расходы</p>
+                <p className="text-2xl font-bold text-red-600">
+                  {formatPrice(metrics.totalCosts)}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-red-100 rounded-lg flex items-center justify-center">
+                <Coins className="h-6 w-6 text-red-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Чистая прибыль</p>
+                <p className={`text-2xl font-bold ${metrics.totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatPrice(metrics.totalProfit)}
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                <Banknote className="h-6 w-6 text-blue-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-0 shadow-lg">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Маржа прибыли</p>
+                <p className={`text-2xl font-bold ${metrics.profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {metrics.profitMargin.toFixed(1)}%
+                </p>
+              </div>
+              <div className="h-12 w-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                <BarChart3 className="h-6 w-6 text-purple-600" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+
+  // Render product costs analysis
+  const renderProductCosts = () => (
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold text-foreground mb-2">Себестоимость товаров</h2>
+        <p className="text-muted-foreground">Управление расходами и расчет прибыли по каждому товару</p>
+      </div>
+
+      <Card className="border-0 shadow-lg">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Товар</TableHead>
+                  <TableHead>Цена продажи</TableHead>
+                  <TableHead>Себестоимость</TableHead>
+                  <TableHead>Общие расходы</TableHead>
+                  <TableHead>Прибыль</TableHead>
+                  <TableHead>Маржа</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {products?.map((product: any) => {
+                  const { profit, profitMargin, totalCost } = getProductProfit(product);
+                  const productName = typeof product.name === 'object' ? product.name.ru || product.name.en : product.name;
+                  
+                  return (
+                    <TableRow key={product.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {product.imageUrl && (
+                            <img src={product.imageUrl} alt="" className="w-10 h-10 rounded object-cover" />
+                          )}
+                          <div>
+                            <p className="font-medium">{productName}</p>
+                            <p className="text-sm text-muted-foreground">ID: {product.id.slice(-8)}</p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-medium text-green-600">
+                          {formatPrice(product.price, product.currencyId)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-gray-600">
+                          {formatPrice(product.costPrice || 0, product.costCurrencyId)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-red-600">
+                          {formatPrice(totalCost, product.costCurrencyId)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-medium ${profit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {formatPrice(profit, product.currencyId)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-medium ${profitMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                          {profitMargin.toFixed(1)}%
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* Tab Navigation */}
+      <div className="flex items-center gap-2">
+        <Button
+          variant={activeTab === 'overview' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('overview')}
+          data-testid="tab-financial-overview"
+        >
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Общая аналитика
+        </Button>
+        <Button
+          variant={activeTab === 'products' ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => setActiveTab('products')}
+          data-testid="tab-product-costs"
+        >
+          <Calculator className="h-4 w-4 mr-2" />
+          Себестоимость товаров ({products?.length || 0})
+        </Button>
+      </div>
+
+      {/* Tab Content */}
+      {activeTab === 'overview' && renderOverview()}
+      {activeTab === 'products' && renderProductCosts()}
+    </div>
+  );
+}
+
 export default function Admin() {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
@@ -3882,6 +4148,8 @@ export default function Admin() {
         return <BlogManager />;
       case 'currencies':
         return <CurrencySettings />;
+      case 'finances':
+        return <FinancesManager />;
       case 'settings':
         return <SettingsManager />;
       default:

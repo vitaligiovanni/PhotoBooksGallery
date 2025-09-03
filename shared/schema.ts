@@ -83,6 +83,15 @@ export const products = pgTable("products", {
   allowCustomization: boolean("allow_customization").default(true),
   minCustomPrice: decimal("min_custom_price", { precision: 10, scale: 2 }), // Minimum price for custom work
   minCustomPriceCurrencyId: varchar("min_custom_price_currency_id").references(() => currencies.id), // валюта мин. цены
+  // Cost and profit management
+  costPrice: decimal("cost_price", { precision: 10, scale: 2 }).default("0"), // Себестоимость
+  costCurrencyId: varchar("cost_currency_id").references(() => currencies.id), // валюта себестоимости
+  materialCosts: decimal("material_costs", { precision: 10, scale: 2 }).default("0"), // Стоимость материалов
+  laborCosts: decimal("labor_costs", { precision: 10, scale: 2 }).default("0"), // Стоимость работы
+  overheadCosts: decimal("overhead_costs", { precision: 10, scale: 2 }).default("0"), // Накладные расходы
+  shippingCosts: decimal("shipping_costs", { precision: 10, scale: 2 }).default("0"), // Расходы на доставку
+  otherCosts: decimal("other_costs", { precision: 10, scale: 2 }).default("0"), // Прочие расходы
+  expectedProfitMargin: decimal("expected_profit_margin", { precision: 5, scale: 2 }).default("30"), // Ожидаемая маржа %
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),

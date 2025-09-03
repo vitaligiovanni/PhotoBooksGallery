@@ -12,13 +12,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
+import { useCart } from "@/hooks/useCart";
 import { Search, Filter } from "lucide-react";
 import type { Product } from "@shared/schema";
+import type { LocalizedText } from "@/types";
 
 export default function Catalog() {
   const { category } = useParams<{ category?: string }>();
   const { t } = useTranslation();
   const { toast } = useToast();
+  const { addToCart } = useCart();
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [priceRange, setPriceRange] = useState("all");
@@ -45,9 +48,13 @@ export default function Catalog() {
   });
 
   const handleAddToCart = (product: Product) => {
+    addToCart(product, 1);
+    const productName = typeof product.name === 'object' 
+      ? (product.name as LocalizedText)?.ru || (product.name as LocalizedText)?.en || 'Товар'
+      : product.name || 'Товар';
     toast({
-      title: "Added to cart",
-      description: `${Object.values(product.name as any)[0]} added to cart`,
+      title: "Добавлено в корзину",
+      description: `${productName} добавлен в корзину`,
     });
   };
 

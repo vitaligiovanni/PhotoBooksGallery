@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
 import { Star, ShoppingCart, Heart, Package } from "lucide-react";
+import { useSettings } from "@/hooks/useSettings";
 import type { Product } from "@shared/schema";
 import { PHOTOBOOK_FORMAT_LABELS } from "@shared/schema";
 import type { LocalizedText } from "@/types";
@@ -22,6 +23,7 @@ export default function ProductPage() {
   const { t, i18n } = useTranslation();
   const { addToCart } = useCart();
   const { toast } = useToast();
+  const { getFreeShippingThreshold } = useSettings();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [spreads, setSpreads] = useState(10); // Default to minimum spreads
@@ -392,30 +394,30 @@ export default function ProductPage() {
               <div className="space-y-2 text-sm">
                 {product.photobookFormat ? (
                   <>
-                    {calculateTotalPrice() * quantity >= 3000 ? (
+                    {calculateTotalPrice() * quantity >= getFreeShippingThreshold() ? (
                       <div className="text-green-600 font-medium">
-                        🎉 Бесплатная доставка (заказ от ₽3,000)
+                        🎉 Бесплатная доставка (заказ от ₽{getFreeShippingThreshold().toLocaleString()})
                       </div>
                     ) : (
                       <div className="text-muted-foreground">
-                        Доставка: ₽300 (бесплатно от ₽3,000)
+                        Доставка: ₽300 (бесплатно от ₽{getFreeShippingThreshold().toLocaleString()})
                         <div className="text-xs">
-                          До бесплатной доставки: ₽{(3000 - calculateTotalPrice() * quantity).toLocaleString()}
+                          До бесплатной доставки: ₽{(getFreeShippingThreshold() - calculateTotalPrice() * quantity).toLocaleString()}
                         </div>
                       </div>
                     )}
                   </>
                 ) : (
                   <>
-                    {Number(product.price) * quantity >= 3000 ? (
+                    {Number(product.price) * quantity >= getFreeShippingThreshold() ? (
                       <div className="text-green-600 font-medium">
-                        🎉 Бесплатная доставка (заказ от ₽3,000)
+                        🎉 Бесплатная доставка (заказ от ₽{getFreeShippingThreshold().toLocaleString()})
                       </div>
                     ) : (
                       <div className="text-muted-foreground">
-                        Доставка: ₽300 (бесплатно от ₽3,000)
+                        Доставка: ₽300 (бесплатно от ₽{getFreeShippingThreshold().toLocaleString()})
                         <div className="text-xs">
-                          До бесплатной доставки: ₽{(3000 - Number(product.price) * quantity).toLocaleString()}
+                          До бесплатной доставки: ₽{(getFreeShippingThreshold() - Number(product.price) * quantity).toLocaleString()}
                         </div>
                       </div>
                     )}

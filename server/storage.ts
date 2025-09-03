@@ -6,6 +6,7 @@ import {
   blogCategories,
   blogPosts,
   comments,
+  settings,
   type User,
   type UpsertUser,
   type Category,
@@ -20,6 +21,7 @@ import {
   type InsertBlogPost,
   type Comment,
   type InsertComment,
+  type Setting,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or, ne, sql } from "drizzle-orm";
@@ -70,6 +72,11 @@ export interface IStorage {
   createComment(comment: InsertComment): Promise<Comment>;
   updateComment(id: string, comment: Partial<InsertComment>): Promise<Comment>;
   deleteComment(id: string): Promise<void>;
+
+  // Settings operations
+  getSettings(): Promise<Setting[]>;
+  getSetting(key: string): Promise<Setting | undefined>;
+  updateSetting(key: string, value: string, description?: string): Promise<Setting>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -343,6 +350,40 @@ export class DatabaseStorage implements IStorage {
 
   async deleteComment(id: string): Promise<void> {
     await db.delete(comments).where(eq(comments.id, id));
+  }
+
+  // Settings operations
+  async getSettings(): Promise<Setting[]> {
+    return await db.select().from(settings).orderBy(settings.key);
+  }
+
+  async getSetting(key: string): Promise<Setting | undefined> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting;
+  }
+
+  async updateSetting(key: string, value: string, description?: string): Promise<Setting> {
+    // First try to update existing setting
+    const [updatedSetting] = await db
+      .update(settings)
+      .set({ 
+        value, 
+        description: description || null,
+        updatedAt: new Date()
+      })
+      .where(eq(settings.key, key))
+      .returning();
+
+    // If no setting was updated, create a new one
+    if (!updatedSetting) {
+      const [newSetting] = await db
+        .insert(settings)
+        .values({ key, value, description: description || null })
+        .returning();
+      return newSetting;
+    }
+
+    return updatedSetting;
   }
 }
 

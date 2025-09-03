@@ -603,6 +603,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Settings API routes (admin only)
+  app.get('/api/settings', async (req, res) => {
+    try {
+      const settings = await storage.getSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error fetching settings:", error);
+      res.status(500).json({ message: "Failed to fetch settings" });
+    }
+  });
+
+  app.get('/api/settings/:key', async (req, res) => {
+    try {
+      const setting = await storage.getSetting(req.params.key);
+      res.json(setting);
+    } catch (error) {
+      console.error("Error fetching setting:", error);
+      res.status(500).json({ message: "Failed to fetch setting" });
+    }
+  });
+
+  app.put('/api/settings/:key', isAuthenticated, async (req: any, res) => {
+    try {
+      // Check if user is admin
+      const userId = req.user?.claims?.sub;
+      const user = await storage.getUser(userId);
+      if (user?.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const setting = await storage.updateSetting(req.params.key, req.body.value, req.body.description);
+      res.json(setting);
+    } catch (error) {
+      console.error("Error updating setting:", error);
+      res.status(500).json({ message: "Failed to update setting" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

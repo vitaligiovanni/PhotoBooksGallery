@@ -737,6 +737,100 @@ function BlogManager() {
   );
 }
 
+// Settings Manager Component
+function SettingsManager() {
+  const { toast } = useToast();
+  const [freeShippingThreshold, setFreeShippingThreshold] = useState('3000');
+
+  // Load current setting
+  const { data: settings = [] } = useQuery<any[]>({ 
+    queryKey: ["/api/settings"] 
+  });
+
+  // Find free shipping threshold setting
+  const shippingThreshold = settings.find(s => s.key === 'free_shipping_threshold');
+
+  // Initialize form with current value
+  useEffect(() => {
+    if (shippingThreshold) {
+      setFreeShippingThreshold(shippingThreshold.value);
+    }
+  }, [shippingThreshold]);
+
+  const updateSettingMutation = useMutation({
+    mutationFn: async ({ key, value, description }: { key: string; value: string; description?: string }) => {
+      return await apiRequest("PUT", `/api/settings/${key}`, { value, description });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/settings"] });
+      toast({
+        title: "Успех",
+        description: "Настройка обновлена",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить настройку",
+        variant: "destructive",
+      });
+    }
+  });
+
+  const handleSaveShippingThreshold = () => {
+    updateSettingMutation.mutate({
+      key: 'free_shipping_threshold',
+      value: freeShippingThreshold,
+      description: 'Минимальная сумма заказа для бесплатной доставки (в рублях)'
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Настройки</h1>
+        <p className="text-muted-foreground mt-2">Управление системными настройками</p>
+      </div>
+
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Settings className="h-5 w-5" />
+            Настройки доставки
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <label htmlFor="shipping-threshold" className="text-sm font-medium">
+              Лимит бесплатной доставки (₽)
+            </label>
+            <div className="flex gap-3">
+              <input
+                id="shipping-threshold"
+                type="number"
+                value={freeShippingThreshold}
+                onChange={(e) => setFreeShippingThreshold(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="3000"
+              />
+              <Button 
+                onClick={handleSaveShippingThreshold}
+                disabled={updateSettingMutation.isPending}
+                data-testid="button-save-shipping-threshold"
+              >
+                {updateSettingMutation.isPending ? "Сохранение..." : "Сохранить"}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Заказы на сумму от указанной отправляются бесплатно. Текущее значение: ₽{shippingThreshold?.value || '3000'}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Products Manager Component
 function ProductsManager() {
   const { toast } = useToast();
@@ -1825,6 +1919,8 @@ export default function Admin() {
         return <ProductsManager />;
       case 'blog':
         return <BlogManager />;
+      case 'settings':
+        return <SettingsManager />;
       default:
         return (
           <div className="space-y-6">

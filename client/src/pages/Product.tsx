@@ -2,6 +2,7 @@ import { useParams } from "wouter";
 import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
+import { useCart } from "@/hooks/useCart";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import type { LocalizedText } from "@/types";
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
+  const { addToCart } = useCart();
   const { toast } = useToast();
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
@@ -42,9 +44,30 @@ export default function ProductPage() {
   const handleAddToCart = () => {
     if (!product) return;
     
+    // Create a product copy with the current configuration
+    const configuredProduct = {
+      ...product,
+      price: product.photobookFormat ? calculateTotalPrice() : product.price,
+    };
+    
+    const options: Record<string, any> = {
+      ...selectedOptions,
+    };
+    
+    if (product.photobookFormat) {
+      options.spreads = spreads;
+      options.format = product.photobookFormat;
+      if (product.photobookSize) {
+        options.size = product.photobookSize;
+      }
+    }
+    
+    addToCart(configuredProduct, quantity, Object.keys(options).length > 0 ? options : undefined);
+    
+    const productName = (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Товар';
     toast({
-      title: "Added to cart",
-      description: `${(product.name as LocalizedText)?.[i18n.language as keyof LocalizedText]} added to cart`,
+      title: "Добавлено в корзину",
+      description: `${productName} добавлен в корзину`,
     });
   };
 

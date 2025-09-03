@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { useTranslation } from 'react-i18next';
 import { ShoppingCart, User, Menu, Camera } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -12,12 +13,10 @@ import { useState } from "react";
 export function Header() {
   const { t } = useTranslation();
   const { isAuthenticated, user } = useAuth();
+  const { getCartCount } = useCart();
   const [location] = useLocation();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Mock cart count - in real app would come from cart state
-  const cartCount = 3;
 
   return (
     <>
@@ -63,9 +62,9 @@ export function Header() {
                 data-testid="button-cart"
               >
                 <ShoppingCart className="h-5 w-5" />
-                {cartCount > 0 && (
+                {getCartCount > 0 && (
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
-                    {cartCount}
+                    {getCartCount}
                   </Badge>
                 )}
               </Button>

@@ -1,4 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
+import { useCart } from "@/hooks/useCart";
 import { useTranslation } from 'react-i18next';
 import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/Header";
@@ -16,6 +17,7 @@ import type { Product, Category } from "@shared/schema";
 export default function Home() {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const { addToCart } = useCart();
   const { toast } = useToast();
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<Category[]>({
@@ -27,10 +29,13 @@ export default function Home() {
   });
 
   const handleAddToCart = (product: Product) => {
-    // TODO: Implement add to cart functionality
+    addToCart(product, 1);
+    const productName = typeof product.name === 'object' 
+      ? (product.name as any)?.ru || (product.name as any)?.en || 'Товар'
+      : product.name || 'Товар';
     toast({
-      title: "Added to cart",
-      description: `${Object.values(product.name as any)[0]} added to cart`,
+      title: "Добавлено в корзину",
+      description: `${productName} добавлен в корзину`,
     });
   };
 

@@ -2,6 +2,8 @@ export interface CartItem {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
+  discountPercentage?: number;
   quantity: number;
   imageUrl?: string;
   options?: Record<string, any>;

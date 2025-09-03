@@ -5,55 +5,16 @@ import { Separator } from "@/components/ui/separator";
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus, X } from "lucide-react";
 import { Link } from "wouter";
-import { useState } from "react";
-import type { CartItem } from "@/types";
+import { useCart } from "@/hooks/useCart";
 
 interface ShoppingCartProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Initial cart data
-const initialCartItems: CartItem[] = [
-  {
-    id: '1',
-    name: 'Премиум фотокнига',
-    price: 2890,
-    quantity: 1,
-    imageUrl: 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80',
-    options: { cover: 'Кожаная обложка' }
-  },
-  {
-    id: '2',
-    name: 'Деревянная рамка',
-    price: 1290,
-    quantity: 2,
-    imageUrl: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=80&h=80',
-    options: { size: '20x30 см' }
-  }
-];
-
 export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
   const { t } = useTranslation();
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
-  
-  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  const updateQuantity = (id: string, delta: number) => {
-    setCartItems(prevItems => 
-      prevItems.map(item => {
-        if (item.id === id) {
-          const newQuantity = Math.max(1, item.quantity + delta);
-          return { ...item, quantity: newQuantity };
-        }
-        return item;
-      })
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
-  };
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal } = useCart();
 
   return (
     <Sheet open={isOpen} onOpenChange={onClose}>
@@ -95,9 +56,28 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                     )}
                     
                     <div className="flex items-center justify-between mt-2">
-                      <span className="font-semibold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
-                        ₽{item.price.toLocaleString()}
-                      </span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-primary" data-testid={`text-cart-item-price-${item.id}`}>
+                            ₽{item.price.toLocaleString()}
+                          </span>
+                          {item.originalPrice && item.originalPrice > item.price && (
+                            <>
+                              <span className="text-sm text-muted-foreground line-through">
+                                ₽{item.originalPrice.toLocaleString()}
+                              </span>
+                              {item.discountPercentage && (
+                                <Badge className="bg-red-500 text-white text-xs">
+                                  -{item.discountPercentage}%
+                                </Badge>
+                              )}
+                            </>
+                          )}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          за шт.
+                        </span>
+                      </div>
                       
                       <div className="flex items-center space-x-2">
                         <Button 
@@ -126,7 +106,7 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                         <Button 
                           size="sm" 
                           variant="ghost"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           data-testid={`button-remove-${item.id}`}
                         >
                           <X className="h-3 w-3" />
@@ -145,7 +125,7 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
               <div className="flex items-center justify-between mb-4">
                 <span className="font-semibold text-foreground">{t('total')}:</span>
                 <span className="font-bold text-xl text-primary" data-testid="text-cart-total">
-                  ₽{total.toLocaleString()}
+                  ₽{getCartTotal.toLocaleString()}
                 </span>
               </div>
               

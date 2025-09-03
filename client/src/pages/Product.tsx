@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { useToast } from "@/hooks/use-toast";
-import { Star, ShoppingCart, Heart } from "lucide-react";
+import { Star, ShoppingCart, Heart, Package } from "lucide-react";
 import type { Product } from "@shared/schema";
 import { PHOTOBOOK_FORMAT_LABELS } from "@shared/schema";
 import type { LocalizedText } from "@/types";
@@ -381,6 +381,53 @@ export default function ProductPage() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Shipping Information */}
+            <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+              <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                <Package className="h-4 w-4" />
+                Информация о доставке
+              </h3>
+              <div className="space-y-2 text-sm">
+                {product.photobookFormat ? (
+                  <>
+                    {calculateTotalPrice() * quantity >= 3000 ? (
+                      <div className="text-green-600 font-medium">
+                        🎉 Бесплатная доставка (заказ от ₽3,000)
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground">
+                        Доставка: ₽300 (бесплатно от ₽3,000)
+                        <div className="text-xs">
+                          До бесплатной доставки: ₽{(3000 - calculateTotalPrice() * quantity).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {Number(product.price) * quantity >= 3000 ? (
+                      <div className="text-green-600 font-medium">
+                        🎉 Бесплатная доставка (заказ от ₽3,000)
+                      </div>
+                    ) : (
+                      <div className="text-muted-foreground">
+                        Доставка: ₽300 (бесплатно от ₽3,000)
+                        <div className="text-xs">
+                          До бесплатной доставки: ₽{(3000 - Number(product.price) * quantity).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                <div className="text-xs text-muted-foreground">
+                  Время изготовления: {product.productionTime || 7} дней
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Время доставки: {product.shippingTime || 1} день
+                </div>
+              </div>
             </div>
 
             {/* Actions */}

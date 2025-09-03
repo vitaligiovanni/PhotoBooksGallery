@@ -1435,6 +1435,8 @@ function ReviewsManager() {
           title: "Фото загружено!",
           description: "Фотография успешно загружена.",
         });
+      } else {
+        throw new Error(`Upload failed with status: ${uploadResult.status}`);
       }
     } catch (error) {
       console.error('Photo upload error:', error);
@@ -1659,7 +1661,6 @@ function ReviewsManager() {
                           <SelectContent>
                             <SelectItem value="male">Мужской</SelectItem>
                             <SelectItem value="female">Женский</SelectItem>
-                            <SelectItem value="other">Другое</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>

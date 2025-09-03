@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -77,6 +78,8 @@ function ProductsGrid({ onAddToCart }: { onAddToCart: (product: Product) => void
 function ReviewsSection() {
   const { toast } = useToast();
   const [showReviewForm, setShowReviewForm] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [profilePreview, setProfilePreview] = useState<string | null>(null);
   
   const { data: reviews, isLoading } = useQuery<Review[]>({
     queryKey: ["/api/reviews"],
@@ -88,12 +91,16 @@ function ReviewsSection() {
       authorEmail: z.string().email("Некорректный email").optional().or(z.literal("")),
       rating: z.number().min(1).max(5),
       comment: z.string().min(10, "Комментарий должен содержать минимум 10 символов"),
+      gender: z.string().min(1, "Пол обязательно указать"),
+      profilePhoto: z.string().optional(),
     })),
     defaultValues: {
       authorName: "",
       authorEmail: "",
       rating: 5,
       comment: "",
+      gender: "male",
+      profilePhoto: "",
     }
   });
 
@@ -105,6 +112,7 @@ function ReviewsSection() {
       queryClient.invalidateQueries({ queryKey: ["/api/reviews"] });
       reviewForm.reset();
       setShowReviewForm(false);
+      setProfilePreview(null); // Reset photo preview
       toast({
         title: "Спасибо за отзыв!",
         description: "Ваш отзыв отправлен на модерацию и скоро появится на сайте.",
@@ -121,6 +129,90 @@ function ReviewsSection() {
 
   const handleSubmitReview = async (data: any) => {
     createReviewMutation.mutate(data);
+  };
+
+  const handlePhotoUpload = async (file: File) => {
+    setUploadingPhoto(true);
+    try {
+      // Get upload URL
+      const uploadResponse = await apiRequest("POST", "/api/objects/upload");
+      const uploadURL = uploadResponse.uploadURL;
+
+      // Upload the file
+      const uploadResult = await fetch(uploadURL, {
+        method: 'PUT',
+        body: file,
+        headers: {
+          'Content-Type': file.type,
+        },
+      });
+
+      if (uploadResult.ok) {
+        // Normalize the uploaded file path
+        const normalizeResponse = await apiRequest("POST", "/api/objects/normalize", {
+          rawPath: uploadURL
+        });
+        
+        // Set profile photo in form with normalized path
+        reviewForm.setValue('profilePhoto', normalizeResponse.normalizedPath);
+        setProfilePreview(URL.createObjectURL(file));
+        toast({
+          title: "Фото загружено!",
+          description: "Ваша фотография успешно загружена.",
+        });
+      }
+    } catch (error) {
+      console.error('Photo upload error:', error);
+      toast({
+        title: "Ошибка",
+        description: "Не удалось загрузить фотографию.",
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
+
+  const handlePhotoSelect = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        handlePhotoUpload(file);
+      }
+    };
+    input.click();
+  };
+
+  const getDefaultAvatar = (gender: string, name: string) => {
+    const initial = name?.charAt(0)?.toUpperCase() || '?';
+    const bgColor = gender === 'female' ? 'bg-pink-100' : gender === 'male' ? 'bg-blue-100' : 'bg-gray-100';
+    const textColor = gender === 'female' ? 'text-pink-600' : gender === 'male' ? 'text-blue-600' : 'text-gray-600';
+    
+    return (
+      <div className={`w-12 h-12 ${bgColor} rounded-full flex items-center justify-center ${textColor} font-semibold text-lg`}>
+        {initial}
+      </div>
+    );
+  };
+
+  const ReviewAvatar = ({ review }: { review: any }) => {
+    const [imageError, setImageError] = useState(false);
+    
+    if (review.profilePhoto && !imageError) {
+      return (
+        <img 
+          src={review.profilePhoto} 
+          alt={`${review.authorName} avatar`}
+          className="w-12 h-12 rounded-full object-cover"
+          onError={() => setImageError(true)}
+        />
+      );
+    }
+    
+    return getDefaultAvatar(review.gender || 'other', review.authorName);
   };
 
   const renderStars = (rating: number) => {
@@ -158,8 +250,8 @@ function ReviewsSection() {
               <Card key={review.id} className="border border-border">
                 <CardContent className="p-6">
                   <div className="flex items-center mb-4">
-                    <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mr-4">
-                      <span className="text-primary font-semibold">{review.authorName[0]}</span>
+                    <div className="mr-4">
+                      <ReviewAvatar review={review} />
                     </div>
                     <div>
                       <h4 className="font-semibold text-foreground">{review.authorName}</h4>
@@ -225,6 +317,74 @@ function ReviewsSection() {
                       />
                     </div>
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <FormField
+                        control={reviewForm.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Пол</FormLabel>
+                            <FormControl>
+                              <Select onValueChange={field.onChange} value={field.value}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Выберите пол" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="male">Мужской</SelectItem>
+                                  <SelectItem value="female">Женский</SelectItem>
+                                  <SelectItem value="other">Другое</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormItem>
+                        <FormLabel>Фото профиля (необязательно)</FormLabel>
+                        <div className="flex items-center gap-3">
+                          {profilePreview || reviewForm.watch('profilePhoto') ? (
+                            <div className="flex items-center gap-2">
+                              <img 
+                                src={profilePreview || reviewForm.watch('profilePhoto')} 
+                                alt="Profile preview"
+                                className="w-12 h-12 rounded-full object-cover"
+                                onError={(e) => {
+                                  // If image fails to load, fall back to default avatar
+                                  const target = e.target as HTMLImageElement;
+                                  target.style.display = 'none';
+                                }}
+                              />
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setProfilePreview(null);
+                                  reviewForm.setValue('profilePhoto', '');
+                                }}
+                              >
+                                Удалить
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              {getDefaultAvatar(reviewForm.watch('gender') || 'male', reviewForm.watch('authorName') || '')}
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handlePhotoSelect}
+                                disabled={uploadingPhoto}
+                              >
+                                {uploadingPhoto ? "Загружается..." : "Загрузить фото"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </FormItem>
+                    </div>
+
                     <FormField
                       control={reviewForm.control}
                       name="rating"
@@ -278,7 +438,11 @@ function ReviewsSection() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() => setShowReviewForm(false)}
+                        onClick={() => {
+                          setShowReviewForm(false);
+                          setProfilePreview(null);
+                          reviewForm.reset();
+                        }}
                       >
                         Отмена
                       </Button>

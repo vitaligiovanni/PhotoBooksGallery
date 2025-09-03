@@ -753,8 +753,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const reviewData = insertReviewSchema.parse({
         userId: userId,
-        authorName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Пользователь',
-        authorEmail: user.email,
+        authorName: req.body.authorName || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Пользователь',
+        authorEmail: req.body.authorEmail || user.email,
+        profilePhoto: req.body.profilePhoto || null,
+        gender: req.body.gender || 'other',
         rating: req.body.rating,
         comment: req.body.comment,
         status: "pending"
@@ -788,6 +790,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         userId: null, // No user ID for promoted reviews
         authorName: req.body.authorName,
         authorEmail: req.body.authorEmail || null,
+        profilePhoto: req.body.profilePhoto || null,
+        gender: req.body.gender || 'other',
         rating: req.body.rating,
         comment: req.body.comment,
         status: "approved", // Auto-approve admin-created reviews

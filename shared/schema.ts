@@ -228,6 +228,8 @@ export const reviews = pgTable("reviews", {
   userId: varchar("user_id").references(() => users.id), // null для промо-отзывов
   authorName: varchar("author_name").notNull(),
   authorEmail: varchar("author_email"), // опционально для промо-отзывов
+  profilePhoto: varchar("profile_photo"), // URL фото профиля
+  gender: varchar("gender"), // male, female, other для дефолтной аватарки
   rating: integer("rating").notNull(), // 1-5 звезд
   comment: text("comment").notNull(),
   status: reviewStatusEnum("status").default("pending"),

@@ -46,7 +46,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <Header />
       {/* Hero Section */}
-      <section className="hero-gradient text-white py-20 lg:py-32 bg-[#f25252]">
+      <section className="hero-gradient text-white py-20 lg:py-32 bg-[#5c6d91]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">

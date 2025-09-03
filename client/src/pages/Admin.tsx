@@ -4253,6 +4253,7 @@ function FinancesManager() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Товар</TableHead>
+                  <TableHead>Размеры</TableHead>
                   <TableHead>Цена продажи</TableHead>
                   <TableHead>Себестоимость</TableHead>
                   <TableHead>Общие расходы</TableHead>
@@ -4277,6 +4278,26 @@ function FinancesManager() {
                             <p className="font-medium">{productName}</p>
                             <p className="text-sm text-muted-foreground">ID: {product.id.slice(-8)}</p>
                           </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="text-sm">
+                          {product.dimensions ? (
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-1">
+                                <span className="text-muted-foreground">Размер:</span>
+                                <span className="font-medium">{product.dimensions}</span>
+                              </div>
+                              {product.pages && (
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground">Страниц:</span>
+                                  <span className="font-medium">{product.pages}</span>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs">Не указано</span>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell>

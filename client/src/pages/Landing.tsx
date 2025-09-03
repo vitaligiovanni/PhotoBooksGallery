@@ -137,9 +137,15 @@ function ReviewsSection() {
     try {
       // Get upload URL
       console.log('Step 1: Getting upload URL...');
-      const uploadResponse = await apiRequest("POST", "/api/objects/upload") as any;
+      const uploadResponseRaw = await apiRequest("POST", "/api/objects/upload");
+      const uploadResponse = await uploadResponseRaw.json();
       console.log('Upload URL response:', uploadResponse);
       const uploadURL = uploadResponse.uploadURL;
+      
+      if (!uploadURL) {
+        console.error('uploadURL is undefined in response:', uploadResponse);
+        throw new Error('Upload URL not received from server');
+      }
 
       // Upload the file
       console.log('Step 2: Uploading file to:', uploadURL);
@@ -159,9 +165,10 @@ function ReviewsSection() {
         const rawPath = uploadURL.split('?')[0];
         console.log('Raw path for normalization:', rawPath);
         
-        const normalizeResponse = await apiRequest("POST", "/api/objects/normalize", {
+        const normalizeResponseRaw = await apiRequest("POST", "/api/objects/normalize", {
           rawPath: rawPath
-        }) as any;
+        });
+        const normalizeResponse = await normalizeResponseRaw.json();
         
         console.log('Normalize response:', normalizeResponse);
         

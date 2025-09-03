@@ -45,9 +45,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       {/* Hero Section */}
-      <section className="hero-gradient text-white py-20 lg:py-32">
+      <section className="hero-gradient text-white py-20 lg:py-32 bg-[#f25252]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -96,7 +95,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Categories Section */}
       <section className="py-16 bg-muted">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -112,7 +110,6 @@ export default function Landing() {
           <CategoriesGrid />
         </div>
       </section>
-
       {/* Photo Editor Section */}
       <section id="editor" className="py-16 bg-card">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -177,7 +174,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Features */}
       <section className="py-16 bg-muted">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -221,7 +217,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Testimonials */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -256,7 +251,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       {/* Call to Action */}
       <section className="py-20 hero-gradient text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -287,7 +281,6 @@ export default function Landing() {
           </div>
         </div>
       </section>
-
       <Footer />
     </div>
   );

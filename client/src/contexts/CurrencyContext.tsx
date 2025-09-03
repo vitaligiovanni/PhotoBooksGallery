@@ -34,17 +34,17 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
   });
 
   // Fetch currencies
-  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery<Currency[]>({
     queryKey: ['/api/currencies'],
   });
 
   // Fetch base currency  
-  const { data: baseCurrency, isLoading: baseCurrencyLoading } = useQuery({
+  const { data: baseCurrency, isLoading: baseCurrencyLoading } = useQuery<Currency>({
     queryKey: ['/api/currencies/base'],
   });
 
   // Fetch exchange rates
-  const { data: exchangeRates = [], isLoading: exchangeRatesLoading } = useQuery({
+  const { data: exchangeRates = [], isLoading: exchangeRatesLoading } = useQuery<ExchangeRate[]>({
     queryKey: ['/api/exchange-rates'],
   });
 

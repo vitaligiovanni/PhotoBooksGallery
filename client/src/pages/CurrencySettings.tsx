@@ -19,25 +19,22 @@ export function CurrencySettings() {
   const [editingRate, setEditingRate] = useState<string>('');
 
   // Fetch data
-  const { data: currencies = [], isLoading: currenciesLoading } = useQuery({
+  const { data: currencies = [], isLoading: currenciesLoading } = useQuery<Currency[]>({
     queryKey: ['/api/currencies'],
   });
 
-  const { data: baseCurrency, isLoading: baseCurrencyLoading } = useQuery({
+  const { data: baseCurrency, isLoading: baseCurrencyLoading } = useQuery<Currency>({
     queryKey: ['/api/currencies/base'],
   });
 
-  const { data: exchangeRates = [], isLoading: ratesLoading } = useQuery({
+  const { data: exchangeRates = [], isLoading: ratesLoading } = useQuery<ExchangeRate[]>({
     queryKey: ['/api/exchange-rates'],
   });
 
   // Mutations
   const updateBaseCurrencyMutation = useMutation({
     mutationFn: async (currencyId: string) => {
-      await apiRequest(`/api/currencies/base`, {
-        method: 'PUT',
-        body: JSON.stringify({ baseCurrencyId: currencyId })
-      });
+      await apiRequest(`/api/currencies/base`, 'PUT', { baseCurrencyId: currencyId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currencies/base'] });
@@ -57,10 +54,7 @@ export function CurrencySettings() {
 
   const updateExchangeRateMutation = useMutation({
     mutationFn: async ({ id, rate }: { id: string; rate: number }) => {
-      await apiRequest(`/api/exchange-rates/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ rate })
-      });
+      await apiRequest(`/api/exchange-rates/${id}`, 'PUT', { rate });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/exchange-rates'] });

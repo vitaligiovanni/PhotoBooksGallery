@@ -85,8 +85,8 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground uppercase tracking-wide">Цена</span>
             <PriceDisplay
-              price={product.price}
-              originalPrice={product.originalPrice || undefined}
+              price={Number(product.price)}
+              originalPrice={product.originalPrice ? Number(product.originalPrice) : undefined}
               fromCurrencyId={baseCurrency?.id || ""}
               className="mt-1"
               data-testid={`text-product-price-${product.id}`}

@@ -132,13 +132,17 @@ function ReviewsSection() {
   };
 
   const handlePhotoUpload = async (file: File) => {
+    console.log('Starting photo upload process', { fileName: file.name, fileSize: file.size, fileType: file.type });
     setUploadingPhoto(true);
     try {
       // Get upload URL
+      console.log('Step 1: Getting upload URL...');
       const uploadResponse = await apiRequest("POST", "/api/objects/upload") as any;
+      console.log('Upload URL response:', uploadResponse);
       const uploadURL = uploadResponse.uploadURL;
 
       // Upload the file
+      console.log('Step 2: Uploading file to:', uploadURL);
       const uploadResult = await fetch(uploadURL, {
         method: 'PUT',
         body: file,
@@ -146,28 +150,40 @@ function ReviewsSection() {
           'Content-Type': file.type,
         },
       });
+      
+      console.log('Upload result:', { status: uploadResult.status, statusText: uploadResult.statusText, ok: uploadResult.ok });
 
       if (uploadResult.ok) {
         // Normalize the uploaded file path
+        console.log('Step 3: Normalizing path...');
+        const rawPath = uploadURL.split('?')[0];
+        console.log('Raw path for normalization:', rawPath);
+        
         const normalizeResponse = await apiRequest("POST", "/api/objects/normalize", {
-          rawPath: uploadURL.split('?')[0] // Remove query parameters before normalizing
+          rawPath: rawPath
         }) as any;
+        
+        console.log('Normalize response:', normalizeResponse);
         
         // Set profile photo in form with normalized path
         reviewForm.setValue('profilePhoto', normalizeResponse.normalizedPath);
         setProfilePreview(URL.createObjectURL(file));
+        console.log('Photo upload completed successfully!');
         toast({
           title: "Фото загружено!",
           description: "Ваша фотография успешно загружена.",
         });
       } else {
-        throw new Error(`Upload failed with status: ${uploadResult.status}`);
+        const errorText = await uploadResult.text();
+        console.error('Upload failed with details:', { status: uploadResult.status, statusText: uploadResult.statusText, errorText });
+        throw new Error(`Upload failed with status: ${uploadResult.status} - ${errorText}`);
       }
     } catch (error) {
       console.error('Photo upload error:', error);
+      console.error('Error details:', { message: error.message, stack: error.stack });
       toast({
         title: "Ошибка",
-        description: "Не удалось загрузить фотографию.",
+        description: `Не удалось загрузить фотографию: ${error.message}`,
         variant: "destructive",
       });
     } finally {

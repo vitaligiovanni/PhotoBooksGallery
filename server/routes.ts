@@ -53,29 +53,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/objects/upload", isAuthenticated, async (req, res) => {
+    console.log('[SERVER] Getting upload URL for authenticated user');
     const objectStorageService = new ObjectStorageService();
     try {
       const uploadURL = await objectStorageService.getObjectEntityUploadURL();
+      console.log('[SERVER] Generated upload URL:', uploadURL);
       res.json({ uploadURL });
     } catch (error) {
-      console.error("Error getting upload URL:", error);
+      console.error("[SERVER] Error getting upload URL:", error);
       res.status(500).json({ error: "Failed to get upload URL" });
     }
   });
 
   app.post("/api/objects/normalize", async (req, res) => {
+    console.log('[SERVER] Normalize request received:', req.body);
     try {
       const { rawPath } = req.body;
       
       if (!rawPath) {
+        console.error('[SERVER] Missing rawPath in request');
         return res.status(400).json({ error: "rawPath is required" });
       }
       
+      console.log('[SERVER] Normalizing path:', rawPath);
       const objectStorageService = new ObjectStorageService();
       const normalizedPath = objectStorageService.normalizeObjectEntityPath(rawPath);
+      console.log('[SERVER] Normalized path result:', normalizedPath);
       res.json({ normalizedPath });
     } catch (error) {
-      console.error("Error normalizing object path:", error);
+      console.error("[SERVER] Error normalizing object path:", error);
       res.status(500).json({ error: "Failed to normalize object path" });
     }
   });

@@ -1407,13 +1407,17 @@ function ReviewsManager() {
   };
 
   const handlePhotoUpload = async (file: File) => {
+    console.log('[ADMIN] Starting photo upload process', { fileName: file.name, fileSize: file.size, fileType: file.type });
     setUploadingPhoto(true);
     try {
       // Get upload URL
+      console.log('[ADMIN] Step 1: Getting upload URL...');
       const uploadResponse = await apiRequest("POST", "/api/objects/upload") as any;
+      console.log('[ADMIN] Upload URL response:', uploadResponse);
       const uploadURL = uploadResponse.uploadURL;
 
       // Upload the file
+      console.log('[ADMIN] Step 2: Uploading file to:', uploadURL);
       const uploadResult = await fetch(uploadURL, {
         method: 'PUT',
         body: file,
@@ -1421,28 +1425,40 @@ function ReviewsManager() {
           'Content-Type': file.type,
         },
       });
+      
+      console.log('[ADMIN] Upload result:', { status: uploadResult.status, statusText: uploadResult.statusText, ok: uploadResult.ok });
 
       if (uploadResult.ok) {
         // Normalize the uploaded file path
+        console.log('[ADMIN] Step 3: Normalizing path...');
+        const rawPath = uploadURL.split('?')[0];
+        console.log('[ADMIN] Raw path for normalization:', rawPath);
+        
         const normalizeResponse = await apiRequest("POST", "/api/objects/normalize", {
-          rawPath: uploadURL.split('?')[0] // Remove query parameters before normalizing
+          rawPath: rawPath
         }) as any;
+        
+        console.log('[ADMIN] Normalize response:', normalizeResponse);
         
         // Set profile photo in form with normalized path
         reviewForm.setValue('profilePhoto', normalizeResponse.normalizedPath);
         setProfilePreview(URL.createObjectURL(file));
+        console.log('[ADMIN] Photo upload completed successfully!');
         toast({
           title: "Фото загружено!",
           description: "Фотография успешно загружена.",
         });
       } else {
-        throw new Error(`Upload failed with status: ${uploadResult.status}`);
+        const errorText = await uploadResult.text();
+        console.error('[ADMIN] Upload failed with details:', { status: uploadResult.status, statusText: uploadResult.statusText, errorText });
+        throw new Error(`Upload failed with status: ${uploadResult.status} - ${errorText}`);
       }
     } catch (error) {
-      console.error('Photo upload error:', error);
+      console.error('[ADMIN] Photo upload error:', error);
+      console.error('[ADMIN] Error details:', { message: error.message, stack: error.stack });
       toast({
         title: "Ошибка",
-        description: "Не удалось загрузить фотографию.",
+        description: `Не удалось загрузить фотографию: ${error.message}`,
         variant: "destructive",
       });
     } finally {

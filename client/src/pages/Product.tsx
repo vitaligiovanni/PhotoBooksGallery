@@ -27,6 +27,7 @@ export default function ProductPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({});
   const [quantity, setQuantity] = useState(1);
   const [spreads, setSpreads] = useState(10); // Default to minimum spreads
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", id],
@@ -135,6 +136,13 @@ export default function ProductPage() {
   const description = (product.description as LocalizedText)?.[i18n.language as keyof LocalizedText] || '';
   const options = (product.options as Record<string, any>) || {};
 
+  // Get all available images
+  const images = product.images && product.images.length > 0 
+    ? product.images 
+    : [product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600'];
+
+  const hasMultipleImages = images.length > 1;
+
   return (
     <div className="min-h-screen page-bg">
       <Header />
@@ -158,26 +166,45 @@ export default function ProductPage() {
         </Breadcrumb>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Product Image */}
+          {/* Product Image Gallery */}
           <div className="space-y-4">
+            {/* Main Image */}
             <div className="aspect-square overflow-hidden rounded-lg border border-border">
               <img 
-                src={(product.images && product.images.length > 0) ? product.images[0] : (product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600')} 
+                src={images[activeImageIndex]} 
                 alt={name}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-300"
                 data-testid="img-product-main"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600';
+                }}
               />
             </div>
             
             {/* Thumbnail gallery */}
-            {product.images && product.images.length > 1 && (
-              <div className="grid grid-cols-4 gap-2">
-                {product.images.slice(0, 4).map((image, i) => (
-                  <div key={i} className="aspect-square rounded border border-border overflow-hidden opacity-60 hover:opacity-100 cursor-pointer transition-opacity">
+            {hasMultipleImages && (
+              <div className="flex gap-2 overflow-x-auto pb-2">
+                {images.map((image, index) => (
+                  <div 
+                    key={index} 
+                    className={`flex-shrink-0 w-16 h-16 rounded border overflow-hidden cursor-pointer transition-all duration-300 ${
+                      index === activeImageIndex 
+                        ? 'ring-2 ring-primary ring-offset-2 opacity-100 border-primary' 
+                        : 'border-border opacity-60 hover:opacity-100 hover:border-primary/50'
+                    }`}
+                    onMouseEnter={() => setActiveImageIndex(index)}
+                    onClick={() => setActiveImageIndex(index)}
+                    data-testid={`thumbnail-product-${index}`}
+                  >
                     <img 
                       src={image} 
-                      alt={`${name} view ${i + 1}`}
-                      className="w-full h-full object-cover"
+                      alt={`${name} view ${index + 1}`}
+                      className="w-full h-full object-cover transition-transform duration-200 hover:scale-110"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600';
+                      }}
                     />
                   </div>
                 ))}

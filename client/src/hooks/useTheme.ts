@@ -13,7 +13,13 @@ interface UserThemeData {
 }
 
 export function useTheme() {
-  const [currentThemeName, setCurrentThemeName] = useState<string>('default');
+  const [currentThemeName, setCurrentThemeName] = useState<string>(() => {
+    // Initialize with saved theme from localStorage if available
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('photocraft-theme') || 'default';
+    }
+    return 'default';
+  });
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
@@ -66,17 +72,28 @@ export function useTheme() {
     setCurrentThemeName(themeName);
   };
 
-  // Apply theme when theme data changes
+  // Initial theme application
   useEffect(() => {
-    const themeName = themeData?.theme?.themeName || 'default';
-    applyTheme(themeName);
-  }, [themeData]);
+    applyTheme(currentThemeName);
+  }, []);
+
+  // Apply theme when theme data changes (for authenticated users)
+  useEffect(() => {
+    if (isAuthenticated && themeData?.theme?.themeName) {
+      const themeName = themeData.theme.themeName;
+      if (themeName !== currentThemeName) {
+        applyTheme(themeName);
+      }
+    }
+  }, [themeData, isAuthenticated]);
 
   // For unauthenticated users, use localStorage fallback
   useEffect(() => {
     if (!isAuthenticated) {
       const savedTheme = localStorage.getItem('photocraft-theme') || 'default';
-      applyTheme(savedTheme);
+      if (savedTheme !== currentThemeName) {
+        applyTheme(savedTheme);
+      }
     }
   }, [isAuthenticated]);
 

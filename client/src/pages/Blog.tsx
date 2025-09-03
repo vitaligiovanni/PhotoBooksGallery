@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar, Clock, User, Search, ArrowRight, Eye } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
+import { Header } from "@/components/Header";
 
 type BlogPost = {
   id: string;
@@ -73,6 +74,7 @@ export default function Blog() {
   if (postsLoading || categoriesLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
@@ -93,6 +95,7 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-50 dark:from-slate-900 dark:via-slate-800 dark:to-slate-900">
+      <Header />
       {/* Hero Section */}
       <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white">
         <div className="absolute inset-0 bg-black/20"></div>

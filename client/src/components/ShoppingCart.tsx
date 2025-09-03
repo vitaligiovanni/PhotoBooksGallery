@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { useTranslation } from 'react-i18next';
 import { Minus, Plus, X } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 import type { CartItem } from "@/types";
 
 interface ShoppingCartProps {
@@ -12,8 +13,8 @@ interface ShoppingCartProps {
   onClose: () => void;
 }
 
-// Mock cart data - in real app this would come from state management
-const mockCartItems: CartItem[] = [
+// Initial cart data
+const initialCartItems: CartItem[] = [
   {
     id: '1',
     name: 'Премиум фотокнига',
@@ -34,17 +35,24 @@ const mockCartItems: CartItem[] = [
 
 export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
   const { t } = useTranslation();
+  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
   
-  const total = mockCartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   const updateQuantity = (id: string, delta: number) => {
-    // In real app, update cart state
-    console.log('Update quantity for item', id, 'by', delta);
+    setCartItems(prevItems => 
+      prevItems.map(item => {
+        if (item.id === id) {
+          const newQuantity = Math.max(1, item.quantity + delta);
+          return { ...item, quantity: newQuantity };
+        }
+        return item;
+      })
+    );
   };
 
   const removeItem = (id: string) => {
-    // In real app, remove from cart state
-    console.log('Remove item', id);
+    setCartItems(prevItems => prevItems.filter(item => item.id !== id));
   };
 
   return (
@@ -52,7 +60,7 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
       <SheetContent className="w-full max-w-md">
         <SheetHeader>
           <SheetTitle className="flex items-center justify-between">
-            {t('cart')} ({mockCartItems.length})
+            {t('cart')} ({cartItems.length})
             <Button variant="ghost" size="sm" onClick={onClose} data-testid="button-close-cart">
               <X className="h-4 w-4" />
             </Button>
@@ -62,12 +70,12 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
         <div className="flex flex-col h-full">
           {/* Cart Items */}
           <div className="flex-1 overflow-y-auto py-6 space-y-4">
-            {mockCartItems.length === 0 ? (
+            {cartItems.length === 0 ? (
               <div className="text-center text-muted-foreground py-8">
                 Корзина пуста
               </div>
             ) : (
-              mockCartItems.map((item) => (
+              cartItems.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4 p-4 bg-muted rounded-lg" data-testid={`cart-item-${item.id}`}>
                   <img 
                     src={item.imageUrl} 
@@ -132,7 +140,7 @@ export function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
           </div>
 
           {/* Cart Footer */}
-          {mockCartItems.length > 0 && (
+          {cartItems.length > 0 && (
             <div className="border-t border-border pt-6">
               <div className="flex items-center justify-between mb-4">
                 <span className="font-semibold text-foreground">{t('total')}:</span>

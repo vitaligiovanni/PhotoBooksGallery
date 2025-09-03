@@ -39,6 +39,7 @@ import { insertProductSchema, insertBlogPostSchema, insertBlogCategorySchema, in
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, Category, Order, User, PhotobookFormat, BlogPost, BlogCategory } from "@shared/schema";
 import { ObjectUploader } from "@/components/ObjectUploader";
+import { CurrencySettings } from "./CurrencySettings";
 import type { UploadResult } from "@uppy/core";
 
 // Navigation items
@@ -50,6 +51,7 @@ const navigationItems = [
   { id: 'customers', label: 'Клиенты', icon: Users, color: 'text-purple-600' },
   { id: 'reviews', label: 'Отзывы', icon: Star, color: 'text-yellow-600' },
   { id: 'blog', label: 'Блог', icon: FileText, color: 'text-pink-600' },
+  { id: 'currencies', label: 'Валюты', icon: DollarSign, color: 'text-emerald-600' },
   { id: 'analytics', label: 'Аналитика', icon: BarChart3, color: 'text-indigo-600' },
   { id: 'settings', label: 'Настройки', icon: Settings, color: 'text-gray-600' },
 ];
@@ -2921,6 +2923,8 @@ export default function Admin() {
         return <ReviewsManager />;
       case 'blog':
         return <BlogManager />;
+      case 'currencies':
+        return <CurrencySettings />;
       case 'settings':
         return <SettingsManager />;
       default:

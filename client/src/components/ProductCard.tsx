@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { useTranslation } from 'react-i18next';
 import { Link } from "wouter";
 import { PriceDisplay } from "./PriceDisplay";
+import { useCurrency } from '@/contexts/CurrencyContext';
 import type { Product } from "@shared/schema";
 import type { LocalizedText } from "@/types";
 
@@ -14,6 +15,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const { t, i18n } = useTranslation();
+  const { baseCurrency } = useCurrency();
   
   const name = (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Untitled';
   const description = (product.description as LocalizedText)?.[i18n.language as keyof LocalizedText] || '';
@@ -85,7 +87,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             <PriceDisplay
               price={product.price}
               originalPrice={product.originalPrice || undefined}
-              fromCurrencyId="8c34315e-9a1d-4cca-9c91-5fe65e0c0478"
+              fromCurrencyId={baseCurrency?.id || ""}
               className="mt-1"
               data-testid={`text-product-price-${product.id}`}
             />

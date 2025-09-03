@@ -943,6 +943,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update base currency (admin only)
+  app.put('/api/currencies/base', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { baseCurrencyId } = req.body;
+      if (!baseCurrencyId) {
+        return res.status(400).json({ message: "baseCurrencyId is required" });
+      }
+
+      await storage.setBaseCurrency(baseCurrencyId);
+      const baseCurrency = await storage.getBaseCurrency();
+      res.json(baseCurrency);
+    } catch (error) {
+      console.error("Error updating base currency:", error);
+      res.status(500).json({ message: "Failed to update base currency" });
+    }
+  });
+
+  // Update exchange rate (admin only)
+  app.put('/api/exchange-rates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const { rate } = req.body;
+      if (!rate || rate <= 0) {
+        return res.status(400).json({ message: "Valid rate is required" });
+      }
+
+      const updatedRate = await storage.updateExchangeRate(req.params.id, { rate: rate.toString() });
+      res.json(updatedRate);
+    } catch (error) {
+      console.error("Error updating exchange rate:", error);
+      res.status(500).json({ message: "Failed to update exchange rate" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

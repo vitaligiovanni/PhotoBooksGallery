@@ -18,6 +18,7 @@ import Editor from "@/pages/Editor";
 import Admin from "@/pages/Admin";
 import Blog from "@/pages/Blog";
 import BlogPost from "@/pages/BlogPost";
+import { CurrencySettings } from "@/pages/CurrencySettings";
 import NotFound from "@/pages/not-found";
 
 function HomePage() {
@@ -34,6 +35,7 @@ function Router() {
       <Route path="/cart" component={Cart} />
       <Route path="/editor" component={Editor} />
       <Route path="/admin" component={Admin} />
+      <Route path="/admin/currencies" component={CurrencySettings} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route component={NotFound} />

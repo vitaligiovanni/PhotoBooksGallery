@@ -1,0 +1,78 @@
+The above error occurred in the <CostEditForm> component:
+
+    at CostEditForm (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/pages/Admin.tsx:8103:25)
+    at div
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=ae5b571e:42:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-W36JHHCV.js?v=ae5b571e:59:7
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:79:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:56:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=ae5b571e:42:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5UIZTJ2Q.js?v=ae5b571e:57:5
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:233:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:156:58
+    at Presence (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2J4VDR5J.js?v=ae5b571e:24:11)
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:147:64
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:79:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:56:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=ae5b571e:42:13
+    at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-W36JHHCV.js?v=ae5b571e:258:22
+    at Presence (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2J4VDR5J.js?v=ae5b571e:24:11)
+    at Provider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SZQWSWC.js?v=ae5b571e:48:15)
+    at DialogPortal (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:109:11)
+    at _c3 (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/components/ui/dialog.tsx:52:12)
+    at Provider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SZQWSWC.js?v=ae5b571e:48:15)
+    at Dialog (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:50:5)
+    at div
+    at FinancesManager (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/pages/Admin.tsx:8791:30)
+    at div
+    at div
+    at div
+    at Admin (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/pages/Admin.tsx:9380:17)
+    at Route (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ae5b571e:191:16)
+    at Switch (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ae5b571e:247:17)
+    at Router
+    at Provider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SZQWSWC.js?v=ae5b571e:48:15)
+    at TooltipProvider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=ae5b571e:59:5)
+    at CurrencyProvider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/contexts/CurrencyContext.tsx:31:36)
+    at I18nextProvider…
+
+at CostEditForm (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/pages/Admin.tsx:8103:25)
+at div
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=ae5b571e:42:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-W36JHHCV.js?v=ae5b571e:59:7
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:79:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:56:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=ae5b571e:42:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5UIZTJ2Q.js?v=ae5b571e:57:5
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:233:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:156:58
+at Presence (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2J4VDR5J.js?v=ae5b571e:24:11)
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:147:64
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:79:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2K77HOHX.js?v=ae5b571e:56:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-AXMZZQ2X.js?v=ae5b571e:42:13
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-W36JHHCV.js?v=ae5b571e:258:22
+at Presence (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-2J4VDR5J.js?v=ae5b571e:24:11)
+at Provider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SZQWSWC.js?v=ae5b571e:48:15)
+at DialogPortal (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:109:11)
+at _c3 (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/components/ui/dialog.tsx:52:12)
+at Provider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SZQWSWC.js?v=ae5b571e:48:15)
+at Dialog (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-dialog.js?v=ae5b571e:50:5)
+at div
+at FinancesManager (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/pages/Admin.tsx:8791:30)
+at div
+at div
+at div
+at Admin (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/pages/Admin.tsx:9380:17)
+at Route (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ae5b571e:191:16)
+at Switch (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=ae5b571e:247:17)
+at Router
+at Provider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/chunk-5SZQWSWC.js?v=ae5b571e:48:15)
+at TooltipProvider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/@fs/home/runner/workspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=ae5b571e:59:5)
+at CurrencyProvider (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/src/contexts/CurrencyContext.tsx:31:36)
+at I18nextProvider…
+at t.value (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:17465)
+at new t (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:12630)
+at t.value (https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:32766)
+at https://ed2d2ffb-c725-49a3-8122-027ecad97413-00-2c8iw0bvyw316.spock.replit.dev/__replco/static/devtools/eruda/3.2.3/eruda.js:2:34400
+useQueryClient is not defined

@@ -8,6 +8,7 @@ import {
   comments,
   settings,
   userThemes,
+  reviews,
   type User,
   type UpsertUser,
   type Category,
@@ -25,6 +26,8 @@ import {
   type Setting,
   type UserTheme,
   type InsertUserTheme,
+  type Review,
+  type InsertReview,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or, ne, sql } from "drizzle-orm";
@@ -84,6 +87,15 @@ export interface IStorage {
   // User theme operations
   getUserTheme(userId: string): Promise<UserTheme | undefined>;
   upsertUserTheme(userTheme: InsertUserTheme): Promise<UserTheme>;
+
+  // Review operations
+  getReviews(status?: string): Promise<Review[]>;
+  getApprovedReviews(): Promise<Review[]>;
+  createReview(review: InsertReview): Promise<Review>;
+  updateReview(id: string, review: Partial<InsertReview>): Promise<Review>;
+  deleteReview(id: string): Promise<void>;
+  approveReview(id: string): Promise<Review>;
+  rejectReview(id: string): Promise<Review>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -421,6 +433,87 @@ export class DatabaseStorage implements IStorage {
     }
 
     return updatedTheme;
+  }
+
+  // Review operations
+  async getReviews(status?: string): Promise<Review[]> {
+    let query = db.select().from(reviews).orderBy(desc(reviews.createdAt));
+    
+    if (status) {
+      query = query.where(eq(reviews.status, status as any));
+    }
+    
+    return await query;
+  }
+
+  async getApprovedReviews(): Promise<Review[]> {
+    return await db.select()
+      .from(reviews)
+      .where(eq(reviews.status, "approved"))
+      .orderBy(desc(reviews.sortOrder), desc(reviews.createdAt));
+  }
+
+  async createReview(review: InsertReview): Promise<Review> {
+    const [newReview] = await db
+      .insert(reviews)
+      .values(review)
+      .returning();
+    return newReview;
+  }
+
+  async updateReview(id: string, review: Partial<InsertReview>): Promise<Review> {
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({ 
+        ...review,
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, id))
+      .returning();
+    
+    if (!updatedReview) {
+      throw new Error(`Review with id ${id} not found`);
+    }
+    
+    return updatedReview;
+  }
+
+  async deleteReview(id: string): Promise<void> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+  }
+
+  async approveReview(id: string): Promise<Review> {
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({ 
+        status: "approved",
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, id))
+      .returning();
+    
+    if (!updatedReview) {
+      throw new Error(`Review with id ${id} not found`);
+    }
+    
+    return updatedReview;
+  }
+
+  async rejectReview(id: string): Promise<Review> {
+    const [updatedReview] = await db
+      .update(reviews)
+      .set({ 
+        status: "rejected",
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, id))
+      .returning();
+    
+    if (!updatedReview) {
+      throw new Error(`Review with id ${id} not found`);
+    }
+    
+    return updatedReview;
   }
 }
 

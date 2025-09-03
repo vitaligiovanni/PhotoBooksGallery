@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
-import { insertCategorySchema, insertProductSchema, insertOrderSchema, insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema, insertUserThemeSchema, BUILT_IN_THEMES } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertOrderSchema, insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema, insertUserThemeSchema, insertReviewSchema, BUILT_IN_THEMES } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -710,6 +710,153 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error("Error updating user theme:", error);
       res.status(500).json({ message: "Failed to update user theme" });
+    }
+  });
+
+  // Review routes
+  app.get('/api/reviews', async (req, res) => {
+    try {
+      const reviews = await storage.getApprovedReviews();
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.get('/api/admin/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const status = req.query.status as string;
+      const reviews = await storage.getReviews(status);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching admin reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
+    }
+  });
+
+  app.post('/api/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const reviewData = insertReviewSchema.parse({
+        userId: userId,
+        authorName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email || 'Пользователь',
+        authorEmail: user.email,
+        rating: req.body.rating,
+        comment: req.body.comment,
+        status: "pending"
+      });
+
+      const review = await storage.createReview(reviewData);
+      res.status(201).json(review);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid review data",
+          errors: error.errors 
+        });
+      }
+      console.error("Error creating review:", error);
+      res.status(500).json({ message: "Failed to create review" });
+    }
+  });
+
+  app.post('/api/admin/reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Admin can create promoted reviews
+      const reviewData = insertReviewSchema.parse({
+        userId: null, // No user ID for promoted reviews
+        authorName: req.body.authorName,
+        authorEmail: req.body.authorEmail || null,
+        rating: req.body.rating,
+        comment: req.body.comment,
+        status: "approved", // Auto-approve admin-created reviews
+        isPromoted: true,
+        sortOrder: req.body.sortOrder || 0
+      });
+
+      const review = await storage.createReview(reviewData);
+      res.status(201).json(review);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ 
+          message: "Invalid review data",
+          errors: error.errors 
+        });
+      }
+      console.error("Error creating promoted review:", error);
+      res.status(500).json({ message: "Failed to create promoted review" });
+    }
+  });
+
+  app.put('/api/admin/reviews/:id/approve', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const review = await storage.approveReview(req.params.id);
+      res.json(review);
+    } catch (error) {
+      console.error("Error approving review:", error);
+      res.status(500).json({ message: "Failed to approve review" });
+    }
+  });
+
+  app.put('/api/admin/reviews/:id/reject', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const review = await storage.rejectReview(req.params.id);
+      res.json(review);
+    } catch (error) {
+      console.error("Error rejecting review:", error);
+      res.status(500).json({ message: "Failed to reject review" });
+    }
+  });
+
+  app.delete('/api/admin/reviews/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      await storage.deleteReview(req.params.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      res.status(500).json({ message: "Failed to delete review" });
     }
   });
 

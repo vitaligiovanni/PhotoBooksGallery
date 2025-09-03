@@ -109,6 +109,13 @@ export const blogStatusEnum = pgEnum("blog_status", [
   "archived"
 ]);
 
+// Review status enum
+export const reviewStatusEnum = pgEnum("review_status", [
+  "pending",
+  "approved",
+  "rejected"
+]);
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -215,6 +222,21 @@ export const promocodes = pgTable("promocodes", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Reviews
+export const reviews = pgTable("reviews", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id), // null для промо-отзывов
+  authorName: varchar("author_name").notNull(),
+  authorEmail: varchar("author_email"), // опционально для промо-отзывов
+  rating: integer("rating").notNull(), // 1-5 звезд
+  comment: text("comment").notNull(),
+  status: reviewStatusEnum("status").default("pending"),
+  isPromoted: boolean("is_promoted").default(false), // промо-отзывы от администратора
+  sortOrder: integer("sort_order").default(0), // для управления порядком
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -222,6 +244,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   comments: many(comments),
   analyticsEvents: many(analyticsEvents),
   themes: many(userThemes),
+  reviews: many(reviews),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -279,6 +302,13 @@ export const analyticsEventsRelations = relations(analyticsEvents, ({ one }) => 
 export const userThemesRelations = relations(userThemes, ({ one }) => ({
   user: one(users, {
     fields: [userThemes.userId],
+    references: [users.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  user: one(users, {
+    fields: [reviews.userId],
     references: [users.id],
   }),
 }));
@@ -347,6 +377,15 @@ export const insertUserThemeSchema = createInsertSchema(userThemes).omit({
   updatedAt: true,
 });
 
+export const insertReviewSchema = createInsertSchema(reviews).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+}).extend({
+  rating: z.number().min(1).max(5),
+  comment: z.string().min(10, "Отзыв должен содержать минимум 10 символов"),
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -370,6 +409,8 @@ export type Promocode = typeof promocodes.$inferSelect;
 export type InsertPromocode = z.infer<typeof insertPromocodeSchema>;
 export type UserTheme = typeof userThemes.$inferSelect;
 export type InsertUserTheme = z.infer<typeof insertUserThemeSchema>;
+export type Review = typeof reviews.$inferSelect;
+export type InsertReview = z.infer<typeof insertReviewSchema>;
 
 // Photobook format types and constants
 export type PhotobookFormat = "album" | "book" | "square";

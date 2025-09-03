@@ -55,6 +55,7 @@ export const products = pgTable("products", {
   name: jsonb("name").notNull(), // {ru: string, hy: string, en: string}
   description: jsonb("description"), // {ru: string, hy: string, en: string}
   price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  currencyId: varchar("currency_id").references(() => currencies.id), // валюта цены
   originalPrice: decimal("original_price", { precision: 10, scale: 2 }), // For discounts
   discountPercentage: integer("discount_percentage").default(0), // Discount percentage (0-100)
   inStock: boolean("in_stock").default(true), // Availability status
@@ -69,6 +70,7 @@ export const products = pgTable("products", {
   photobookSize: varchar("photobook_size"), // "20x15", "30x20", etc
   minSpreads: integer("min_spreads").default(10), // minimum spreads
   additionalSpreadPrice: decimal("additional_spread_price", { precision: 10, scale: 2 }), // price per additional spread
+  additionalSpreadCurrencyId: varchar("additional_spread_currency_id").references(() => currencies.id), // валюта доп. цены
   // Quality and materials
   paperType: varchar("paper_type"), // matte, glossy, satin
   coverMaterial: varchar("cover_material"), // hardcover, softcover, leatherette
@@ -80,6 +82,7 @@ export const products = pgTable("products", {
   // Customization options
   allowCustomization: boolean("allow_customization").default(true),
   minCustomPrice: decimal("min_custom_price", { precision: 10, scale: 2 }), // Minimum price for custom work
+  minCustomPriceCurrencyId: varchar("min_custom_price_currency_id").references(() => currencies.id), // валюта мин. цены
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
@@ -116,6 +119,13 @@ export const reviewStatusEnum = pgEnum("review_status", [
   "rejected"
 ]);
 
+// Currency enum
+export const currencyEnum = pgEnum("currency", [
+  "USD", // American Dollar
+  "RUB", // Russian Ruble
+  "AMD"  // Armenian Dram
+]);
+
 // Orders
 export const orders = pgTable("orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -125,6 +135,8 @@ export const orders = pgTable("orders", {
   customerPhone: varchar("customer_phone"),
   shippingAddress: text("shipping_address").notNull(),
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  currencyId: varchar("currency_id").references(() => currencies.id), // валюта заказа
+  exchangeRate: decimal("exchange_rate", { precision: 15, scale: 8 }), // курс на момент заказа
   status: orderStatusEnum("status").default("pending"),
   items: jsonb("items").notNull(), // Array of order items
   createdAt: timestamp("created_at").defaultNow(),
@@ -214,7 +226,9 @@ export const promocodes = pgTable("promocodes", {
   name: varchar("name").notNull(),
   discountType: varchar("discount_type").notNull(), // percentage, fixed
   discountValue: decimal("discount_value", { precision: 10, scale: 2 }).notNull(),
+  currencyId: varchar("currency_id").references(() => currencies.id), // валюта для fixed скидки
   minOrderAmount: decimal("min_order_amount", { precision: 10, scale: 2 }),
+  minOrderCurrencyId: varchar("min_order_currency_id").references(() => currencies.id), // валюта мин. суммы
   maxUses: integer("max_uses"),
   usedCount: integer("used_count").default(0),
   isActive: boolean("is_active").default(true),
@@ -239,6 +253,31 @@ export const reviews = pgTable("reviews", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Currencies
+export const currencies = pgTable("currencies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  code: currencyEnum("code").notNull().unique(), // USD, RUB, AMD
+  name: jsonb("name").notNull(), // {ru: "Доллар США", hy: "Ամերիկյան դոլար", en: "US Dollar"}
+  symbol: varchar("symbol").notNull(), // $, ₽, ֏
+  isBaseCurrency: boolean("is_base_currency").default(false), // одна валюта должна быть базовой
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Exchange Rates
+export const exchangeRates = pgTable("exchange_rates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fromCurrencyId: varchar("from_currency_id").references(() => currencies.id).notNull(),
+  toCurrencyId: varchar("to_currency_id").references(() => currencies.id).notNull(),
+  rate: decimal("rate", { precision: 15, scale: 8 }).notNull(), // точный курс обмена
+  source: varchar("source"), // источник курса (manual, api, etc)
+  isManual: boolean("is_manual").default(false), // ручное управление курсом
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   orders: many(orders),
@@ -258,12 +297,20 @@ export const productsRelations = relations(products, ({ one }) => ({
     fields: [products.categoryId],
     references: [categories.id],
   }),
+  currency: one(currencies, {
+    fields: [products.currencyId],
+    references: [currencies.id],
+  }),
 }));
 
 export const ordersRelations = relations(orders, ({ one }) => ({
   user: one(users, {
     fields: [orders.userId],
     references: [users.id],
+  }),
+  currency: one(currencies, {
+    fields: [orders.currencyId],
+    references: [currencies.id],
   }),
 }));
 
@@ -315,6 +362,27 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
 }));
 
+export const currenciesRelations = relations(currencies, ({ many }) => ({
+  products: many(products),
+  orders: many(orders),
+  promocodes: many(promocodes),
+  exchangeRatesFrom: many(exchangeRates, { relationName: "fromCurrency" }),
+  exchangeRatesTo: many(exchangeRates, { relationName: "toCurrency" }),
+}));
+
+export const exchangeRatesRelations = relations(exchangeRates, ({ one }) => ({
+  fromCurrency: one(currencies, {
+    fields: [exchangeRates.fromCurrencyId],
+    references: [currencies.id],
+    relationName: "fromCurrency",
+  }),
+  toCurrency: one(currencies, {
+    fields: [exchangeRates.toCurrencyId],
+    references: [currencies.id],
+    relationName: "toCurrency",
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   id: true,
@@ -322,6 +390,18 @@ export const insertUserSchema = createInsertSchema(users).pick({
   firstName: true,
   lastName: true,
   profileImageUrl: true,
+});
+
+export const insertCurrencySchema = createInsertSchema(currencies).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertExchangeRateSchema = createInsertSchema(exchangeRates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
 });
 
 export const insertCategorySchema = createInsertSchema(categories).omit({
@@ -391,6 +471,10 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+export type Currency = typeof currencies.$inferSelect;
+export type InsertCurrency = z.infer<typeof insertCurrencySchema>;
+export type ExchangeRate = typeof exchangeRates.$inferSelect;
+export type InsertExchangeRate = z.infer<typeof insertExchangeRateSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 export type Product = typeof products.$inferSelect;
@@ -473,6 +557,50 @@ export interface ColorTheme {
     border: string;
   };
 }
+
+// Currency definitions and helpers
+export const SUPPORTED_CURRENCIES = [
+  {
+    code: 'USD' as const,
+    name: { ru: 'Доллар США', hy: 'ԱՄՆ դոլար', en: 'US Dollar' },
+    symbol: '$',
+    isBaseCurrency: true,
+    sortOrder: 1,
+  },
+  {
+    code: 'AMD' as const,
+    name: { ru: 'Армянский драм', hy: 'Հայկական դրամ', en: 'Armenian Dram' },
+    symbol: '֏',
+    isBaseCurrency: false,
+    sortOrder: 2,
+  },
+  {
+    code: 'RUB' as const,
+    name: { ru: 'Российский рубль', hy: 'Ռուսական ռուբլի', en: 'Russian Ruble' },
+    symbol: '₽',
+    isBaseCurrency: false,
+    sortOrder: 3,
+  },
+] as const;
+
+export type SupportedCurrency = typeof SUPPORTED_CURRENCIES[number]['code'];
+
+// Currency formatting helper
+export const formatCurrency = (amount: number | string, currencyCode: SupportedCurrency, locale: string = 'en'): string => {
+  const currency = SUPPORTED_CURRENCIES.find(c => c.code === currencyCode);
+  if (!currency) return `${amount}`;
+  
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  if (isNaN(numAmount)) return `${amount}`;
+  
+  // Format with proper decimal places and symbol
+  const formatted = new Intl.NumberFormat(locale, {
+    minimumFractionDigits: currencyCode === 'USD' ? 2 : 0,
+    maximumFractionDigits: currencyCode === 'USD' ? 2 : 0,
+  }).format(numAmount);
+  
+  return `${formatted} ${currency.symbol}`;
+};
 
 export const BUILT_IN_THEMES: Record<string, ColorTheme> = {
   default: {

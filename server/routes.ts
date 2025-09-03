@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { z } from "zod";
-import { insertCategorySchema, insertProductSchema, insertOrderSchema, insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema, insertUserThemeSchema, insertReviewSchema, BUILT_IN_THEMES } from "@shared/schema";
+import { insertCategorySchema, insertProductSchema, insertOrderSchema, insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema, insertUserThemeSchema, insertReviewSchema, insertCurrencySchema, insertExchangeRateSchema, BUILT_IN_THEMES } from "@shared/schema";
 import { ObjectStorageService, ObjectNotFoundError } from "./objectStorage";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -872,6 +872,74 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting review:", error);
       res.status(500).json({ message: "Failed to delete review" });
+    }
+  });
+
+  // Currency API routes
+  app.get('/api/currencies', async (req, res) => {
+    try {
+      const currencies = await storage.getCurrencies();
+      res.json(currencies);
+    } catch (error) {
+      console.error("Error fetching currencies:", error);
+      res.status(500).json({ message: "Failed to fetch currencies" });
+    }
+  });
+
+  app.get('/api/currencies/base', async (req, res) => {
+    try {
+      const baseCurrency = await storage.getBaseCurrency();
+      res.json(baseCurrency);
+    } catch (error) {
+      console.error("Error fetching base currency:", error);
+      res.status(500).json({ message: "Failed to fetch base currency" });
+    }
+  });
+
+  app.get('/api/exchange-rates', async (req, res) => {
+    try {
+      const rates = await storage.getExchangeRates();
+      res.json(rates);
+    } catch (error) {
+      console.error("Error fetching exchange rates:", error);
+      res.status(500).json({ message: "Failed to fetch exchange rates" });
+    }
+  });
+
+  // Admin-only currency management routes
+  app.post('/api/admin/currencies', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const currencyData = insertCurrencySchema.parse(req.body);
+      const currency = await storage.createCurrency(currencyData);
+      res.status(201).json(currency);
+    } catch (error) {
+      console.error("Error creating currency:", error);
+      res.status(500).json({ message: "Failed to create currency" });
+    }
+  });
+
+  app.post('/api/admin/exchange-rates', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const rateData = insertExchangeRateSchema.parse(req.body);
+      const rate = await storage.createExchangeRate(rateData);
+      res.status(201).json(rate);
+    } catch (error) {
+      console.error("Error creating exchange rate:", error);
+      res.status(500).json({ message: "Failed to create exchange rate" });
     }
   });
 

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from 'react-i18next';
 import { Link } from "wouter";
+import { PriceDisplay } from "./PriceDisplay";
 import type { Product } from "@shared/schema";
 import type { LocalizedText } from "@/types";
 
@@ -81,16 +82,13 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground uppercase tracking-wide">Цена</span>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-primary text-xl" data-testid={`text-product-price-${product.id}`}>
-                ₽{Number(product.price).toLocaleString()}
-              </span>
-              {product.originalPrice && product.isOnSale && (
-                <span className="text-sm text-muted-foreground line-through">
-                  ₽{Number(product.originalPrice).toLocaleString()}
-                </span>
-              )}
-            </div>
+            <PriceDisplay
+              price={product.price}
+              originalPrice={product.originalPrice || undefined}
+              fromCurrencyId="8c34315e-9a1d-4cca-9c91-5fe65e0c0478"
+              className="mt-1"
+              data-testid={`text-product-price-${product.id}`}
+            />
           </div>
           <Button 
             size="sm"

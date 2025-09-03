@@ -9,6 +9,8 @@ import {
   settings,
   userThemes,
   reviews,
+  currencies,
+  exchangeRates,
   type User,
   type UpsertUser,
   type Category,
@@ -28,6 +30,10 @@ import {
   type InsertUserTheme,
   type Review,
   type InsertReview,
+  type Currency,
+  type InsertCurrency,
+  type ExchangeRate,
+  type InsertExchangeRate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, ilike, or, ne, sql } from "drizzle-orm";
@@ -96,6 +102,22 @@ export interface IStorage {
   deleteReview(id: string): Promise<void>;
   approveReview(id: string): Promise<Review>;
   rejectReview(id: string): Promise<Review>;
+
+  // Currency operations
+  getCurrencies(): Promise<Currency[]>;
+  getCurrency(id: string): Promise<Currency | undefined>;
+  getCurrencyByCode(code: string): Promise<Currency | undefined>;
+  createCurrency(currency: InsertCurrency): Promise<Currency>;
+  updateCurrency(id: string, currency: Partial<InsertCurrency>): Promise<Currency>;
+  deleteCurrency(id: string): Promise<void>;
+  getBaseCurrency(): Promise<Currency | undefined>;
+
+  // Exchange rate operations
+  getExchangeRates(): Promise<ExchangeRate[]>;
+  getExchangeRate(fromCurrencyId: string, toCurrencyId: string): Promise<ExchangeRate | undefined>;
+  createExchangeRate(exchangeRate: InsertExchangeRate): Promise<ExchangeRate>;
+  updateExchangeRate(id: string, exchangeRate: Partial<InsertExchangeRate>): Promise<ExchangeRate>;
+  deleteExchangeRate(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -514,6 +536,106 @@ export class DatabaseStorage implements IStorage {
     }
     
     return updatedReview;
+  }
+
+  // Currency operations
+  async getCurrencies(): Promise<Currency[]> {
+    return db.select().from(currencies).orderBy(currencies.sortOrder, currencies.code);
+  }
+
+  async getCurrency(id: string): Promise<Currency | undefined> {
+    const [currency] = await db.select().from(currencies).where(eq(currencies.id, id));
+    return currency;
+  }
+
+  async getCurrencyByCode(code: string): Promise<Currency | undefined> {
+    const [currency] = await db.select().from(currencies).where(eq(currencies.code, code as any));
+    return currency;
+  }
+
+  async createCurrency(currency: InsertCurrency): Promise<Currency> {
+    const [newCurrency] = await db
+      .insert(currencies)
+      .values({
+        ...currency,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newCurrency;
+  }
+
+  async updateCurrency(id: string, currency: Partial<InsertCurrency>): Promise<Currency> {
+    const [updatedCurrency] = await db
+      .update(currencies)
+      .set({ 
+        ...currency,
+        updatedAt: new Date()
+      })
+      .where(eq(currencies.id, id))
+      .returning();
+    
+    if (!updatedCurrency) {
+      throw new Error(`Currency with id ${id} not found`);
+    }
+    
+    return updatedCurrency;
+  }
+
+  async deleteCurrency(id: string): Promise<void> {
+    await db.delete(currencies).where(eq(currencies.id, id));
+  }
+
+  async getBaseCurrency(): Promise<Currency | undefined> {
+    const [currency] = await db.select().from(currencies).where(eq(currencies.isBaseCurrency, true));
+    return currency;
+  }
+
+  // Exchange rate operations
+  async getExchangeRates(): Promise<ExchangeRate[]> {
+    return db.select().from(exchangeRates).orderBy(desc(exchangeRates.updatedAt));
+  }
+
+  async getExchangeRate(fromCurrencyId: string, toCurrencyId: string): Promise<ExchangeRate | undefined> {
+    const [rate] = await db.select().from(exchangeRates)
+      .where(and(
+        eq(exchangeRates.fromCurrencyId, fromCurrencyId),
+        eq(exchangeRates.toCurrencyId, toCurrencyId)
+      ));
+    return rate;
+  }
+
+  async createExchangeRate(exchangeRate: InsertExchangeRate): Promise<ExchangeRate> {
+    const [newRate] = await db
+      .insert(exchangeRates)
+      .values({
+        ...exchangeRate,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return newRate;
+  }
+
+  async updateExchangeRate(id: string, exchangeRate: Partial<InsertExchangeRate>): Promise<ExchangeRate> {
+    const [updatedRate] = await db
+      .update(exchangeRates)
+      .set({ 
+        ...exchangeRate,
+        updatedAt: new Date()
+      })
+      .where(eq(exchangeRates.id, id))
+      .returning();
+    
+    if (!updatedRate) {
+      throw new Error(`Exchange rate with id ${id} not found`);
+    }
+    
+    return updatedRate;
+  }
+
+  async deleteExchangeRate(id: string): Promise<void> {
+    await db.delete(exchangeRates).where(eq(exchangeRates.id, id));
   }
 }
 

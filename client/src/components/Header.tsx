@@ -4,6 +4,7 @@ import { useCart } from "@/hooks/useCart";
 import { useTranslation } from 'react-i18next';
 import { ShoppingCart, User, Menu, Camera, Palette, Shuffle } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
+import { CurrencySelector } from "./CurrencySelector";
 import { ShoppingCart as Cart } from "./ShoppingCart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -87,6 +88,9 @@ export function Header() {
             <div className="flex items-center space-x-4">
               {/* Language Switcher */}
               <LanguageSwitcher />
+              
+              {/* Currency Selector */}
+              <CurrencySelector />
 
               {/* Theme Selector */}
               <DropdownMenu>

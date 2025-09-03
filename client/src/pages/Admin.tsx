@@ -1831,6 +1831,258 @@ function ReviewsManager() {
   );
 }
 
+// Customers Manager Component
+function CustomersManager() {
+  const { toast } = useToast();
+  const { t } = useTranslation();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
+
+  const { data: customers = [], isLoading } = useQuery<User[]>({ queryKey: ["/api/users"] });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ userId, role }: { userId: string; role: string }) => {
+      return await apiRequest("PUT", `/api/users/${userId}/role`, { role });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+      toast({
+        title: "Успех",
+        description: "Роль пользователя обновлена",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Ошибка",
+        description: "Не удалось обновить роль пользователя",
+        variant: "destructive",
+      });
+    }
+  });
+
+  // Filter customers based on search and role
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch = !searchTerm || 
+      customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.firstName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.lastName?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesRole = selectedRole === "all" || customer.role === selectedRole;
+    
+    return matchesSearch && matchesRole;
+  });
+
+  const handleRoleChange = (userId: string, newRole: string) => {
+    updateRoleMutation.mutate({ userId, role: newRole });
+  };
+
+  const formatDate = (dateString: string | Date | null) => {
+    if (!dateString) return "—";
+    return new Date(dateString).toLocaleDateString('ru-RU');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">Управление клиентами</h1>
+        <p className="text-muted-foreground mt-2">
+          Просмотр и управление зарегистрированными пользователями системы
+        </p>
+      </div>
+
+      {/* Search and Filters */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-purple-600" />
+            Фильтры и поиск
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Поиск по имени или email..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full"
+                data-testid="input-customer-search"
+              />
+            </div>
+            <Select
+              value={selectedRole}
+              onValueChange={setSelectedRole}
+            >
+              <SelectTrigger className="w-48" data-testid="select-role-filter">
+                <SelectValue placeholder="Фильтр по роли" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все пользователи</SelectItem>
+                <SelectItem value="user">Обычные пользователи</SelectItem>
+                <SelectItem value="admin">Администраторы</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Customers Table */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5 text-purple-600" />
+            Список клиентов ({filteredCustomers.length})
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p>Загрузка клиентов...</p>
+            </div>
+          ) : filteredCustomers.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+              <p className="text-lg mb-2">Пользователи не найдены</p>
+              <p className="text-sm">
+                {searchTerm || selectedRole !== "all" ? "Попробуйте изменить фильтры поиска" : "Пока нет зарегистрированных пользователей"}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Пользователь</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Роль</TableHead>
+                    <TableHead>Дата регистрации</TableHead>
+                    <TableHead>Последняя активность</TableHead>
+                    <TableHead>Действия</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCustomers.map((customer) => (
+                    <TableRow key={customer.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-3">
+                          {customer.profileImageUrl ? (
+                            <img
+                              src={customer.profileImageUrl}
+                              alt="Avatar"
+                              className="w-8 h-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                              {customer.firstName?.[0] || customer.email?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-medium text-gray-900">
+                              {customer.firstName && customer.lastName
+                                ? `${customer.firstName} ${customer.lastName}`
+                                : customer.firstName || customer.lastName || 'Без имени'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              ID: {customer.id}
+                            </p>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">
+                          {customer.email || '—'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Select
+                          value={customer.role || "user"}
+                          onValueChange={(newRole) => handleRoleChange(customer.id, newRole)}
+                          disabled={updateRoleMutation.isPending}
+                        >
+                          <SelectTrigger className="w-32" data-testid={`select-role-${customer.id}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                Пользователь
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="admin">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                Администратор
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">
+                          {formatDate(customer.createdAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-gray-600">
+                          {formatDate(customer.updatedAt)}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={customer.role === 'admin' ? 'destructive' : 'outline'}
+                            className="text-xs"
+                          >
+                            {customer.role === 'admin' ? 'Администратор' : 'Клиент'}
+                          </Badge>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Statistics */}
+      <Card className="border-0 shadow-lg">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="h-5 w-5 text-purple-600" />
+            Статистика пользователей
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">
+                {customers.filter(c => c.role === 'user').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Обычных пользователей</div>
+            </div>
+            <div className="text-center p-4 bg-red-50 rounded-lg">
+              <div className="text-2xl font-bold text-red-600">
+                {customers.filter(c => c.role === 'admin').length}
+              </div>
+              <div className="text-sm text-muted-foreground">Администраторов</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">
+                {customers.length}
+              </div>
+              <div className="text-sm text-muted-foreground">Всего пользователей</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
 // Products Manager Component
 function ProductsManager() {
   const { toast } = useToast();
@@ -2919,6 +3171,8 @@ export default function Admin() {
         return <CategoriesManager />;
       case 'products':
         return <ProductsManager />;
+      case 'customers':
+        return <CustomersManager />;
       case 'reviews':
         return <ReviewsManager />;
       case 'blog':

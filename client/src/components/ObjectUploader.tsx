@@ -13,6 +13,7 @@ interface ObjectUploaderProps {
     url: string;
   }>;
   onComplete?: (result: { successful: Array<{ uploadURL: string }> }) => void;
+  onFilesAdded?: (previews: string[]) => void;
   buttonClassName?: string;
   children: ReactNode;
 }
@@ -22,6 +23,7 @@ export function ObjectUploader({
   maxFileSize = 10485760, // 10MB default
   onGetUploadParameters,
   onComplete,
+  onFilesAdded,
   buttonClassName,
   children,
 }: ObjectUploaderProps) {
@@ -32,47 +34,70 @@ export function ObjectUploader({
   const handleUpload = async (files: FileList) => {
     if (!files.length) return;
 
-    const file = files[0];
+    // Convert FileList to array and limit to maxNumberOfFiles
+    const fileArray = Array.from(files).slice(0, maxNumberOfFiles);
     
-    // Check file size
-    if (file.size > maxFileSize) {
-      alert(`Файл слишком большой. Максимальный размер: ${Math.round(maxFileSize / 1024 / 1024)}MB`);
-      return;
+    // Check each file before upload
+    for (const file of fileArray) {
+      // Check file size
+      if (file.size > maxFileSize) {
+        alert(`Файл "${file.name}" слишком большой. Максимальный размер: ${Math.round(maxFileSize / 1024 / 1024)}MB`);
+        return;
+      }
+
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        alert(t('onlyImages'));
+        return;
+      }
     }
 
-    // Check file type
-    if (!file.type.startsWith('image/')) {
-      alert(t('onlyImages'));
-      return;
+    // Create preview URLs immediately and call onFilesAdded
+    if (onFilesAdded) {
+      const previews = fileArray.map(file => URL.createObjectURL(file));
+      onFilesAdded(previews);
     }
 
     setIsUploading(true);
+    const successfulUploads: { uploadURL: string }[] = [];
     
     try {
-      console.log('Getting upload parameters...');
-      const uploadParams = await onGetUploadParameters();
-      console.log('Upload params received:', uploadParams);
+      console.log(`Starting upload of ${fileArray.length} files...`);
+      
+      // Upload each file sequentially
+      for (const file of fileArray) {
+        console.log(`Uploading file: ${file.name}`);
+        
+        // Get unique upload parameters for each file
+        const uploadParams = await onGetUploadParameters();
+        console.log('Upload params received:', uploadParams);
 
-      console.log('Starting upload...');
-      const response = await fetch(uploadParams.url, {
-        method: uploadParams.method,
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-      });
-
-      console.log('Upload response:', response.status, response.statusText);
-
-      if (response.ok) {
-        console.log('Upload successful, calling onComplete with URL:', uploadParams.url);
-        onComplete?.({
-          successful: [{
-            uploadURL: uploadParams.url
-          }]
+        const response = await fetch(uploadParams.url, {
+          method: uploadParams.method,
+          body: file,
+          headers: {
+            'Content-Type': file.type,
+          },
         });
-      } else {
-        throw new Error(`Upload failed: ${response.statusText}`);
+
+        console.log(`Upload response for ${file.name}:`, response.status, response.statusText);
+
+        if (response.ok) {
+          console.log(`Upload successful for ${file.name}, URL:`, uploadParams.url);
+          successfulUploads.push({
+            uploadURL: uploadParams.url
+          });
+        } else {
+          throw new Error(`Upload failed for ${file.name}: ${response.statusText}`);
+        }
+      }
+
+      // Call onComplete with all successful uploads
+      if (successfulUploads.length > 0) {
+        console.log(`All uploads completed successfully. ${successfulUploads.length} files uploaded.`);
+        onComplete?.({
+          successful: successfulUploads
+        });
       }
     } catch (error) {
       console.error('Upload error:', error);

@@ -222,8 +222,8 @@ html.theme-default {
   --card-foreground: hsl(220, 9%, 15%);
   
   /* Gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(45, 15%, 98%) 0%, hsl(168, 20%, 95%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(0, 0%, 100%) 0%, hsl(168, 10%, 98%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(168, 30%, 88%) 0%, hsl(348, 40%, 92%) 50%, hsl(43, 50%, 90%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(168, 25%, 96%) 0%, hsl(348, 15%, 98%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(168, 76%, 36%) 0%, hsl(348, 83%, 47%) 100%);
 }
 
@@ -241,8 +241,8 @@ html.theme-ocean {
   --card-foreground: hsl(200, 95%, 25%);
   
   /* Ocean gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(195, 50%, 96%) 0%, hsl(200, 80%, 90%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(195, 60%, 98%) 0%, hsl(190, 70%, 94%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(200, 65%, 85%) 0%, hsl(190, 75%, 88%) 50%, hsl(180, 60%, 92%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(195, 40%, 96%) 0%, hsl(190, 50%, 94%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(200, 95%, 25%) 0%, hsl(190, 80%, 35%) 100%);
 }
 
@@ -260,8 +260,8 @@ html.theme-sunset {
   --card-foreground: hsl(15, 85%, 30%);
   
   /* Sunset gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(25, 60%, 96%) 0%, hsl(15, 70%, 88%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(25, 70%, 98%) 0%, hsl(35, 60%, 92%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(15, 70%, 85%) 0%, hsl(25, 80%, 88%) 50%, hsl(35, 70%, 90%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(25, 50%, 96%) 0%, hsl(35, 40%, 94%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(15, 85%, 40%) 0%, hsl(35, 80%, 50%) 100%);
 }
 
@@ -279,8 +279,8 @@ html.theme-forest {
   --card-foreground: hsl(140, 50%, 25%);
   
   /* Forest gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(120, 50%, 96%) 0%, hsl(140, 60%, 88%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(120, 60%, 98%) 0%, hsl(130, 50%, 92%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(120, 60%, 85%) 0%, hsl(140, 70%, 88%) 50%, hsl(100, 50%, 90%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(120, 40%, 96%) 0%, hsl(140, 30%, 94%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(140, 50%, 30%) 0%, hsl(120, 60%, 35%) 100%);
 }
 
@@ -298,8 +298,8 @@ html.theme-purple {
   --card-foreground: hsl(270, 60%, 35%);
   
   /* Purple gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(280, 50%, 96%) 0%, hsl(270, 60%, 88%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(280, 60%, 98%) 0%, hsl(275, 50%, 92%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(270, 70%, 85%) 0%, hsl(280, 80%, 88%) 50%, hsl(290, 60%, 90%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(280, 40%, 96%) 0%, hsl(275, 30%, 94%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(270, 60%, 40%) 0%, hsl(280, 70%, 45%) 100%);
 }
 
@@ -317,8 +317,8 @@ html.theme-cosmic {
   --card-foreground: hsl(0, 0%, 95%);
   
   /* Cosmic gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(220, 25%, 8%) 0%, hsl(250, 40%, 15%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(220, 20%, 12%) 0%, hsl(250, 30%, 18%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(220, 40%, 12%) 0%, hsl(250, 60%, 18%) 50%, hsl(280, 50%, 22%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(220, 30%, 15%) 0%, hsl(250, 40%, 20%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(250, 80%, 60%) 0%, hsl(280, 100%, 70%) 100%);
 }
 
@@ -336,7 +336,7 @@ html.theme-rainbow {
   --card-foreground: hsl(340, 85%, 25%);
   
   /* Rainbow gradient backgrounds */
-  --gradient-bg: linear-gradient(135deg, hsl(340, 30%, 98%) 0%, hsl(180, 40%, 92%) 100%);
-  --gradient-card: linear-gradient(135deg, hsl(60, 40%, 98%) 0%, hsl(340, 20%, 95%) 100%);
+  --gradient-bg: linear-gradient(135deg, hsl(340, 60%, 88%) 0%, hsl(180, 70%, 86%) 25%, hsl(60, 80%, 85%) 50%, hsl(120, 60%, 88%) 75%, hsl(280, 65%, 90%) 100%);
+  --gradient-card: linear-gradient(135deg, hsl(340, 30%, 96%) 0%, hsl(180, 25%, 94%) 50%, hsl(60, 35%, 96%) 100%);
   --gradient-header: linear-gradient(90deg, hsl(340, 85%, 55%) 0%, hsl(180, 85%, 55%) 50%, hsl(60, 85%, 55%) 100%);
 }

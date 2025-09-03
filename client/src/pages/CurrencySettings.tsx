@@ -34,7 +34,7 @@ export function CurrencySettings() {
   // Mutations
   const updateBaseCurrencyMutation = useMutation({
     mutationFn: async (currencyId: string) => {
-      await apiRequest(`/api/currencies/base`, 'PUT', { baseCurrencyId: currencyId });
+      await apiRequest('PUT', `/api/currencies/base`, { baseCurrencyId: currencyId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/currencies/base'] });
@@ -54,7 +54,7 @@ export function CurrencySettings() {
 
   const updateExchangeRateMutation = useMutation({
     mutationFn: async ({ id, rate }: { id: string; rate: number }) => {
-      await apiRequest(`/api/exchange-rates/${id}`, 'PUT', { rate });
+      await apiRequest('PUT', `/api/exchange-rates/${id}`, { rate });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/exchange-rates'] });

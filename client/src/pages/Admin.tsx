@@ -3784,6 +3784,298 @@ function DashboardStats() {
   );
 }
 
+// Cost Edit Form Component
+function CostEditForm({ product, onClose, currencies, baseCurrency }: any) {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const form = useForm({
+    defaultValues: {
+      costPrice: product.costPrice || '0',
+      costCurrencyId: product.costCurrencyId || baseCurrency?.id || '',
+      materialCosts: product.materialCosts || '0',
+      laborCosts: product.laborCosts || '0',
+      overheadCosts: product.overheadCosts || '0',
+      shippingCosts: product.shippingCosts || '0',
+      otherCosts: product.otherCosts || '0',
+      expectedProfitMargin: product.expectedProfitMargin || '30',
+    },
+  });
+
+  const updateProductCosts = useMutation({
+    mutationFn: async (data: any) => {
+      const response = await fetch(`/api/products/${product.id}/costs`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error('Ошибка обновления расходов');
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Расходы обновлены",
+        description: "Себестоимость товара успешно обновлена",
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/products'] });
+      onClose();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Ошибка",
+        description: error.message || "Не удалось обновить расходы",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = (data: any) => {
+    updateProductCosts.mutate(data);
+  };
+
+  const calculateTotal = () => {
+    const costs = form.watch();
+    return parseFloat(costs.costPrice || '0') +
+           parseFloat(costs.materialCosts || '0') +
+           parseFloat(costs.laborCosts || '0') +
+           parseFloat(costs.overheadCosts || '0') +
+           parseFloat(costs.shippingCosts || '0') +
+           parseFloat(costs.otherCosts || '0');
+  };
+
+  const calculateProfitPreview = () => {
+    const sellPrice = parseFloat(product.price || '0');
+    const totalCost = calculateTotal();
+    const profit = sellPrice - totalCost;
+    const margin = sellPrice > 0 ? (profit / sellPrice) * 100 : 0;
+    return { profit, margin };
+  };
+
+  const { profit: previewProfit, margin: previewMargin } = calculateProfitPreview();
+  const productName = typeof product.name === 'object' ? product.name.ru || product.name.en : product.name;
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        {/* Product Info */}
+        <div className="bg-gray-50 p-4 rounded-lg">
+          <div className="flex items-center gap-3 mb-3">
+            {product.imageUrl && (
+              <img src={product.imageUrl} alt="" className="w-12 h-12 rounded object-cover" />
+            )}
+            <div>
+              <h3 className="font-semibold text-lg">{productName}</h3>
+              <p className="text-sm text-muted-foreground">
+                Цена продажи: <span className="font-medium text-green-600">{parseFloat(product.price || '0').toLocaleString()} ₽</span>
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Cost Fields */}
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-900">Основная себестоимость</h4>
+            
+            <FormField
+              control={form.control}
+              name="costPrice"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Базовая себестоимость</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...field}
+                      data-testid="input-cost-price"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="materialCosts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Стоимость материалов</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...field}
+                      data-testid="input-material-costs"
+                    />
+                  </FormControl>
+                  <FormDescription>Бумага, краски, обложки и т.д.</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="laborCosts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Стоимость работы</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...field}
+                      data-testid="input-labor-costs"
+                    />
+                  </FormControl>
+                  <FormDescription>Дизайн, печать, обработка</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-semibold text-gray-900">Дополнительные расходы</h4>
+
+            <FormField
+              control={form.control}
+              name="overheadCosts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Накладные расходы</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...field}
+                      data-testid="input-overhead-costs"
+                    />
+                  </FormControl>
+                  <FormDescription>Аренда, электричество, оборудование</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="shippingCosts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Расходы на доставку</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...field}
+                      data-testid="input-shipping-costs"
+                    />
+                  </FormControl>
+                  <FormDescription>Упаковка и доставка</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="otherCosts"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Прочие расходы</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      {...field}
+                      data-testid="input-other-costs"
+                    />
+                  </FormControl>
+                  <FormDescription>Маркетинг, комиссии и другое</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="expectedProfitMargin"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Целевая маржа (%)</FormLabel>
+                  <FormControl>
+                    <Input
+                      type="number"
+                      step="0.1"
+                      placeholder="30.0"
+                      {...field}
+                      data-testid="input-expected-margin"
+                    />
+                  </FormControl>
+                  <FormDescription>Желаемая маржа прибыли</FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Cost Summary */}
+        <div className="bg-blue-50 p-4 rounded-lg">
+          <h4 className="font-semibold text-gray-900 mb-3">Расчет прибыли</h4>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+            <div>
+              <span className="text-muted-foreground">Общие расходы:</span>
+              <p className="font-bold text-red-600">{calculateTotal().toLocaleString()} ₽</p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Прибыль с единицы:</span>
+              <p className={`font-bold ${previewProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {previewProfit.toLocaleString()} ₽
+              </p>
+            </div>
+            <div>
+              <span className="text-muted-foreground">Маржа:</span>
+              <p className={`font-bold ${previewMargin >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                {previewMargin.toFixed(1)}%
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3">
+          <Button type="button" variant="outline" onClick={onClose}>
+            Отменить
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={updateProductCosts.isPending}
+            data-testid="button-save-costs"
+          >
+            {updateProductCosts.isPending ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Сохранение...
+              </>
+            ) : (
+              'Сохранить расходы'
+            )}
+          </Button>
+        </div>
+      </form>
+    </Form>
+  );
+}
+
 // Finances Manager Component  
 function FinancesManager() {
   const { data: products } = useQuery({ queryKey: ['/api/products'] });
@@ -3792,6 +4084,8 @@ function FinancesManager() {
   const { data: baseCurrency } = useQuery({ queryKey: ['/api/currencies/base'] });
 
   const [activeTab, setActiveTab] = useState('overview');
+  const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [isCostModalOpen, setIsCostModalOpen] = useState(false);
 
   // Calculate financial metrics
   const calculateFinancialMetrics = () => {
@@ -3860,6 +4154,11 @@ function FinancesManager() {
     const profitMargin = sellPrice > 0 ? (profit / sellPrice) * 100 : 0;
     
     return { profit, profitMargin, totalCost };
+  };
+
+  const handleEditProductCosts = (product: any) => {
+    setSelectedProduct(product);
+    setIsCostModalOpen(true);
   };
 
   // Render financial overview
@@ -3959,6 +4258,7 @@ function FinancesManager() {
                   <TableHead>Общие расходы</TableHead>
                   <TableHead>Прибыль</TableHead>
                   <TableHead>Маржа</TableHead>
+                  <TableHead>Действия</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -4004,6 +4304,17 @@ function FinancesManager() {
                           {profitMargin.toFixed(1)}%
                         </span>
                       </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleEditProductCosts(product)}
+                          data-testid={`button-edit-costs-${product.id}`}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          Расходы
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -4042,6 +4353,30 @@ function FinancesManager() {
       {/* Tab Content */}
       {activeTab === 'overview' && renderOverview()}
       {activeTab === 'products' && renderProductCosts()}
+
+      {/* Cost Edit Modal */}
+      <Dialog open={isCostModalOpen} onOpenChange={setIsCostModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Calculator className="h-5 w-5 text-green-600" />
+              Редактировать расходы товара
+            </DialogTitle>
+            <DialogDescription>
+              Укажите все расходы для расчета точной себестоимости товара
+            </DialogDescription>
+          </DialogHeader>
+          
+          {selectedProduct && (
+            <CostEditForm 
+              product={selectedProduct} 
+              onClose={() => setIsCostModalOpen(false)}
+              currencies={currencies}
+              baseCurrency={baseCurrency}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

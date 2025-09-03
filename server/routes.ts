@@ -316,6 +316,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/products/:id/costs', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user || user.role !== 'admin') {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      // Validate cost data
+      const costsData = {
+        costPrice: req.body.costPrice || '0',
+        costCurrencyId: req.body.costCurrencyId,
+        materialCosts: req.body.materialCosts || '0',
+        laborCosts: req.body.laborCosts || '0',
+        overheadCosts: req.body.overheadCosts || '0',
+        shippingCosts: req.body.shippingCosts || '0',
+        otherCosts: req.body.otherCosts || '0',
+        expectedProfitMargin: req.body.expectedProfitMargin || '30',
+      };
+
+      const product = await storage.updateProduct(req.params.id, costsData);
+      res.json(product);
+    } catch (error) {
+      console.error("Error updating product costs:", error);
+      res.status(500).json({ message: "Failed to update product costs" });
+    }
+  });
+
   // Order routes
   app.get('/api/orders', isAuthenticated, async (req: any, res) => {
     try {

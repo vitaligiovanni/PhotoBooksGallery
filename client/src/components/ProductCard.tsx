@@ -66,6 +66,18 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           )}
         </Link>
         
+        {/* Production and delivery info */}
+        {(product.productionTime || product.shippingTime) && (
+          <div className="flex items-center gap-4 text-xs text-muted-foreground mb-3">
+            {product.productionTime && (
+              <span>Изготовление: {product.productionTime} дн.</span>
+            )}
+            {product.shippingTime && (
+              <span>Доставка: {product.shippingTime} дн.</span>
+            )}
+          </div>
+        )}
+        
         <div className="flex items-center justify-between pt-2 border-t border-gray-100">
           <div className="flex flex-col">
             <span className="text-xs text-muted-foreground uppercase tracking-wide">Цена</span>

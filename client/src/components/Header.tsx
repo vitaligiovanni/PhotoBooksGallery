@@ -2,7 +2,7 @@ import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { useTranslation } from 'react-i18next';
-import { ShoppingCart, User, Menu, Camera, Palette } from "lucide-react";
+import { ShoppingCart, User, Menu, Camera, Palette, Shuffle } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ShoppingCart as Cart } from "./ShoppingCart";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,12 @@ export function Header() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleRandomTheme = async () => {
+    const otherThemes = availableThemes.filter(t => t.name !== currentTheme.name);
+    const randomTheme = otherThemes[Math.floor(Math.random() * otherThemes.length)];
+    await handleThemeChange(randomTheme.name);
   };
 
   return (
@@ -120,6 +126,18 @@ export function Header() {
                       </div>
                     </DropdownMenuItem>
                   ))}
+                  <div className="border-t border-border mt-1 pt-1">
+                    <DropdownMenuItem
+                      onClick={handleRandomTheme}
+                      className="cursor-pointer text-primary font-medium"
+                      data-testid="theme-option-random"
+                    >
+                      <div className="flex items-center space-x-3 w-full">
+                        <Shuffle className="w-4 h-4" />
+                        <span>Случайная тема</span>
+                      </div>
+                    </DropdownMenuItem>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
 

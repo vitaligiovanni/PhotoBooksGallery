@@ -58,16 +58,18 @@ export function useTheme() {
     // Add the current theme class
     document.documentElement.classList.add(`theme-${theme.name}`);
     
-    // Apply CSS custom properties
+    // Apply CSS custom properties directly to the CSS variables
     const root = document.documentElement;
-    root.style.setProperty('--theme-primary', theme.colors.primary);
-    root.style.setProperty('--theme-secondary', theme.colors.secondary);
-    root.style.setProperty('--theme-accent', theme.colors.accent);
-    root.style.setProperty('--theme-background', theme.colors.background);
-    root.style.setProperty('--theme-surface', theme.colors.surface);
-    root.style.setProperty('--theme-text', theme.colors.text);
-    root.style.setProperty('--theme-text-muted', theme.colors.textMuted);
-    root.style.setProperty('--theme-border', theme.colors.border);
+    root.style.setProperty('--primary', theme.colors.primary);
+    root.style.setProperty('--secondary', theme.colors.secondary);  
+    root.style.setProperty('--accent', theme.colors.accent);
+    root.style.setProperty('--background', theme.colors.background);
+    root.style.setProperty('--foreground', theme.colors.text);
+    root.style.setProperty('--muted', theme.colors.surface);
+    root.style.setProperty('--muted-foreground', theme.colors.textMuted);
+    root.style.setProperty('--border', theme.colors.border);
+    root.style.setProperty('--card', theme.colors.surface);
+    root.style.setProperty('--card-foreground', theme.colors.text);
     
     setCurrentThemeName(themeName);
   };

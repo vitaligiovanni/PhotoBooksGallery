@@ -507,5 +507,35 @@ export const BUILT_IN_THEMES: Record<string, ColorTheme> = {
       border: "hsl(280, 20%, 85%)",
     },
   },
+  cosmic: {
+    name: "cosmic",
+    label: "Космос",
+    description: "Темная космическая тема со звездными акцентами",
+    colors: {
+      primary: "hsl(250, 80%, 60%)",
+      secondary: "hsl(220, 20%, 15%)",
+      accent: "hsl(280, 100%, 70%)",
+      background: "hsl(220, 25%, 8%)",
+      surface: "hsl(220, 20%, 12%)",
+      text: "hsl(0, 0%, 95%)",
+      textMuted: "hsl(220, 15%, 65%)",
+      border: "hsl(220, 20%, 25%)",
+    },
+  },
+  rainbow: {
+    name: "rainbow",
+    label: "Радуга",
+    description: "Яркие многоцветные акценты",
+    colors: {
+      primary: "hsl(340, 85%, 55%)",
+      secondary: "hsl(60, 85%, 95%)",
+      accent: "hsl(180, 85%, 85%)",
+      background: "hsl(0, 0%, 100%)",
+      surface: "hsl(60, 20%, 98%)",
+      text: "hsl(340, 85%, 25%)",
+      textMuted: "hsl(220, 15%, 45%)",
+      border: "hsl(180, 30%, 80%)",
+    },
+  },
 };
 

@@ -4282,16 +4282,16 @@ function FinancesManager() {
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          {product.dimensions ? (
+                          {product.photobookSize && product.photobookSize !== "none" ? (
                             <div className="space-y-1">
                               <div className="flex items-center gap-1">
                                 <span className="text-muted-foreground">Размер:</span>
-                                <span className="font-medium">{product.dimensions}</span>
+                                <span className="font-medium">{product.photobookSize}</span>
                               </div>
-                              {product.pages && (
+                              {product.photobookFormat && product.photobookFormat !== "none" && (
                                 <div className="flex items-center gap-1">
-                                  <span className="text-muted-foreground">Страниц:</span>
-                                  <span className="font-medium">{product.pages}</span>
+                                  <span className="text-muted-foreground">Формат:</span>
+                                  <span className="font-medium capitalize">{product.photobookFormat}</span>
                                 </div>
                               )}
                             </div>

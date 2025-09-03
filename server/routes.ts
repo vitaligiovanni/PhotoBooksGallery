@@ -291,7 +291,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const productData = insertProductSchema.partial().parse(req.body);
-      const product = await storage.updateProduct(req.params.id, productData);
+      
+      // Clean empty strings for numeric fields to prevent database errors
+      const cleanedData = { ...productData };
+      const numericFields = [
+        'price', 'originalPrice', 'additionalSpreadPrice', 'weight', 
+        'minCustomPrice', 'costPrice', 'materialCosts', 'laborCosts', 
+        'overheadCosts', 'shippingCosts', 'otherCosts', 'expectedProfitMargin'
+      ];
+      
+      numericFields.forEach(field => {
+        if (cleanedData[field] === '') {
+          delete cleanedData[field]; // Remove empty string fields
+        }
+      });
+      
+      // Clean empty strings for foreign key fields
+      const foreignKeyFields = [
+        'currencyId', 'categoryId', 'costCurrencyId', 
+        'additionalSpreadCurrencyId', 'minCustomPriceCurrencyId'
+      ];
+      
+      foreignKeyFields.forEach(field => {
+        if (cleanedData[field] === '') {
+          cleanedData[field] = null;
+        }
+      });
+      
+      const product = await storage.updateProduct(req.params.id, cleanedData);
       res.json(product);
     } catch (error) {
       console.error("Error updating product:", error);
@@ -325,16 +352,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      // Validate cost data
+      // Validate cost data - convert empty strings to null or 0
       const costsData = {
-        costPrice: req.body.costPrice || '0',
-        costCurrencyId: req.body.costCurrencyId,
-        materialCosts: req.body.materialCosts || '0',
-        laborCosts: req.body.laborCosts || '0',
-        overheadCosts: req.body.overheadCosts || '0',
-        shippingCosts: req.body.shippingCosts || '0',
-        otherCosts: req.body.otherCosts || '0',
-        expectedProfitMargin: req.body.expectedProfitMargin || '30',
+        costPrice: req.body.costPrice && req.body.costPrice !== '' ? req.body.costPrice : '0',
+        costCurrencyId: req.body.costCurrencyId && req.body.costCurrencyId !== '' ? req.body.costCurrencyId : null,
+        materialCosts: req.body.materialCosts && req.body.materialCosts !== '' ? req.body.materialCosts : '0',
+        laborCosts: req.body.laborCosts && req.body.laborCosts !== '' ? req.body.laborCosts : '0',
+        overheadCosts: req.body.overheadCosts && req.body.overheadCosts !== '' ? req.body.overheadCosts : '0',
+        shippingCosts: req.body.shippingCosts && req.body.shippingCosts !== '' ? req.body.shippingCosts : '0',
+        otherCosts: req.body.otherCosts && req.body.otherCosts !== '' ? req.body.otherCosts : '0',
+        expectedProfitMargin: req.body.expectedProfitMargin && req.body.expectedProfitMargin !== '' ? req.body.expectedProfitMargin : '30',
       };
 
       const product = await storage.updateProduct(req.params.id, costsData);

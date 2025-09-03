@@ -314,9 +314,28 @@ function CategoriesManager() {
                           {field.value && (
                             <div className="flex items-center gap-2 p-2 border rounded">
                               <img 
-                                src={field.value} 
+                                src={field.value.startsWith('/objects/') 
+                                  ? field.value 
+                                  : field.value.startsWith('https://storage.googleapis.com/') 
+                                    ? (() => {
+                                        // Преобразуем Google Storage URL в локальный путь
+                                        const url = new URL(field.value);
+                                        const pathParts = url.pathname.split('/');
+                                        const privateIndex = pathParts.findIndex(part => part === '.private');
+                                        if (privateIndex !== -1 && privateIndex < pathParts.length - 2) {
+                                          const entityId = pathParts.slice(privateIndex + 2).join('/');
+                                          return `/objects/${entityId}`;
+                                        }
+                                        return field.value;
+                                      })()
+                                    : field.value
+                                } 
                                 alt="Preview" 
                                 className="w-16 h-16 object-cover rounded"
+                                onError={(e) => {
+                                  console.log('Preview image load error for:', field.value);
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
                               />
                               <span className="text-sm text-muted-foreground flex-1">
                                 Изображение загружено
@@ -358,12 +377,33 @@ function CategoriesManager() {
                                 throw error;
                               }
                             }}
-                            onComplete={(result) => {
+                            onComplete={async (result) => {
                               if (result.successful && result.successful.length > 0) {
                                 const uploadedFile = result.successful[0];
                                 const uploadURL = uploadedFile.uploadURL || uploadedFile.response?.uploadURL || uploadedFile.meta?.uploadURL;
+                                console.log("Upload completed:", { uploadedFile, uploadURL });
+                                
                                 if (uploadURL) {
-                                  field.onChange(uploadURL);
+                                  // Нормализуем URL для использования в приложении
+                                  try {
+                                    const response = await fetch("/api/objects/normalize", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ rawPath: uploadURL })
+                                    });
+                                    
+                                    if (response.ok) {
+                                      const data = await response.json();
+                                      field.onChange(data.normalizedPath || uploadURL);
+                                    } else {
+                                      field.onChange(uploadURL);
+                                    }
+                                  } catch (error) {
+                                    console.error("Error normalizing URL:", error);
+                                    field.onChange(uploadURL);
+                                  }
                                 }
                               }
                             }}
@@ -442,9 +482,28 @@ function CategoriesManager() {
                         <TableCell>
                           {category.imageUrl ? (
                             <img 
-                              src={category.imageUrl} 
+                              src={category.imageUrl.startsWith('/objects/') 
+                                ? category.imageUrl 
+                                : category.imageUrl.startsWith('https://storage.googleapis.com/') 
+                                  ? (() => {
+                                      // Преобразуем Google Storage URL в локальный путь
+                                      const url = new URL(category.imageUrl);
+                                      const pathParts = url.pathname.split('/');
+                                      const privateIndex = pathParts.findIndex(part => part === '.private');
+                                      if (privateIndex !== -1 && privateIndex < pathParts.length - 2) {
+                                        const entityId = pathParts.slice(privateIndex + 2).join('/');
+                                        return `/objects/${entityId}`;
+                                      }
+                                      return category.imageUrl;
+                                    })()
+                                  : category.imageUrl
+                              } 
                               alt={(category.name as any)?.ru || 'Категория'} 
                               className="w-12 h-12 object-cover rounded-lg border"
+                              onError={(e) => {
+                                console.log('Image load error for:', category.imageUrl);
+                                (e.target as HTMLImageElement).style.display = 'none';
+                              }}
                             />
                           ) : (
                             <div className="w-12 h-12 bg-gray-100 rounded-lg border flex items-center justify-center">

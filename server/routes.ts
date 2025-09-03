@@ -63,6 +63,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/objects/normalize", async (req, res) => {
+    try {
+      const { rawPath } = req.body;
+      const objectStorageService = new ObjectStorageService();
+      const normalizedPath = objectStorageService.normalizeObjectEntityPath(rawPath);
+      res.json({ normalizedPath });
+    } catch (error) {
+      console.error("Error normalizing object path:", error);
+      res.status(500).json({ error: "Failed to normalize object path" });
+    }
+  });
+
   // Category routes
   app.get('/api/categories', async (req, res) => {
     try {

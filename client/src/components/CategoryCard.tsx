@@ -22,11 +22,33 @@ export function CategoryCard({ category }: CategoryCardProps) {
           <div className="relative overflow-hidden">
             <div className="aspect-square overflow-hidden">
               <img 
-                src={category.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200'} 
+                src={category.imageUrl 
+                  ? (category.imageUrl.startsWith('/objects/') 
+                      ? category.imageUrl 
+                      : category.imageUrl.startsWith('https://storage.googleapis.com/') 
+                        ? (() => {
+                            // Преобразуем Google Storage URL в локальный путь
+                            try {
+                              const url = new URL(category.imageUrl);
+                              const pathParts = url.pathname.split('/');
+                              const privateIndex = pathParts.findIndex(part => part === '.private');
+                              if (privateIndex !== -1 && privateIndex < pathParts.length - 2) {
+                                const entityId = pathParts.slice(privateIndex + 2).join('/');
+                                return `/objects/${entityId}`;
+                              }
+                              return category.imageUrl;
+                            } catch {
+                              return category.imageUrl;
+                            }
+                          })()
+                        : category.imageUrl)
+                  : 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200'
+                } 
                 alt={name}
                 className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
                 data-testid={`img-category-${category.slug}`}
                 onError={(e) => {
+                  console.log('Category image load error for:', category.imageUrl);
                   const target = e.target as HTMLImageElement;
                   target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=300&h=200';
                 }}

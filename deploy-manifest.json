@@ -1,0 +1,4267 @@
+{
+  "generatedAt": "2025-09-27T12:37:51.050Z",
+  "gitCommit": "5cb9d2d",
+  "includeUploads": false,
+  "totals": {
+    "files": 707,
+    "size": 262659949
+  },
+  "categories": {
+    "other": {
+      "files": 481,
+      "size": 258787056
+    },
+    "code": {
+      "files": 215,
+      "size": 3735446
+    },
+    "migrations": {
+      "files": 11,
+      "size": 137447
+    }
+  },
+  "files": [
+    {
+      "path": ".deployignore",
+      "size": 83,
+      "hash": "90b34a997b8c15de11e932f2a4e57f2c",
+      "category": "other"
+    },
+    {
+      "path": ".gitignore",
+      "size": 67,
+      "hash": "7f3b982ac4f0d7fad59b9e5751078fe1",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_020f16f8735a42b14961e849ad70066c741d4d75.bin",
+      "size": 412752,
+      "hash": "521e4ff6a37e1d81dd2a83cf375c7984",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_02d5b97e90d63eca297d16cb9c9e404c26344c88.bin",
+      "size": 421906,
+      "hash": "11b945f458ded2e978d296b22753e61f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_02d8cf04f65abbc109303b40d731b54144a23e3e.bin",
+      "size": 604186,
+      "hash": "a3f76ce470dd60b4eefd03cf8760b71f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_0d9f49efba2e7995559dd4ecde462f1292db2fa3.bin",
+      "size": 395898,
+      "hash": "8db109cc7df512e23f071dcf8261be5e",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_0f7f34dba5c6a62df4aee5c4466a92335b937251.bin",
+      "size": 118182,
+      "hash": "2a6f19a050a487a9f468d12ff0416fec",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_0fb7bc184951b84ac4ed02798d200b4d34379c3e.bin",
+      "size": 99792,
+      "hash": "e71c81c9a400e205175d479612732892",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_101b213cd0e0296c3be60957518125b58fce9835.bin",
+      "size": 414965,
+      "hash": "c3cfe3292b2d1bcc6a68484a34ff22f6",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_173febdf4e2cad0768638c87f06ff45d51f0929a.bin",
+      "size": 539464,
+      "hash": "c46e2ec68898e1a602dc8127832081a0",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_1962c5632c96ec39650625ae175898781f998ff5.bin",
+      "size": 157087,
+      "hash": "7f1e71a6095318dd2cd21c65e651af6a",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_19fddbaa1e7e4acc065b43cc562343b2d0a6dc63.bin",
+      "size": 662192,
+      "hash": "92723657e3c3cdf49db974bd8dff3f01",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_1cbce8158a43ea781129c71b315050f51b9526f3.bin",
+      "size": 508608,
+      "hash": "c36a4355d94684ccdfa1c219b6b20503",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_1e13069ef2af64954b5c65b9991eaa19f3c82ee2.bin",
+      "size": 518656,
+      "hash": "1faf979f901c60511db48f218af8f7a9",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_1e425c5f5658a9795302e6c6ecf9db7ac1889a69.bin",
+      "size": 98314,
+      "hash": "875345c5f48f10c29991c7b8dccf1fd8",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_1f34b4238692b2112fef562b03403a764081ee83.bin",
+      "size": 500775,
+      "hash": "837980a611c871d976479af2fbc51561",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_212e636d2639a581df13188d55b194f3bab79b01.bin",
+      "size": 527809,
+      "hash": "6d7849e54a4bc7e180c5d2ab9d8633e2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_2270969d3ee82351fe378fa9205da901b5e521d1.bin",
+      "size": 408344,
+      "hash": "dafb08544d2fe524726653f12d2446f3",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_2305fb8d7a04a2a05cf2751c9e4820eeff57be0c.bin",
+      "size": 70584,
+      "hash": "98a52e61bd2bfaeb95a29f194e35cf39",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_23e836f385f5df45a5a8bff5bad40a559d1b80a4.bin",
+      "size": 491123,
+      "hash": "2c84354701b73cd398603ea561c59685",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_2525a0a35af71b7161b0e1dee53c7c2c92dea2f1.bin",
+      "size": 430108,
+      "hash": "63d0b7632cfeb90d7db7d0024dff62bb",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_26a461e8f3d33790eaed62d4f58ea38c21033aef.bin",
+      "size": 424394,
+      "hash": "d161cc1d66999a783cb849d43f9c035d",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_26e47999956c4c1d9e780f254da8244973b4e2d6.bin",
+      "size": 529712,
+      "hash": "8e1cebcba02a42fd9c6d9fa310800255",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_27af4e11f28897c0c6ec88566f268f8536e10feb.bin",
+      "size": 452894,
+      "hash": "374386d9323f6e1cadd2040c22983e37",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_2ae0f04cb66f7f424c43c8fd16058c7bfbdabcce.bin",
+      "size": 519629,
+      "hash": "d86ce4cb4f20cff4206dd91b0bd70827",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_304a69be0140a0f8ab1226c3285f4e0c3988666c.bin",
+      "size": 539920,
+      "hash": "1f0ed5670cc80ccbb04f59461a36257c",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_321326e0669b4b0efd35b4a252b99a571a7bfa38.bin",
+      "size": 114758,
+      "hash": "8194b0ad70c68fe9b5e3f9860d2f820c",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_3275d79e447fa454b909290fb2bd1d9f9c85323e.bin",
+      "size": 426719,
+      "hash": "c8693d13a7994e202874c0827260ed5e",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_36d19beb69a7eac2b0a4deddd18e1d50f8d565f1.bin",
+      "size": 692944,
+      "hash": "b774bd6956247778b4bc3f89532efcc2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_36e4a392952dc9dd8ffa249a49e2ac4cdfb51a8d.bin",
+      "size": 462926,
+      "hash": "ae8413100029ecfbf6e936eb815038c4",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_38daafe2f794ad2291d8d1599d5402b578eabd4a.bin",
+      "size": 517074,
+      "hash": "aae253945822f72f5655bfa4648113e8",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_3a9f9632dc1f2941c7a05ddc8ea6a6226e1e0fc1.bin",
+      "size": 479713,
+      "hash": "4050ba7755045dc5280785fa12843846",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_3b6b8d84f94634021575f9ea5bd9586dced9f5b3.bin",
+      "size": 486580,
+      "hash": "1375344d3036f1fdb5d47d39f7d8ec7a",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_3db5718f599dd59ff665c6a78ab5fbe5448897a8.bin",
+      "size": 508175,
+      "hash": "e5237bb151b9e6ef44556e3a53d64f24",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_3e81a5c02f005014a4f52448e70fc0df4d82c583.bin",
+      "size": 381685,
+      "hash": "452f8478e3f54de94f8198cd78c9b51f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_3f00ef541e1b32af0bf72fc4b3616016aeef5095.bin",
+      "size": 141825,
+      "hash": "91c30fafbc8fd9e73e16d9aa11ee8dbd",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4269be42ad017d18298cdc805fd3c2e7d9dd9595.bin",
+      "size": 526077,
+      "hash": "f910dbc8437111b55eedaa8bf5f1d437",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4464eaddce04b21167d06cc62e54434c01eb54c1.bin",
+      "size": 536087,
+      "hash": "4a0d2bf32853799b1954f4aaf5b55d75",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_450e0ab21e6afd94670d29fbfbc8d06065d5544a.bin",
+      "size": 505805,
+      "hash": "4a38ed1bc139bb7b833d191d5406d3a6",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4516da19ae622aa264fdef3c27c4a082077ba69c.bin",
+      "size": 406182,
+      "hash": "95977fc831c13ce1ef71fc79baddcb78",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_47584f130e4cecf2fe320463ed9ab33d3be93607.bin",
+      "size": 466005,
+      "hash": "493a0cda3660438d9e2d14ec578cec57",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_487c1a0cdd10fb05da1656c75dbcfd3e5083e325.bin",
+      "size": 395645,
+      "hash": "ca44e967d75de31835d7b6ba0e5756a6",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_48f9aaf880e7436570ae47072d5d43ddd71d4e3e.bin",
+      "size": 519063,
+      "hash": "13e9818bb938d74fb002c5dd827471f3",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4b4346f2435300b71de0513b854f801ef18bb87e.bin",
+      "size": 537220,
+      "hash": "af7ee8181c88c8196e4bd64d991ddc89",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4b7bdbae682f7a96c12f60f8f8a265e520b64c41.bin",
+      "size": 529582,
+      "hash": "9bea74d2fd8b637df8e30401ee0d6fea",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4d9db02eb1b95e96f3b4f33d30f125dca692478e.bin",
+      "size": 471847,
+      "hash": "9ec827ed125d648fa74aba7fa4374fc8",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4daf91418309b7395f92d6010fac888c75e9bf88.bin",
+      "size": 392529,
+      "hash": "8811280dfd1b1c7a5691f6b145b164b3",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4e3ae02ea636d796ef405ebd13708e0166402465.bin",
+      "size": 463402,
+      "hash": "dd9940cf2d0aee5dccfddf0f6486b776",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_4f2c308acee60db61447ea1fea9a6cf1740fec6b.bin",
+      "size": 524157,
+      "hash": "50d67e134e378bb9ae4a6a6169f62db7",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_50a26f0c6feb2e32d6e66faed02e17dc5c71d493.bin",
+      "size": 413631,
+      "hash": "985c9f20d554380855936e43c2071cac",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_51ee0429beeecf6bb5dab8c7aba1b26acf27cddb.bin",
+      "size": 411355,
+      "hash": "900a5bda260a48811930cb7c3444940c",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_5679fcf38cf69fc8de8ff3bf26f68a24d716a0aa.bin",
+      "size": 417078,
+      "hash": "b0716c467e63cd37a66fb09da6f83c43",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_57e326da94cc68d7ce1c9ad0f8f48d3a04d938ed.bin",
+      "size": 455815,
+      "hash": "d0e579d3a8e6fc870868aec27d734726",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_5cb9d2d7a9ceb8f06aaaebc6ddf63bf0b14e11af.bin",
+      "size": 367642,
+      "hash": "c0bbf8ea3ec22f370d6478cdb4cad45e",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_5d3cf53323813352d07cb3eb9872ee6ea172e038.bin",
+      "size": 479169,
+      "hash": "9b2e16f35c408392ba2e3700ab248384",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_626d362e4bac4fbbe09c6f980606941ee2604c90.bin",
+      "size": 531005,
+      "hash": "608e6552e2833f73dbeef5f069264786",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_66cd6211ad14ba51906d6f575ff1e8e1e60d9dfe.bin",
+      "size": 792459,
+      "hash": "b291399edbf5fc64fec1ba3f884610a0",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_682627a355b64a7b019dd97054323864bb8c7997.bin",
+      "size": 418169,
+      "hash": "1e0b0a5a8a2bb651594a3d669f331cf0",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_68b115267fde79182c1cb7efdb550eafafaf6785.bin",
+      "size": 542454,
+      "hash": "2f8b5a2148b125597e56898cc2c30a55",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_6952b686285145e7278711c7afde7e3afb33bbd7.bin",
+      "size": 170063,
+      "hash": "df12ea92d7854a26d22036696300008d",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_69a6e94264ab632c5c1c0438e07f9a74d14a73b7.bin",
+      "size": 524522,
+      "hash": "00d1b1e3ebcc6110039ef8202e22b877",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_6ce7b93433c6857e17af952716bff8e28c81cfdd.bin",
+      "size": 424633,
+      "hash": "47aaeec8c63b6ed6047693d21cb3f4df",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_6e4725a9d209dab709f36c253a0580b6f68c2e0d.bin",
+      "size": 436976,
+      "hash": "7ba19f8d8ca64ac01fd16fdfcc642c5b",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_6f6a6d34fa55b08c5022cf5725accd651e35939b.bin",
+      "size": 110735,
+      "hash": "2df3e3a8e90344221d035603b91eb2c2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_721357cfa38eadf61fc414fa6e57b88167873b10.bin",
+      "size": 536048,
+      "hash": "9997f14ac7051b04c90413cb6bde96e1",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_72aa8cfc6b79923f69b086691d66787a7bba37c3.bin",
+      "size": 557692,
+      "hash": "47b1709dfd0498ef2d41a04cfb1df2ab",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_73d78b81728afb3a8161d60d34acb04379aafebc.bin",
+      "size": 534863,
+      "hash": "1c34f55c93d3a33b633d7b9efdc41160",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_767d92d2680e0177493fa5c2fe39a379b79dbef2.bin",
+      "size": 411967,
+      "hash": "2b1f7ee4d4958a5aa8dc5148bf503d19",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_77c7b9b5e8569c993f54c1de962734be726f5163.bin",
+      "size": 453901,
+      "hash": "5d64e701cbfb1f6bcd595624d0c018db",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_7802a7825e831d281f53656a59fc0cbc0274bb83.bin",
+      "size": 445230,
+      "hash": "0bdee021de3f0d67d94ebdefa120e085",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_7882fe746a2d0ce7bc6ff4deba922044bdbc3b0c.bin",
+      "size": 464954,
+      "hash": "ccdc609c51a9b928c841803c0b2cd109",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_78f8b6662fb48848159517688705f8b75ba7fc47.bin",
+      "size": 466920,
+      "hash": "37a40c58beed188733cfdba12c5e6674",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_79859cfe747896bac03ce9b57e45ceef979f57f4.bin",
+      "size": 451656,
+      "hash": "c83c1a7801f3eb9724122e6ef10cb410",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_7c5d88d4bb82f0f7f94302f2563c154993d1aef5.bin",
+      "size": 507589,
+      "hash": "1cc9feb088f5aecb8bebbdc03b86b047",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_7e19cb03510ec0dff745036aaa893412757a47ad.bin",
+      "size": 517263,
+      "hash": "1140fbb0f8054bfb30f08042147da9ba",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_80444bb83be5a16939b9a363bf4e3a9ca4681b4f.bin",
+      "size": 99363,
+      "hash": "3988f0be2d99557ce780e1fc419b0b55",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_8182f3fb47d04c62df0350ddf2748df4da597c64.bin",
+      "size": 387795,
+      "hash": "76b7a67892ec460d3117936dd33d0491",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_84899ee2574a317ef729efe35c2a34f1537fdc4d.bin",
+      "size": 456789,
+      "hash": "03ac61d4de07c17b779af515bda671f2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_8a38442d924c4f73cfe3632d2074dda48a1a1c79.bin",
+      "size": 461302,
+      "hash": "603f967b85c94eaf00f29aa3d649322f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_8b631dcab7cc756cdcd14b8c94d7712a68f20680.bin",
+      "size": 537057,
+      "hash": "a828ec998128dfd0eb39db5ade9262e5",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_8d0172d8fa11fac67125c9b110a10a02bd44148b.bin",
+      "size": 513159,
+      "hash": "bf6ac242faf8209da3242c4cc79b8a0b",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_92902e42ffcb0343f78eb53bdd723f0430177c8b.bin",
+      "size": 433510,
+      "hash": "9b7abd23f1ef410498cff8111383feae",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_9758972bb224d2157843944f214ccd6985819ad8.bin",
+      "size": 449887,
+      "hash": "3b8312790cc5895743247a70d2504045",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_98bdf9c10b29e8f37e9f6f33777a2c9ba395f5eb.bin",
+      "size": 556361,
+      "hash": "02b897dd9a4ff3f77d0ab8278b818ed4",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_9b25a5ff98730dbeecbb73419b1f366ed96321d3.bin",
+      "size": 581178,
+      "hash": "063b81a9a8b2d449452298d8c72de156",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_9bc84ea7437f21eb83da6eb453a5abad489a8cc0.bin",
+      "size": 413726,
+      "hash": "7be6fc553a20ff33e354a35df75db91b",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_9c313a08f3628c4e4b09e57f41ca97e6f8892769.bin",
+      "size": 547926,
+      "hash": "e7d9a0258f1e5566a092cc623db9afa9",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_9c4cd0daa600a713533c1656284bffaedf367745.bin",
+      "size": 501057,
+      "hash": "56884a73d9b40f0289e018d83ae0c4b9",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_9f05d3881fffac45127a261d6c7ba540ca82ec02.bin",
+      "size": 415026,
+      "hash": "962f78e9b34b4604847404d57fa852c2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_a0c05579f29c62beb490960c59923d268197ff2f.bin",
+      "size": 397983,
+      "hash": "18884d32f6dc74701faf546832fd767d",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_a5de3f169566a55f1ac0514b1ca6773fc738fa7e.bin",
+      "size": 546673,
+      "hash": "b504f5432d5f7da7b8a1a242fbbd065f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_a91c49921b0db1643be286266406fe576ff8309a.bin",
+      "size": 448168,
+      "hash": "135db895dbcc43c21ebf2778f62b94a0",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_a971bde7decb60a713fdd4d476e49dc6092168c1.bin",
+      "size": 118823,
+      "hash": "232d23e5d4782e6eac4931c9e133bcbb",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_ac122fc6fdaeccc703563dcb3a2c975da5d62bc0.bin",
+      "size": 462265,
+      "hash": "68f556800d44f4d27576990463617b26",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_ac3cf6e6877fc9484b9aec32744fe569a6593cf9.bin",
+      "size": 524517,
+      "hash": "f722c70d90f6bdbb69eee72469b4d34e",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_acc6b60bd975efc63c5c22af74874c888ec5727c.bin",
+      "size": 418051,
+      "hash": "2d6a8eae16df3d607061bc7879d98461",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_af10b74c1a4a9208771f51a6649c101f4c8b9c41.bin",
+      "size": 527830,
+      "hash": "1aa254b2edc8e3fe08a6f4f9103c9b4f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_b1b2ee8f2afebffbebd23bff10c965d9ea0b88d5.bin",
+      "size": 428456,
+      "hash": "90dfc789e0a68a3e4ecaa9639568de8c",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_b469b751e060bddbaea0d51e68a1796ac965639e.bin",
+      "size": 519042,
+      "hash": "c9771bcdc372c5fbffba83df58cf4c7f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_b77e9f9a3ddf617c48a38d21f74573a546632ca6.bin",
+      "size": 103340,
+      "hash": "c8d0d718d095a78952540aa15ba3db06",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_bc62e086532bf9fdbd97ff8b62fb7191da8a1191.bin",
+      "size": 527024,
+      "hash": "2efe6b112048a69fbd9d0c633ebb0560",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_c12b983bb747bddaa587f88ff3621352fab22b1f.bin",
+      "size": 599443,
+      "hash": "62afc2fbf6c3ef51e511d43a82a84035",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_c297406fbf20536e5726cb05c8affd5c40e94d94.bin",
+      "size": 136842,
+      "hash": "1e9596e4d51fe062bfbb00bdac1df3bb",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_c8cf2a2b355a6e1ed3f40295bc13cbe0cfd2eee9.bin",
+      "size": 484128,
+      "hash": "0c28500199db5e6e7bd8ae5e21f1f248",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_ca7d4a1b75e5a8672bbe608daf17113e2278472b.bin",
+      "size": 520344,
+      "hash": "a376648536a6ec11cbf73fa77a3df580",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_cb1d2d3c5d292ed9b850f2926b89018d9ecb8832.bin",
+      "size": 522264,
+      "hash": "8f8553f6167dd8893511f4509fe8c2ab",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_cc0d084b6c8e7b214eb44d4f17e157b5145653af.bin",
+      "size": 404070,
+      "hash": "a9cb3c504158a961309614654928c298",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_cdbce3d5918ab1ffff4909421b4003316b25568b.bin",
+      "size": 406509,
+      "hash": "4dab38cd87af1ce394ac5a32efe3a1f9",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d1ace10ea852bf45ec2d259c461301d54aa56b1f.bin",
+      "size": 410188,
+      "hash": "53b13023d80b6af119a5024338844611",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d1b20129b83c6e90fa6d3867d020c241e6538497.bin",
+      "size": 521982,
+      "hash": "defdd62e2867957cb850ac6ade8cbc54",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d385d37acce475a00e228d3a29823db9b18e7880.bin",
+      "size": 262652,
+      "hash": "a820f44d55d173d4e974c044c4e3973f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d3a6f375a75acfccc59458159c319fb0febde175.bin",
+      "size": 505374,
+      "hash": "523932dd40b9c9f3e18ff1af132b82f9",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d4d6987c6ffd8cf9cc0201ad4a6a1f843152abc0.bin",
+      "size": 513369,
+      "hash": "e8628584a22920b98ca9e6f420a1176f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d5444df5aaf39d230210001703d774284918665d.bin",
+      "size": 357574,
+      "hash": "ccf5aefde6547b5aa0befd8e8b342fc2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d61880a7907f4743abc1acee24e7d71da03822f3.bin",
+      "size": 507994,
+      "hash": "c9061d9ddfe292800b756b257636df79",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_d8f79c31c5f164b6e7d73e8f4c16c1f146691ca9.bin",
+      "size": 34979,
+      "hash": "a19a478d87faea46d590976a71618c11",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_e0904a8689195ef64113cddc0c7f754d289140db.bin",
+      "size": 501112,
+      "hash": "75ea6b7630df022ed3350345256e8fad",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_e6909ad4d85a0a8c5938cbd5db180ad1a9908b38.bin",
+      "size": 498558,
+      "hash": "7196eb199958ff84ea60e4af1951e1cb",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_e6a9716b12a6ab3ccf6356734078aeb9c2840ca0.bin",
+      "size": 532684,
+      "hash": "edcb7b62c451a9181b6ed9bfcde5252d",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_e866b5c4f26941768991a3a86ff421719818685c.bin",
+      "size": 87830,
+      "hash": "619f8f84cdf04211733d2bf30e8c6c7d",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_e94cb77e7ce0a90349b07f4e494f4c638ae4fc16.bin",
+      "size": 142417,
+      "hash": "65b1af498f4973f68f09f89ff156a02f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_ea5314cd419d87d024fe6bec61597368fcf9b561.bin",
+      "size": 477409,
+      "hash": "e7fb2c8b319e4da1dd5e49ca52c07a7d",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_f157ddf2a0a3c358acf3365b302eace01850468c.bin",
+      "size": 93214,
+      "hash": "6d0603ad2b7841c319ff971a30272bf4",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_f2202e75ad5bb4e728ab7478ea9381f3d0fb7c6a.bin",
+      "size": 387661,
+      "hash": "0499fa7460c2d9e1264533a0da500eab",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_f56e3ebf3890b26c7680849549143a825dd1f705.bin",
+      "size": 353551,
+      "hash": "b3343cdc3c77c14cb5c25d4baf9b043f",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_f5fc0349cbcd0b39f5f2a30ab9fdc91e6d830bdb.bin",
+      "size": 607616,
+      "hash": "375e786ed16223c3482c088bd9c4a7d2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_fafaea9eb745f684b99077604ce6b35aa7b9efe9.bin",
+      "size": 577636,
+      "hash": "f45c361499e6aafd6b87ca8a6515bb56",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_fdffc1a1cded18afbf6316415d326d716fa48b27.bin",
+      "size": 122320,
+      "hash": "c855f9618dc0d8c424b9c937468d467c",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_fed17222309faf22738d45f946cf4d7b5383766c.bin",
+      "size": 511154,
+      "hash": "e1f3e4da30a86a8b2dd2aac0c2f89d42",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.agent_state_main.bin",
+      "size": 374664,
+      "hash": "4ac2d2878f0ed03aae9598e118895b1a",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/.latest.json",
+      "size": 18,
+      "hash": "ffde1611a1c8f612d8569f573e26fb72",
+      "category": "code"
+    },
+    {
+      "path": ".local/state/replit/agent/design_reference/73757343-72dd-4be9-8d91-1138e339138d/e5afa5d9-19af-4bd2-bb08-b1c45cc21695.html",
+      "size": 53386,
+      "hash": "d3689202b28089de610ab522972b5df2",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/filesystem/filesystem_state.json",
+      "size": 765621,
+      "hash": "7910e4114e8e5156749025f3c0c3091a",
+      "category": "code"
+    },
+    {
+      "path": ".local/state/replit/agent/rapid_build_started",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/rapid_build_success",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": ".local/state/replit/agent/repl_state.bin",
+      "size": 5648,
+      "hash": "d483bb55ac6d59f6635496a1d9de24ab",
+      "category": "other"
+    },
+    {
+      "path": ".replit",
+      "size": 856,
+      "hash": "8152f5fc56031015cdce8c07e01c49d3",
+      "category": "other"
+    },
+    {
+      "path": "add-blocks-columns.js",
+      "size": 1362,
+      "hash": "8f9a7c374fc622dd3219adf9a500a525",
+      "category": "code"
+    },
+    {
+      "path": "add-missing-columns.js",
+      "size": 1347,
+      "hash": "14c6db8ca04afd30a02bf777b9a2fe67",
+      "category": "code"
+    },
+    {
+      "path": "add-video-columns.cjs",
+      "size": 1064,
+      "hash": "270c84a125c41e4e48943d0d9860e7a5",
+      "category": "code"
+    },
+    {
+      "path": "additional-endpoints.js",
+      "size": 2123,
+      "hash": "9cd8544fb693c534e34aca8666b35393",
+      "category": "code"
+    },
+    {
+      "path": "all-endpoints-correct-order.js",
+      "size": 4521,
+      "hash": "522a2e0e4a14b5a7e8a5e4170c08ae65",
+      "category": "code"
+    },
+    {
+      "path": "api-server-admin-fixed.cjs",
+      "size": 20208,
+      "hash": "8a357d8c9116189997489df3e956bf88",
+      "category": "code"
+    },
+    {
+      "path": "attached_assets/2025-09-02_21-07-48_1756832882998.png",
+      "size": 229891,
+      "hash": "5b05875171aba35abc112eae038e5150",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/2025-09-02_21-25-16_1756833944650.png",
+      "size": 8672,
+      "hash": "f6b212f933d9d7494eda8168eedca40c",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756823165363.png",
+      "size": 313305,
+      "hash": "df77dd3bb4b44f4e35d6ed724f9085ac",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756823705193.png",
+      "size": 207522,
+      "hash": "d45393cab4e2c3da5adacedcb3460381",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756832584783.png",
+      "size": 347112,
+      "hash": "e22f58576ce7f4f915ba0002b21096d2",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756832596433.png",
+      "size": 396391,
+      "hash": "01cfbc9ae9065a6811617d5fe84fe838",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756833561721.png",
+      "size": 344769,
+      "hash": "2d2553ab26c4b83dff09ac494d6399e9",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756842528374.png",
+      "size": 335033,
+      "hash": "fd6fb0400f9a184a720564b538e34951",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/image_1756885221980.png",
+      "size": 713473,
+      "hash": "7541a62fd5bd769ef4e1b5baed6fb827",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted--Frontend-Next-js-Typ-1756821676132_1756821676134.txt",
+      "size": 3856,
+      "hash": "00114544e9b1eda539e421ef256129d4",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted--ObjectUploader-tsx-95-Got-upload-parameters-method-PUT-url-https-storage-googleapis-c-1756842768775_1756842768777.txt",
+      "size": 2404,
+      "hash": "7518d812144239168776e3ba4555031b",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted-Download-the-React-DevTools-for-a-better-development-experience-https-reactjs-org-link-react-devt-1756842135458_1756842135459.txt",
+      "size": 2443,
+      "hash": "2d3bfaaa9950c66b7b431c1137a3a52c",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted-Download-the-React-DevTools-for-a-better-development-experience-https-reactjs-org-link-react-devt-1756842236962_1756842236963.txt",
+      "size": 4362,
+      "hash": "4d361eab868d08defeaec7fae9c24779",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted-Download-the-React-DevTools-for-a-better-development-experience-https-reactjs-org-link-react-devt-1756842377192_1756842377193.txt",
+      "size": 2214,
+      "hash": "eecca11628c7b56101722274c3ea616c",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted-The-above-error-occurred-in-the-CostEditForm-component-at-CostEditForm-https-ed2d2ffb-c-1756915556512_1756915556513.txt",
+      "size": 10262,
+      "hash": "12c42beda9cf1d2d06d33e2ac272cc47",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted-The-above-error-occurred-in-the-SelectItem-component-at-https-ed2d2ffb-c725-49a3-8122-02-1756836848686_1756836848686.txt",
+      "size": 5139,
+      "hash": "2f3106d675036606cc0c98830da3493c",
+      "category": "other"
+    },
+    {
+      "path": "attached_assets/Pasted-The-above-error-occurred-in-the-SelectItem-component-at-https-ed2d2ffb-c725-49a3-8122-02-1756912071425_1756912071426.txt",
+      "size": 5060,
+      "hash": "119adf4f8a27bb554ece5f63901dc1d9",
+      "category": "other"
+    },
+    {
+      "path": "banner-api-examples.md",
+      "size": 1254,
+      "hash": "eae5c68d37ebcf2de9b7ab5e6b83abcb",
+      "category": "other"
+    },
+    {
+      "path": "banner-examples.md",
+      "size": 3333,
+      "hash": "e8912ede743da1713d9272efeef59968",
+      "category": "other"
+    },
+    {
+      "path": "BANNER_SYSTEM_GUIDE.md",
+      "size": 5209,
+      "hash": "6d3c3abb08bd85c675cd13218bda671b",
+      "category": "other"
+    },
+    {
+      "path": "blog-endpoints.js",
+      "size": 1531,
+      "hash": "ffff97b1abec23cb1d0b680e07a386ab",
+      "category": "code"
+    },
+    {
+      "path": "broken-images-report.txt",
+      "size": 651,
+      "hash": "bafd22fecbaaefe93be2d4caa718b2a5",
+      "category": "other"
+    },
+    {
+      "path": "check-blocks.js",
+      "size": 892,
+      "hash": "758384751654e903c1a5610a33b12ebc",
+      "category": "code"
+    },
+    {
+      "path": "check-build.js",
+      "size": 1670,
+      "hash": "58bc2b7bc42e9689fc044259cbdd5b7f",
+      "category": "code"
+    },
+    {
+      "path": "check-current-data.cjs",
+      "size": 2040,
+      "hash": "29ef49a7e4d9515df5175ff272c83c21",
+      "category": "code"
+    },
+    {
+      "path": "check-db-data.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "check-db.js",
+      "size": 1276,
+      "hash": "fa571e5851c06cb9cb029ae043aace6b",
+      "category": "code"
+    },
+    {
+      "path": "check-demo-data.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "check-products-structure.cjs",
+      "size": 1249,
+      "hash": "401648f258ec629526cf66c6a56832b6",
+      "category": "code"
+    },
+    {
+      "path": "check-products-structure.js",
+      "size": 1129,
+      "hash": "bdd6577eea261ae2995845943a057b5f",
+      "category": "code"
+    },
+    {
+      "path": "check-tables.cjs",
+      "size": 1624,
+      "hash": "ec675e3f0b9bf216c0eb49160a7e77db",
+      "category": "code"
+    },
+    {
+      "path": "check-videos-column.js",
+      "size": 1094,
+      "hash": "867dbe62e79ccae048b1c26d61cba487",
+      "category": "code"
+    },
+    {
+      "path": "check_localhost.sh",
+      "size": 204,
+      "hash": "9c2d4c54a6aed542a4d0d050ee81cc0c",
+      "category": "other"
+    },
+    {
+      "path": "client/index.html",
+      "size": 2671,
+      "hash": "c5ea0746b399fd5d3ba6acd276fb6b19",
+      "category": "other"
+    },
+    {
+      "path": "client/PHOTOBOOK_IMPROVEMENTS.md",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/public/favicon.ico",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "other"
+    },
+    {
+      "path": "client/public/icons/icon-16x16.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "other"
+    },
+    {
+      "path": "client/public/icons/icon-192x192.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "other"
+    },
+    {
+      "path": "client/public/icons/icon-32x32.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "other"
+    },
+    {
+      "path": "client/public/icons/icon-512x512.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "other"
+    },
+    {
+      "path": "client/public/icons/INSTRUCTIONS.md",
+      "size": 3100,
+      "hash": "143afd3797cfa9d400fd85ba9c0700f1",
+      "category": "other"
+    },
+    {
+      "path": "client/public/icons/logo-original.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "other"
+    },
+    {
+      "path": "client/public/manifest.json",
+      "size": 3707,
+      "hash": "a0f3aafa00681e462df8c0fa255fce98",
+      "category": "code"
+    },
+    {
+      "path": "client/public/README-icons.md",
+      "size": 1175,
+      "hash": "d492a2b188b6b7bb1468d6b80234232b",
+      "category": "other"
+    },
+    {
+      "path": "client/public/robots.txt",
+      "size": 1628,
+      "hash": "e78807848b9941c0ecfcd7c57a6d4f6d",
+      "category": "other"
+    },
+    {
+      "path": "client/public/sitemap.xml",
+      "size": 4470,
+      "hash": "f9d1d599a31b8e1a57daaf59778ffef8",
+      "category": "other"
+    },
+    {
+      "path": "client/src/App.tsx",
+      "size": 3442,
+      "hash": "3917d3c5c05b995e7782d7ea2d4d7b63",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/BannersManager.tsx",
+      "size": 44206,
+      "hash": "cacdbdced9763d0cf6c5dd94e5bb55f5",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/BlogManager.tsx",
+      "size": 18552,
+      "hash": "46a9d30cc2e13ff8556af86736969fe4",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/CategoriesManager.tsx",
+      "size": 23480,
+      "hash": "cd0dfca1eb02a4ddb44b75c560683ba0",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/CommentsManager.tsx",
+      "size": 18742,
+      "hash": "edc8776c65e0e2c4bbc64d1fb42689c5",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/CostEditForm.tsx",
+      "size": 19669,
+      "hash": "3592d348a7cfb6efc9bd9c3ee929e7c1",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/CustomersManager.tsx",
+      "size": 28193,
+      "hash": "8918db6cb99f50581a0f7c3adde80d9e",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/DashboardStats.tsx",
+      "size": 14648,
+      "hash": "5e2f07e0de64c6846aa93c8b7cef5a81",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/FinancesManager.tsx",
+      "size": 18217,
+      "hash": "51a2ba1ff28770f54aeafb0d8a3f5489",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/OrdersManager.tsx",
+      "size": 19461,
+      "hash": "b84a4d40a50010bef8d940f851db6db0",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/PagesManager.tsx",
+      "size": 10844,
+      "hash": "6f9607e9866912d0c2c6fab792931877",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/ProductsManager.tsx",
+      "size": 54341,
+      "hash": "c1fd92f090e5fecfbed6ef36cd91d1dd",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/ReviewsManager.tsx",
+      "size": 22105,
+      "hash": "5c4c27502114f1f71a34ba247ea1f067",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/SettingsManager.tsx",
+      "size": 22557,
+      "hash": "e0e475d7d582eb5378b44e1a6ef46a41",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/SitePagesManager.tsx",
+      "size": 7562,
+      "hash": "25d382981872755780e96b1550c8c050",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/admin/managers/SpecialOffersManager.tsx",
+      "size": 39654,
+      "hash": "d7dee58648f9a0ec77661739284e6a6a",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/analytics/AnalyticsDashboard.tsx",
+      "size": 19099,
+      "hash": "56df580fa1730a9036c1f04b6e8e237b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/AppPopups.tsx",
+      "size": 240,
+      "hash": "39e692b36ab693a9fa656301e1540d64",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/banners/BannerManager.tsx",
+      "size": 10000,
+      "hash": "43f3d924df74578f37d0ed0b37b12632",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/banners/FullscreenBanner.tsx",
+      "size": 2063,
+      "hash": "87d1e68837e8c3e8780a580920588345",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/banners/HeaderBanner.tsx",
+      "size": 2322,
+      "hash": "96480760d51c06eac60784342e18f8a6",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/banners/index.ts",
+      "size": 152,
+      "hash": "407376c25b7205ac0e59e2cf3218ddea",
+      "category": "code"
+    },
+    {
+      "path": "client/src/components/CategoryCard.tsx",
+      "size": 3316,
+      "hash": "ea081bf9107e3020c6ec288b6ce6d535",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ColorPicker.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/ButtonBlockEditor.tsx",
+      "size": 11941,
+      "hash": "8b623711a31520e797f8bcec3058300b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/CategoriesBlockEditor.tsx",
+      "size": 20258,
+      "hash": "9935072eac1aae81d07aa8db11d28a67",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/ConstructorApp.tsx",
+      "size": 35752,
+      "hash": "ccf57793fc37d352c7f337bed6283e1e",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/GalleryBlockEditor.tsx",
+      "size": 14024,
+      "hash": "fcb6bc918c065903d7e44e5ed5a5cb26",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/HeroBlockEditor.tsx",
+      "size": 22124,
+      "hash": "8b097a460bd2a5c4c9ebb89a7fe223d5",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/ImageBlockEditor.tsx",
+      "size": 9146,
+      "hash": "dee0dafccaef42978245b8c7fc138c83",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/PageRenderer.tsx",
+      "size": 5205,
+      "hash": "216665a6e2da0700ce21d4e86d08f4df",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/renderers/ButtonBlockRenderer.tsx",
+      "size": 2127,
+      "hash": "7ccff22432fa9723cafab1b0bcc5b99d",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/renderers/CategoriesBlockRenderer.tsx",
+      "size": 4758,
+      "hash": "d7019008792541559f5f4dc4c2415066",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/renderers/GalleryBlockRenderer.tsx",
+      "size": 1536,
+      "hash": "4f8d078a03d8205b467918144408f634",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/renderers/HeroBlockRenderer.tsx",
+      "size": 2689,
+      "hash": "d87d11f1ad8c4f2b405bdc4300e3c379",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/renderers/ImageBlockRenderer.tsx",
+      "size": 1212,
+      "hash": "519e72f42993dcc49eb787bd8b93b18c",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/renderers/TextBlockRenderer.tsx",
+      "size": 1249,
+      "hash": "765f63cf890effebc2926fb6a0a97bf3",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/constructor/TextBlockEditor.tsx",
+      "size": 7237,
+      "hash": "3f3de30ba7e722e4576c03cb14bef4ff",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ContactSection.tsx",
+      "size": 9039,
+      "hash": "96a21b62fcbed964d7c5479260057444",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/CurrencySelector.tsx",
+      "size": 2083,
+      "hash": "3f84c4d614b2e30e24d33e159e147a2b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/DesignLibrary.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/FAQSection.tsx",
+      "size": 3264,
+      "hash": "65a5560d4b11b61cbfe4d15ef46e4bef",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/Footer.tsx",
+      "size": 4181,
+      "hash": "fa6c60c4f3ef1ab508f944c547e286b1",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/Header.tsx",
+      "size": 13005,
+      "hash": "b8ed3ae5c35c677b19f5f657ff0203dd",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/LanguageSwitcher.tsx",
+      "size": 1174,
+      "hash": "ba1b0c3d442e0081550ad265a99b52ed",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/layout/AppLayout.tsx",
+      "size": 2312,
+      "hash": "ad0968beebfb3e1d1a7a925afc40a7bd",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ObjectUploader.tsx",
+      "size": 4484,
+      "hash": "a039ab86c70738344f1e1c5656866856",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PageEditor.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PhotobookEditor.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PhotoEditor.tsx",
+      "size": 7569,
+      "hash": "22a3e41f12bd66f265aaa56ee9d151ca",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PhotoManager.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/popups/ExitIntentPopup.tsx",
+      "size": 5661,
+      "hash": "4a4799dc0f79bb93b83107aa3078fd00",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/popups/PopupManager.tsx",
+      "size": 6200,
+      "hash": "29f3982d9fb552acca53f8e0fa899c5b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/popups/WelcomePopup.tsx",
+      "size": 3597,
+      "hash": "2b995d0d3913709128c742ea7aac8ae5",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PremiumButtons.tsx",
+      "size": 3035,
+      "hash": "e2314608e821d2e74215eaf2cd5eb234",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PremiumServices.tsx",
+      "size": 10122,
+      "hash": "738e087b525f8fd6d15ea7a4914555ac",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/PriceDisplay.tsx",
+      "size": 1502,
+      "hash": "70fd9c1fef5dcaf15051c1517ac68dd7",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ProductCard.tsx",
+      "size": 8306,
+      "hash": "01781fa1651c339b3026765a12a6162d",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/QRUpload.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/QuickPhotobookPreview.tsx",
+      "size": 3683,
+      "hash": "8d7030003c11321eccb6c6ba016c4214",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ShoppingCart.tsx",
+      "size": 6101,
+      "hash": "252d39135b63885f9d3c940eaab39d76",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/SizeSelectionModal.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/special-offers/CountdownTimer.tsx",
+      "size": 8129,
+      "hash": "571f1d01104418da10815b6bc5fb7733",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/StatisticsComponents.tsx",
+      "size": 5706,
+      "hash": "f41ebf6f8cefee5ab791e94f20471bf0",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ThemeSelector.tsx",
+      "size": 4757,
+      "hash": "186c70cebf48d2bf568eb0d57f082a20",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ToolsPanel.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/TrustIndicators.tsx",
+      "size": 16927,
+      "hash": "f017f3097f96fa592dd1d96c00a8d9d4",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/accordion.tsx",
+      "size": 1977,
+      "hash": "6b84cb28b5c8e2129d854cffb8c5ba01",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/alert-dialog.tsx",
+      "size": 4420,
+      "hash": "5ab57317c19d0edd8e2d6d9c98992bce",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/alert.tsx",
+      "size": 1584,
+      "hash": "ed78a053a9db783f48d5dfab7398b630",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/aspect-ratio.tsx",
+      "size": 140,
+      "hash": "08b0aa0b05efc573c7d63363c03e83d4",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/avatar.tsx",
+      "size": 1419,
+      "hash": "e78b35ed76c67d8ff50603fbe0dfa4fe",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/badge.tsx",
+      "size": 1128,
+      "hash": "db977d821af56ae3fb7952182d9c0a07",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/breadcrumb.tsx",
+      "size": 2712,
+      "hash": "c3d3dcb0d82fc5e91d8830bac7fead90",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/button.tsx",
+      "size": 2085,
+      "hash": "cede97e941de0d2c7531f024d327e3c6",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/calendar.tsx",
+      "size": 2695,
+      "hash": "a7873d2b249506009a6f018b10a58c7c",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/card.tsx",
+      "size": 1858,
+      "hash": "69afcf9c8e58ca6c3acf43c5b1ec9186",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/carousel.tsx",
+      "size": 6210,
+      "hash": "5a4ff73c804e86c873382da80c453f13",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/chart.tsx",
+      "size": 10481,
+      "hash": "e30219cedb35c55c2f9069f6470d6051",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/checkbox.tsx",
+      "size": 1056,
+      "hash": "60a0084cbdfcb96e54c9f6438e9066df",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/collapsible.tsx",
+      "size": 329,
+      "hash": "f4cdd104de29928bfcd40b865c7d08ee",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/command.tsx",
+      "size": 4885,
+      "hash": "924fef47d5e04a133ecc700e5881175c",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/context-menu.tsx",
+      "size": 7428,
+      "hash": "b3abf3bb92fc028dd9a4c5dc6a10093b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/dialog.tsx",
+      "size": 3848,
+      "hash": "60d5246653c714fc12a67743ee595133",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/drawer.tsx",
+      "size": 3021,
+      "hash": "774316527ddc577fc54012a0c898ebcf",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/dropdown-menu.tsx",
+      "size": 7609,
+      "hash": "aca10633792d03bb541e09ea106b5e1f",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/form.tsx",
+      "size": 4120,
+      "hash": "0d812c11a1afa799fb2bfa8f1e11052e",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/hover-card.tsx",
+      "size": 1251,
+      "hash": "dcb793b8b1202b1634d791a993acadca",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/input-otp.tsx",
+      "size": 2154,
+      "hash": "b06b6294edee39d817586b3cf4766de1",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/input.tsx",
+      "size": 791,
+      "hash": "b326e2af874b14aa2ac18096ddbec512",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/label.tsx",
+      "size": 710,
+      "hash": "e69cfc27d78c9ef31b248ab8ea4fa543",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/menubar.tsx",
+      "size": 8605,
+      "hash": "da0c7ace239ead75f7fbc46ffbae8ddf",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/navigation-menu.tsx",
+      "size": 5128,
+      "hash": "74f3b1b937e42582093a1671cf7f5c72",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/pagination.tsx",
+      "size": 2751,
+      "hash": "6d66283fc04f3901772f15f3108bda73",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/popover.tsx",
+      "size": 1280,
+      "hash": "d853c561833e545879a56e2c4de18a92",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/progress.tsx",
+      "size": 791,
+      "hash": "8c036da4baed076de68d27719929dc98",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/radio-group.tsx",
+      "size": 1467,
+      "hash": "74f87531da1fde8d3c07dbd7b380ee65",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/resizable.tsx",
+      "size": 1723,
+      "hash": "70d1e35a5fb0897af7063cdd841d8ed6",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/scroll-area.tsx",
+      "size": 1642,
+      "hash": "d7d02600effca55d0dcadce8c09c97eb",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/select.tsx",
+      "size": 5742,
+      "hash": "79888d8afa95a5eb89cf0395e3e5a64d",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/separator.tsx",
+      "size": 756,
+      "hash": "c956c4cca4b8442fa9314d6079b9f975",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/sheet.tsx",
+      "size": 4281,
+      "hash": "9051eb9d885a18c0521c63c945480eff",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/sidebar.tsx",
+      "size": 23567,
+      "hash": "fcf9c1332e49671509ed9aeb2c334939",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/skeleton.tsx",
+      "size": 261,
+      "hash": "a72a9d8fc1c1999b5411a33391c5e700",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/slider.tsx",
+      "size": 1077,
+      "hash": "61e959d046f72e295d73a822b9afc7cc",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/switch.tsx",
+      "size": 1139,
+      "hash": "bd29ce723e952bc7f8fab367320347ca",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/table.tsx",
+      "size": 2765,
+      "hash": "1da243956282c040db49d5718d2f0093",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/tabs.tsx",
+      "size": 1883,
+      "hash": "d9958fd005db42bcca4f2c12ede63500",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/textarea.tsx",
+      "size": 689,
+      "hash": "aaf46918c590c2bf59e2afb7904dfd8e",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/toast.tsx",
+      "size": 4845,
+      "hash": "99f9f4a3e897f71d89b01c6772b2f5db",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/toaster.tsx",
+      "size": 772,
+      "hash": "1348f1a1f9820e2f1394b93cecc156a7",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/toggle-group.tsx",
+      "size": 1753,
+      "hash": "dba95ead40d163af6959198ded9853a2",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/toggle.tsx",
+      "size": 1527,
+      "hash": "c9a401b2e134f28d870f3f44330b9d91",
+      "category": "other"
+    },
+    {
+      "path": "client/src/components/ui/tooltip.tsx",
+      "size": 1209,
+      "hash": "2f26d20816448c630faccbda5ae9b4fe",
+      "category": "other"
+    },
+    {
+      "path": "client/src/contexts/CurrencyContext.tsx",
+      "size": 5550,
+      "hash": "ab0ae8d6817197d88e4c758f0c3652ab",
+      "category": "other"
+    },
+    {
+      "path": "client/src/hooks/use-mobile.tsx",
+      "size": 565,
+      "hash": "ad0936f84f1df79d3697bfbff9c18f8a",
+      "category": "other"
+    },
+    {
+      "path": "client/src/hooks/use-toast.ts",
+      "size": 3895,
+      "hash": "5aab0623ee24bddf9420c259a23a0699",
+      "category": "code"
+    },
+    {
+      "path": "client/src/hooks/useAuth.ts",
+      "size": 1806,
+      "hash": "b8f6bd358f1b08c1dfb2249cb0602d68",
+      "category": "code"
+    },
+    {
+      "path": "client/src/hooks/useBanners.ts",
+      "size": 2743,
+      "hash": "75eeb0ac453a65d105cbbf38a3231634",
+      "category": "code"
+    },
+    {
+      "path": "client/src/hooks/useCart.ts",
+      "size": 4359,
+      "hash": "b06186b8d6cde832d102027d11349227",
+      "category": "code"
+    },
+    {
+      "path": "client/src/hooks/usePopups.ts",
+      "size": 651,
+      "hash": "3e661d681ed36a6d5660c173bd4022ac",
+      "category": "code"
+    },
+    {
+      "path": "client/src/hooks/useSettings.ts",
+      "size": 517,
+      "hash": "8f3f01440e3f60346a5e8fa4d20ec5ec",
+      "category": "code"
+    },
+    {
+      "path": "client/src/hooks/useTheme.ts",
+      "size": 4431,
+      "hash": "0460b284a4ec96fd13bf42f8c1950c27",
+      "category": "code"
+    },
+    {
+      "path": "client/src/index.css",
+      "size": 22929,
+      "hash": "77233ae023d873dda0e6845e0020ecd1",
+      "category": "other"
+    },
+    {
+      "path": "client/src/lib/authUtils.ts",
+      "size": 115,
+      "hash": "5478db85c25b47a8983311844424b5fd",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/categoryColors.ts",
+      "size": 3396,
+      "hash": "2371cd2e98fc93b0d6bbb120dea37bda",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/i18n.ts",
+      "size": 63470,
+      "hash": "6105a5550fcf60b3b1f95176de461424",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/NEW_COLLAGE_SYSTEM.md",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/lib/photobookSizes.ts",
+      "size": 322,
+      "hash": "066b1b933b69f82e53c50f1aeb7702a8",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/photobookUtils.ts",
+      "size": 36190,
+      "hash": "4a4c87e840e4cbe348f0319c114abfcb",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/photobookUtils_old.ts",
+      "size": 15295,
+      "hash": "f1062ecc57880858b71b1e6632f1ec89",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/queryClient.ts",
+      "size": 1383,
+      "hash": "4e32b4e5cf93a98c307883ed253a7edc",
+      "category": "code"
+    },
+    {
+      "path": "client/src/lib/SPREAD_SYSTEM_DOCUMENTATION.md",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/lib/utils.ts",
+      "size": 166,
+      "hash": "7c8c3dfc0cdd370d44932828eb067ef7",
+      "category": "code"
+    },
+    {
+      "path": "client/src/main.tsx",
+      "size": 157,
+      "hash": "29946f51942fba11605c7595fd82b50b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/About.tsx",
+      "size": 10611,
+      "hash": "05ec787908ab72b1f1b5d04535da1830",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/admin/banners.tsx",
+      "size": 5689,
+      "hash": "19d0631028aef39db10039737ec78a6b",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Admin.tsx",
+      "size": 10514,
+      "hash": "4b44e90ba69bd1d22417d51c50b5a01c",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Blog.tsx",
+      "size": 15435,
+      "hash": "16195c859f9856052a8acc9871c0d3e0",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/BlogPost.tsx",
+      "size": 23012,
+      "hash": "4c2901e012681208c537f08bb3cae53a",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Cart.tsx",
+      "size": 15611,
+      "hash": "346b8719797ec76fafd8d1b948fce9cd",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Catalog.tsx",
+      "size": 12426,
+      "hash": "86d441c8f349ba5d5a9c63eb013ab324",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Contacts.tsx",
+      "size": 2807,
+      "hash": "6fc5243b8ce07bb5026be646f19493a2",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/CurrencySettings.tsx",
+      "size": 22850,
+      "hash": "417bbac0e79115a49b8ba513395330ec",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Editor.tsx",
+      "size": 6410,
+      "hash": "130bccd412de5df7fdc522969ab05e21",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Home.tsx",
+      "size": 5397,
+      "hash": "6641dee2147e2e72ffc9724ec233473e",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Landing.tsx",
+      "size": 47690,
+      "hash": "f4db973b685ccd6f3a71f6f26ab4b0d6",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Login.tsx",
+      "size": 5685,
+      "hash": "6a659db702892478748c003e6a6edbd7",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/not-found.tsx",
+      "size": 711,
+      "hash": "718a41bd05a163d1db32480aba013f5f",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Page.tsx",
+      "size": 1366,
+      "hash": "5b344693edb6f32586aac911e3db9098",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/PremiumPreview.tsx",
+      "size": 6928,
+      "hash": "9819b778ce998a92fb6d103ca72727ea",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Product.tsx",
+      "size": 30353,
+      "hash": "e167da00c15f591c27f16d3a79c41c93",
+      "category": "other"
+    },
+    {
+      "path": "client/src/pages/Products.tsx",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "client/src/types/index.ts",
+      "size": 1952,
+      "hash": "46e10f34d8c079c9d75aca02cac92fc0",
+      "category": "code"
+    },
+    {
+      "path": "components.json",
+      "size": 459,
+      "hash": "ac24a8e743f3be926f7ff2bce9756309",
+      "category": "code"
+    },
+    {
+      "path": "constructor-pages-endpoint-full.js",
+      "size": 3997,
+      "hash": "9ab2e53f2c94c6ea996bab524b49819f",
+      "category": "code"
+    },
+    {
+      "path": "constructor-pages-endpoint.js",
+      "size": 4324,
+      "hash": "239d917ed70ea0293ac3ac4c3b235b94",
+      "category": "code"
+    },
+    {
+      "path": "CONTEXT.md",
+      "size": 6767,
+      "hash": "0362cc1612829c79b571c0f6639e9d0e",
+      "category": "other"
+    },
+    {
+      "path": "create-demo-content.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "create-demo-db.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "CRM-PANEL",
+      "size": 4559,
+      "hash": "ec040705616d228ba970ada247f96ffd",
+      "category": "other"
+    },
+    {
+      "path": "debug-banners.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "deploy/systemd/photobooksgallery.service",
+      "size": 580,
+      "hash": "6b253d480bfed1f9dc87b6e8c6a14c5b",
+      "category": "other"
+    },
+    {
+      "path": "deploy/systemd/setup-systemd.sh",
+      "size": 654,
+      "hash": "fa65c28ccb80add7b8576e95fe700d15",
+      "category": "other"
+    },
+    {
+      "path": "DEPLOYMENT_ADVANCED.md",
+      "size": 9412,
+      "hash": "2fdfb37759dbe015ad55d2f13f1a36fd",
+      "category": "other"
+    },
+    {
+      "path": "DEPLOYMENT_GUIDE.md",
+      "size": 3589,
+      "hash": "6bd0fa4c2fa63fafaccff3ade9ce53c3",
+      "category": "other"
+    },
+    {
+      "path": "detailed-find-broken-images.cjs",
+      "size": 4589,
+      "hash": "a7cdb1100c0ad0b7526b2c327802cabf",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/About-B5Z_mIu5.js",
+      "size": 8031,
+      "hash": "f718152eca02a5c31c9dd505783bef4f",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Admin-CtdU7ral.js",
+      "size": 281075,
+      "hash": "b33e8683180ac443ed76bcf683973883",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/AppPopups-CIY_nmOO.js",
+      "size": 7226,
+      "hash": "48c2fb5e3e830a8ce032f2d81e12b8d5",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/arrow-right-D0rym6Az.js",
+      "size": 333,
+      "hash": "e7511e088b25c8182d274345d7eeeccf",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/badge-Ba-suCTa.js",
+      "size": 3544,
+      "hash": "e673cf06ae15a48b40226033a2ee6883",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Blog-DIyCBMlq.js",
+      "size": 9183,
+      "hash": "4a0fa13e989f4cf6e93d21dd49d5d3b3",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/BlogPost-B7Sjrmah.js",
+      "size": 14492,
+      "hash": "06a833bc559031f6b58d82472e00ac86",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/breadcrumb-CnpTzbZ8.js",
+      "size": 1229,
+      "hash": "fc82e742a0183160310b04ddf14f821c",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/button-Sq_LoJOc.js",
+      "size": 1305,
+      "hash": "cdae6e97319b04b9eab5bf230c72d1f1",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/card-CkqO05ZP.js",
+      "size": 985,
+      "hash": "7954fd2e160e6e8b820f04e37e986859",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Cart-Banjvlw4.js",
+      "size": 9012,
+      "hash": "11e9e9bc06ce7762db0cf86a81ac02e4",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Catalog-B4YawvIG.js",
+      "size": 15370,
+      "hash": "9f16de1d8b87b6fd95c730eec10dbd0d",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/CategoryCard-DtQV2p_n.js",
+      "size": 2160,
+      "hash": "dc5bde59a30b290f2a8ed7fd9ec2b489",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/clock-CAJpbZFD.js",
+      "size": 347,
+      "hash": "cc30bd5524cae651eb64b1edc5382fd5",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Contacts-DW-FIBmH.js",
+      "size": 2618,
+      "hash": "90fa6ae54303daa31cb16e343a9cd0a6",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/ContactSection-DoBNRcoa.js",
+      "size": 118821,
+      "hash": "66977d8e9927c88ab0b9dec12b8c2a52",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/credit-card-BtOABk1G.js",
+      "size": 375,
+      "hash": "e594ac8a8f7585b42029784d3c73dcbb",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/CurrencySettings-DYVWsL7c.js",
+      "size": 15981,
+      "hash": "be52b9fcb18e8fe9062af05f185fd834",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/download-VBso0bb4.js",
+      "size": 431,
+      "hash": "58daa336c3e2085e7c38495e4f80e517",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Editor-Bcp1by_X.js",
+      "size": 9330,
+      "hash": "9633be9773fe4aec6f16e14c721c8d86",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/eye-ChzvkYNJ.js",
+      "size": 802,
+      "hash": "4d19f1ec0ed7172bac5f9be7193c1353",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Footer-DFBdOrLy.js",
+      "size": 5544,
+      "hash": "962ff2eb9c6a51fbe6c0c0084686cf2d",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Header-RUq4hygT.js",
+      "size": 41133,
+      "hash": "d608eaf92650424b2d7f310153a1b86a",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/heart-B2sxIkYD.js",
+      "size": 409,
+      "hash": "1e5452d52d4ec3684cc243f489b8c34a",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Home-C0820sYQ.js",
+      "size": 3832,
+      "hash": "944d70070794938003ada84603cf71c2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/index-B5O5qlxe.js",
+      "size": 511218,
+      "hash": "1b8c0c1beef5d906d5784206b9685f11",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/index-BB9vqy9a.js",
+      "size": 10117,
+      "hash": "0a9568f996a0c061c25cc9225579556c",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/index-CKZbuPtL.css",
+      "size": 140371,
+      "hash": "23fd8b5a200a4bd5a4b834ec44755073",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/index-DzlgQqTV.js",
+      "size": 6897,
+      "hash": "2261124b9186d0517627073628a5f356",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/input-D7KFUgA8.js",
+      "size": 580,
+      "hash": "e3af2bc3c353a5726cd4070b5be40b43",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/label-oWNJuu0J.js",
+      "size": 553,
+      "hash": "0b1e5fa91c7a4e578877cc0f06ceef33",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Landing-4fQWy_7D.js",
+      "size": 146596,
+      "hash": "e56233c07d7e239bc8cfca65ea3fcffb",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Login-Dpa54_EF.js",
+      "size": 4232,
+      "hash": "cbb19fb6b2bc53c4c14aad5aa324c75b",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/mail-BxqmUDJ-.js",
+      "size": 384,
+      "hash": "e2ca21d7fc6dd00af8f3ab00c25e884b",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/message-circle-jMstQl_9.js",
+      "size": 316,
+      "hash": "c52f6cbae3d98d2392956cab4f137cdb",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/not-found-BoMa4TRw.js",
+      "size": 982,
+      "hash": "b37d7144ddd865947b9c0822edec1034",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/package-DnIaK-D-.js",
+      "size": 555,
+      "hash": "045ad3bdc4c06f93afa01d5cc23a92a1",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Page-Bib4l97W.js",
+      "size": 10344,
+      "hash": "16fee28c16e6e1d2de292aa170eaff68",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/PremiumPreview-BzSvPL8y.js",
+      "size": 5759,
+      "hash": "1e1668f2962e4cc3e3dcc211b6ee90aa",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/Product-Bf25aQ8a.js",
+      "size": 17784,
+      "hash": "d4fd967d10c027d6ad5e855ce3a68cad",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/ProductCard-BdbdRVan.js",
+      "size": 7253,
+      "hash": "1ecad56585db9aadbd2ce98f83b54dbc",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/search-GnCRCMOP.js",
+      "size": 336,
+      "hash": "3117959620222d234d43715b59460310",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/select-BXoP1-Us.js",
+      "size": 38896,
+      "hash": "7d817a01858732bec7ee9a1369138169",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/skeleton-DfRSR1Un.js",
+      "size": 172,
+      "hash": "0099d464eb9e80ef1a9597cb4304506b",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/star--UWm8V2-.js",
+      "size": 379,
+      "hash": "01ce54340e1b6f125409da74b46efb34",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/upload-nJ1grcLc.js",
+      "size": 426,
+      "hash": "3aa34a3603b37b1a1cb135aded551e18",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/user-DFk8B8RQ.js",
+      "size": 365,
+      "hash": "389f6222226c195bc5aecb2b5fc0d4ed",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/users-BM0qZb2h.js",
+      "size": 473,
+      "hash": "d02bdb11de7fefe1849d36b4bfab756e",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/useTranslation-DHM1ow_m.js",
+      "size": 3121,
+      "hash": "8e99801d1d50f1a89730cdd03e9b03dd",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/assets/zod-BtIKyswr.js",
+      "size": 28612,
+      "hash": "6a4854538824554ce91e47ad685328a7",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/favicon.ico",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/icons/icon-16x16.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/icons/icon-192x192.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/icons/icon-32x32.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/icons/icon-512x512.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/icons/INSTRUCTIONS.md",
+      "size": 3100,
+      "hash": "143afd3797cfa9d400fd85ba9c0700f1",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/icons/logo-original.png",
+      "size": 84077,
+      "hash": "ee94f24b2b093f702e3cbf47e2489fd2",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/index.html",
+      "size": 2769,
+      "hash": "15ea6b24705559d9f9aacf4893754458",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/manifest.json",
+      "size": 3707,
+      "hash": "a0f3aafa00681e462df8c0fa255fce98",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/README-icons.md",
+      "size": 1175,
+      "hash": "d492a2b188b6b7bb1468d6b80234232b",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/robots.txt",
+      "size": 1628,
+      "hash": "e78807848b9941c0ecfcd7c57a6d4f6d",
+      "category": "code"
+    },
+    {
+      "path": "dist/public/sitemap.xml",
+      "size": 4470,
+      "hash": "f9d1d599a31b8e1a57daaf59778ffef8",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/constructor-feature.js",
+      "size": 10869,
+      "hash": "7df44cc510cca105ec9aba5d84486c21",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/db.js",
+      "size": 2569,
+      "hash": "8a928db579701e3bf41f853b53a50ebc",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/index.js",
+      "size": 2365,
+      "hash": "5a2a2e779ea940c1ae1152d2bccdf9ae",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/localStorage.js",
+      "size": 5354,
+      "hash": "cd09744d76473b60154da411efb51fb8",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/objectStorage.js",
+      "size": 8600,
+      "hash": "9c8f927ff45573bc21344ceda264f4c7",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/replitAuth.js",
+      "size": 4591,
+      "hash": "fa37976f9f7d09c92f2e59ca59dde6ff",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/content-router.js",
+      "size": 12049,
+      "hash": "db7322fe84400f651f1ed81430018dee",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/ecommerce-router.js",
+      "size": 13635,
+      "hash": "b3c9c19bf0c1caf2221490295317a92b",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/file-router.js",
+      "size": 10620,
+      "hash": "916b0e9c042ba47f33504b2125767053",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/finance-router.js",
+      "size": 3753,
+      "hash": "f9a0b1f9c5a75f735a6acbf38affae2c",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/health-router.js",
+      "size": 1440,
+      "hash": "674f52760cd994058a22374755285905",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/middleware.js",
+      "size": 2878,
+      "hash": "e3f38c8856e439e6f0140637f1bd5bc4",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routers/settings-router.js",
+      "size": 7656,
+      "hash": "5ddefeea8c68bdf649d221bffc278229",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/routes.js",
+      "size": 4411,
+      "hash": "20dfc2bdcc326be1074b5b6b09dd357e",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/bannerService.js",
+      "size": 7001,
+      "hash": "64bd05dd092ff94dfedd69b543bfc1ac",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/constructor-feature.js",
+      "size": 19002,
+      "hash": "e2ae152fdc42a4649ae7384fbb2cf4fa",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/db.js",
+      "size": 2569,
+      "hash": "8a928db579701e3bf41f853b53a50ebc",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/index.js",
+      "size": 2365,
+      "hash": "5a2a2e779ea940c1ae1152d2bccdf9ae",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/localStorage.js",
+      "size": 5354,
+      "hash": "cd09744d76473b60154da411efb51fb8",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/objectStorage.js",
+      "size": 8600,
+      "hash": "9c8f927ff45573bc21344ceda264f4c7",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/replitAuth.js",
+      "size": 4591,
+      "hash": "fa37976f9f7d09c92f2e59ca59dde6ff",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/banner-router.js",
+      "size": 8058,
+      "hash": "6e21acb6bcd30f93b0ce732ac3a97da0",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/content-router.js",
+      "size": 12049,
+      "hash": "db7322fe84400f651f1ed81430018dee",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/dashboard-router.js",
+      "size": 7949,
+      "hash": "0ef5d79df204b5c802aa244be8e29c6d",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/ecommerce-router.js",
+      "size": 13635,
+      "hash": "b3c9c19bf0c1caf2221490295317a92b",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/file-router.js",
+      "size": 10620,
+      "hash": "916b0e9c042ba47f33504b2125767053",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/finance-router.js",
+      "size": 5069,
+      "hash": "b92e3def2c08a237b03b772a98324d3a",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/health-router.js",
+      "size": 3162,
+      "hash": "76dffbe849d955be67f7db853581f3fc",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/middleware.js",
+      "size": 2878,
+      "hash": "e3f38c8856e439e6f0140637f1bd5bc4",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/settings-router.js",
+      "size": 7656,
+      "hash": "5ddefeea8c68bdf649d221bffc278229",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/site-pages-router.js",
+      "size": 2647,
+      "hash": "985a964a18620bb22563f722988cb8b6",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routers/special-offers-router.js",
+      "size": 14,
+      "hash": "77f5eec38c5ef075e11892244ccf9e24",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/routes.js",
+      "size": 4882,
+      "hash": "dd03dc8ed7e02ae794db5db8cb80ad40",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/storage.js",
+      "size": 16374,
+      "hash": "f0fc2a6d9c06e510e8f9615ab1a490e8",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/server/vite.js",
+      "size": 2361,
+      "hash": "5238c4c234ad1102c26f559fd033c33a",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/shared/schema.js",
+      "size": 43096,
+      "hash": "da94a527f1903c85da23a53b0d917c4c",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/storage.js",
+      "size": 15737,
+      "hash": "b59009cd29227a07b84509d2f7e83664",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/vite.config.js",
+      "size": 1855,
+      "hash": "bce9bfee76e7d8d38629756956bb830e",
+      "category": "code"
+    },
+    {
+      "path": "dist/server/vite.js",
+      "size": 2361,
+      "hash": "5238c4c234ad1102c26f559fd033c33a",
+      "category": "code"
+    },
+    {
+      "path": "dist/shared/schema.js",
+      "size": 25003,
+      "hash": "8e3e38d7c3f65b52f982086dc0f35b8c",
+      "category": "code"
+    },
+    {
+      "path": "dist/vite.config.js",
+      "size": 1183,
+      "hash": "938ae9163ea6a6979903a811ad3b5de8",
+      "category": "code"
+    },
+    {
+      "path": "drizzle.config.ts",
+      "size": 325,
+      "hash": "db80922910a890344195617c17acd664",
+      "category": "code"
+    },
+    {
+      "path": "enhanced-broken-images-report.txt",
+      "size": 536,
+      "hash": "a7e224ddf361cb6141d5e4c3b779c48e",
+      "category": "other"
+    },
+    {
+      "path": "enhanced-find-broken-images.cjs",
+      "size": 6313,
+      "hash": "318f5ef9673209fbd0c73d6a566f97ce",
+      "category": "code"
+    },
+    {
+      "path": "enzostvs-deepsite-prompt.md",
+      "size": 8219,
+      "hash": "9aa68a83db2cf98382154467a00833d3",
+      "category": "other"
+    },
+    {
+      "path": "find-broken-images.cjs",
+      "size": 8002,
+      "hash": "cc721696b21b1560a321c26ae85aee7e",
+      "category": "code"
+    },
+    {
+      "path": "find-broken-images.js",
+      "size": 7976,
+      "hash": "53548ada134c507783cb54939d6d8aed",
+      "category": "code"
+    },
+    {
+      "path": "fix-broken-images.cjs",
+      "size": 2987,
+      "hash": "ab2315c04ed07123667a5aad669b15a6",
+      "category": "code"
+    },
+    {
+      "path": "fix-broken-images.js",
+      "size": 3041,
+      "hash": "fdc0422f4fdf2270f6087279eb53085e",
+      "category": "code"
+    },
+    {
+      "path": "fix-broken-reviews.cjs",
+      "size": 2349,
+      "hash": "c04e354d0acb293d502f2de1e242f32c",
+      "category": "code"
+    },
+    {
+      "path": "fix-comment-default.js",
+      "size": 1042,
+      "hash": "ec38ca815615a5119741750557a5a93d",
+      "category": "code"
+    },
+    {
+      "path": "fix-imports.js",
+      "size": 1912,
+      "hash": "4118e72ef9221f569e6ae8500a849f01",
+      "category": "code"
+    },
+    {
+      "path": "fixed-validation-dist.zip",
+      "size": 973925,
+      "hash": "028eb457a98408f9224c34de8fb3a470",
+      "category": "other"
+    },
+    {
+      "path": "insert-demo-data.sql",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "last-deploy-manifest.json",
+      "size": 125005,
+      "hash": "12b16668d264884ae3c55355808446da",
+      "category": "code"
+    },
+    {
+      "path": "LOCAL_SETUP.md",
+      "size": 6727,
+      "hash": "8ea3ad4cdd7c6b97ac3b8aa0d7294566",
+      "category": "other"
+    },
+    {
+      "path": "migrations/0000_curly_katie_power.sql",
+      "size": 12453,
+      "hash": "863796fc44b9e03d4e2e2f03ec76599e",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0001_add_show_in_header_nav.sql",
+      "size": 131,
+      "hash": "2d19151ddefe00e1f75b2f2a10f573dc",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0001_constructor_update.sql",
+      "size": 1985,
+      "hash": "cb87d65da4be695980d23292c06e9daf",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0001_lethal_darwin.sql",
+      "size": 5519,
+      "hash": "5b3f5f7d3376781a0aedd6b45cff9136",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0002_fix_comment_default.sql",
+      "size": 187,
+      "hash": "7fb219d615b1061f51a6657835dc7f40",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0003_add_video_support.sql",
+      "size": 242,
+      "hash": "6cc11d99bfff47bf3c4df0e657161eba",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0004_add_seo_fields.sql",
+      "size": 620,
+      "hash": "763496f9e47b7dcb631eced0ac1a88e3",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/0005_create_site_pages.sql",
+      "size": 1298,
+      "hash": "996b51a71293f63d638a2451d21f2430",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/meta/0000_snapshot.json",
+      "size": 47023,
+      "hash": "b4165762c6a220e42a26e7216e99cd7c",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/meta/0001_snapshot.json",
+      "size": 67637,
+      "hash": "3edbb28baa91200fef19ca07effef86c",
+      "category": "migrations"
+    },
+    {
+      "path": "migrations/meta/_journal.json",
+      "size": 352,
+      "hash": "acca6e8482cb4d293ebd4ba5f01c16c1",
+      "category": "migrations"
+    },
+    {
+      "path": "missing-endpoints.js",
+      "size": 2522,
+      "hash": "ba0738c4bb83a2cb40a7e8ae3fd6cf2d",
+      "category": "code"
+    },
+    {
+      "path": "nginx-config",
+      "size": 2950,
+      "hash": "595168c061699ca043bdb43dcf738a0a",
+      "category": "other"
+    },
+    {
+      "path": "nginx-config-fixed",
+      "size": 1564,
+      "hash": "7920f76d0c7a011d685640e7ec3895f3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/00e0a17b-162f-4405-b65e-9dfd00f4f7b7.jpg",
+      "size": 77457,
+      "hash": "7378a167a01a0692c5907800a832badf",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/01ccdf0b-d70d-41ee-b7b9-5361fb3b8481.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/032aeecb-b304-445c-bbe8-3151e3cd7bcd.webp",
+      "size": 162910,
+      "hash": "f325fafe02331e72e3a66f8c6927edec",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/04653b86-fc9a-4cc0-8446-600ecb6afce9.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/06b91fa0-2958-4048-b9cd-16eb27ed6bc0.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/06c95cb7-5a27-4d7a-9529-8d4936a06231.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/0aa04c23-6762-4ae3-b943-c2f0d6ca3a7d.mp4",
+      "size": 9853794,
+      "hash": "560349fff5320d3c83cd214b1e722015",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/0cf7c17f-494b-401f-ae21-4d0beb568a53.jpg",
+      "size": 208408,
+      "hash": "3417b014e6e3bf258ec5051826a7f598",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/100b6601-f9e5-4a1b-a43a-8c0b515364b0.mp4",
+      "size": 7677654,
+      "hash": "6d6fc3ae1fa2892e826a21c74c8fda6e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/1080eff7-c6bb-41d7-893d-600f516596a2.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/112f18c9-795e-4ed2-b5cd-6e8cc230f055.jpg",
+      "size": 208656,
+      "hash": "1891a50395951d6c06f84c896b8947aa",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/1376a66a-d7c4-4de1-91fe-f375c0a99e87.mp4",
+      "size": 762525,
+      "hash": "1b5037ae18ed4fc91beefc468ea019cc",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/15f0ca30-2901-4f39-b609-e30643a7c38c.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/18314865-7690-4321-ad05-56b86a3d9f6a.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/1bbf2b3d-358b-4a85-8967-40695cab44cd.webp",
+      "size": 183594,
+      "hash": "5ec055fff0be12f753f53c2330e473dd",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/1ec6d787-6eb3-4531-be67-5fff56fbb5f8.jpg",
+      "size": 134430,
+      "hash": "484f5c24c60108257a368617ae0b2aed",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/207c1ef5-cacf-40ab-bc5f-50c4a91715a3.mp4",
+      "size": 3208037,
+      "hash": "bf5bae2c2de71e4a5bc718e308da61a4",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/20b9b747-288d-4a8d-a9bd-caabf172bc9b.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/22526614-4f10-45b6-95c1-5f8dc45ad3f4.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/26e9d654-8cca-44f2-ac11-49845a5800b5.png",
+      "size": 1435312,
+      "hash": "bf20d22aad214f49c5658eb44811c8ae",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/282490b3-a787-431e-9515-31f126bf7279.png",
+      "size": 1263054,
+      "hash": "d267ba9f4780c27a65b526e042fde0ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/29bf26e3-8718-49f9-b188-414283ac0ffa.png",
+      "size": 1210489,
+      "hash": "6404e80bc3f2653c3f149bbdd2e2160f",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/2acc3df5-3b9c-4578-84a2-c23b9a055663.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/2e21c960-05c2-47c5-8926-175f52869e8d.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/2ffc2483-6cc7-41ba-a295-adefe0f9ab88.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/310b1a85-2aba-439a-b4eb-8e5730a8f0e9.jpg",
+      "size": 49942,
+      "hash": "6e54266c24c286407a41f504021fd2d4",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/33740a92-af51-4f77-974b-c6122d989b8e.png",
+      "size": 1435312,
+      "hash": "bf20d22aad214f49c5658eb44811c8ae",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/339b8096-36d6-44ed-b1e7-e624045b5ade.jpg",
+      "size": 300420,
+      "hash": "4787f2fc1cea3304b7dc77c5bfd58a95",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/34ba5a99-063a-4c63-8177-87aea2598d0c.mp4",
+      "size": 7677654,
+      "hash": "6d6fc3ae1fa2892e826a21c74c8fda6e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/38b15760-1d9d-4d38-8069-e18145191e50.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/38c43e6c-a0b9-41c9-b7f1-b5e29991f71d.png",
+      "size": 892331,
+      "hash": "932122bcc5bdeca5d048906c2d99c454",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/39efd536-1eaa-44de-be16-9550663d0990.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/3a3a25e3-f0db-4cc2-b805-215d1fe0f553.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/3a5198ac-edd8-4724-9d98-81612ee1ee2a.jpg",
+      "size": 238548,
+      "hash": "444b3a7736483a2cb0f165852299ffb5",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/3b9a080b-4371-49f1-a761-7120ca12bc99.mp4",
+      "size": 1359870,
+      "hash": "7064ba179a030023a9fefd817fcbd416",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/3d81030d-937c-426d-90c5-dac226820abf.mp4",
+      "size": 7677654,
+      "hash": "6d6fc3ae1fa2892e826a21c74c8fda6e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/3ef2dbe1-c716-4865-93a9-e0245c107707.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/415124dc-75b9-43b8-9845-89bd52ec8e2f.mp4",
+      "size": 2327702,
+      "hash": "6034ca559370390d83e149902cf92880",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/4381e64b-242f-4d9d-bf06-5d3be0082adf.png",
+      "size": 1561755,
+      "hash": "64d99ae4c21a898395abe0019206ba4b",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/48937ba9-3beb-41d7-8b90-010b249923fa.jpg",
+      "size": 300420,
+      "hash": "4787f2fc1cea3304b7dc77c5bfd58a95",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/491dc4e2-0c6b-4082-bb7f-0b3c10514982.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/4c14d487-b16b-4cf3-a809-4b01d441b397.jpg",
+      "size": 21380,
+      "hash": "1c8b570af49b79d1ee446dd229d46151",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/4cb9c27e-5cbf-423a-baf0-f8a100fee912.png",
+      "size": 1592728,
+      "hash": "acdd14dc2ef6b6bd4a5556d9a0a8779e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/4d5aa63f-ad7e-47ed-ac8f-100306ba4e1a.jpg",
+      "size": 301307,
+      "hash": "400ae3cc1332f8c2671ff54b457f387e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/4e0acfbe-4b00-4e1f-b5c0-a3ac9ab8eab1.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/51a767e3-b923-49a7-b73f-0e9f1a7534dc.png",
+      "size": 1561755,
+      "hash": "64d99ae4c21a898395abe0019206ba4b",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/51bbb1fd-817f-4091-9fdc-f10a6d2046e7.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/540d306a-294f-451a-bebc-4d2376815b9e.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/55378cef-d69a-4c98-a114-7127ccfb905a.mp4",
+      "size": 3208037,
+      "hash": "bf5bae2c2de71e4a5bc718e308da61a4",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/574093d4-e172-4a6d-8ab9-1aebdfff794f.jpg",
+      "size": 238548,
+      "hash": "444b3a7736483a2cb0f165852299ffb5",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/576b96df-7b9d-4921-9bcc-3bac3d4d1183.png",
+      "size": 1524538,
+      "hash": "300325d5fae02cf55424239b0d69a31c",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/591d62e2-8adc-44a5-a8c4-85bc6fe0a045.jpg",
+      "size": 80473,
+      "hash": "cf06d1cda4fe53d0a22f0ef2354689e9",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/5b86064c-a51e-4269-a6d0-d056302f9770.jpg",
+      "size": 81114,
+      "hash": "6ec5130988e6d87191cebc1e1acd9d6a",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/5bc7c84f-5640-4792-8b9d-634832c328fa.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/5cadb6a1-3c1a-4333-a072-70f9c727284c.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/5ce81c90-a58d-45db-b7cb-1c766a2c9ea7.png",
+      "size": 1581416,
+      "hash": "a042d30fbf3399d9c445e59c2530d707",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/62d88bf7-3b9e-4fc6-89d3-666bfde5ce0f.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/6339c831-779a-4eec-92af-dae63c84840d.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/66f08b0d-1ba2-4d8e-9a55-5f9643f266f3.png",
+      "size": 1561755,
+      "hash": "64d99ae4c21a898395abe0019206ba4b",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/67ebe14c-c980-4a02-82e4-281e6ac72a86.png",
+      "size": 1509001,
+      "hash": "2702978768e3d15a146253d33f82173c",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/6a3b60a7-ab89-40e6-8958-fbc993f54186.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/6a60b7d5-275f-4f9f-bd7d-74a4f1849d29.jpg",
+      "size": 124176,
+      "hash": "f70fe99ef93c9714e1d5963bf31e0a8e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/6bd235e0-8a8b-4d52-9e2e-4c431d7196f5.png",
+      "size": 1561755,
+      "hash": "64d99ae4c21a898395abe0019206ba4b",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/6d96139d-b20e-4d7f-9c91-b8426b6d2c2e.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/6ebf62e2-ab02-4b3e-a144-eaaa0c288ee7.webp",
+      "size": 53724,
+      "hash": "67dd352e3234398c3feddc4d1e125805",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/727fd125-9bce-40a4-ab0f-24c0586910d2.jpg",
+      "size": 365176,
+      "hash": "a3b06306b744aa60bd84f8a7c93747ef",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/72bc40ee-9130-43e7-a760-cc0acf9bc796.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/73074035-a41e-466f-b6ea-7671325ceb5f.png",
+      "size": 1509001,
+      "hash": "2702978768e3d15a146253d33f82173c",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/7318923c-e6da-4d8c-bb63-f75d7c69a31d.mp4",
+      "size": 3208037,
+      "hash": "bf5bae2c2de71e4a5bc718e308da61a4",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/73b8841e-a320-431c-9eaa-8b28e6d7fb57.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/73bcc706-bd25-44d8-b007-4f1b5c45a59b.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/73e95ed7-8522-4a8f-b69e-f752fb49100c.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/778bb9df-7c1a-40d1-b5c1-60d70177b7cd.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/779b062c-f3d7-47e2-8326-447150170e3e.png",
+      "size": 1393413,
+      "hash": "18d51b8c21b49b62240779b226dedbba",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/79ca1806-1b4c-477a-8cc2-903f1af6ee93.jpg",
+      "size": 316767,
+      "hash": "6ff5bcbb126992de9cdcebc421788be1",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/7a4bba6e-7b5c-4829-b8db-912f901d1c3d.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/7ccd8348-7805-45e1-a52f-2734dc841335.jpg",
+      "size": 119412,
+      "hash": "c137a513bde8525bfd782990ea1008ee",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/7dcac7da-51e1-466c-b2c4-8f5274666e70.jpg",
+      "size": 316767,
+      "hash": "6ff5bcbb126992de9cdcebc421788be1",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/7fd4d7f3-f219-4d61-8044-78193a99e936.mp4",
+      "size": 2327702,
+      "hash": "6034ca559370390d83e149902cf92880",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/7fde5dd7-b5e9-489c-9c54-e041497f38b7.mp4",
+      "size": 908353,
+      "hash": "2703c84692577e19eeb61d697f94585d",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/80dea92c-cf6b-41fc-9609-52f93987d2a8.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/81252d85-5212-4997-a794-230b64ce4e49.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8157ab63-3063-47fe-9a00-ba9ed1102a5b.jpg",
+      "size": 238548,
+      "hash": "444b3a7736483a2cb0f165852299ffb5",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8216a22a-af12-442f-b5b7-a598c9220b32.JPG",
+      "size": 220431,
+      "hash": "f4a6d05fb5f8c22e59813046228f4123",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/824a420b-3dac-4c9a-810f-382e312465b6.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8277ec13-ed1c-4463-9ac5-f014b080dc55.jpg",
+      "size": 85738,
+      "hash": "ec1ff24a0f08efd3c927b1843cdfc1d7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/83831170-75bb-418a-8a13-15c56b01f5a5.png",
+      "size": 1592728,
+      "hash": "acdd14dc2ef6b6bd4a5556d9a0a8779e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/87c5e67b-5c7f-4fee-8898-091419baaca8.png",
+      "size": 2369030,
+      "hash": "695de7851ed570247e58b66bac73ff87",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8ab7d293-bc4f-465a-a129-f591ba8b2a41.png",
+      "size": 892936,
+      "hash": "cf18008c1cb61050bb3f3352cf3e0fd8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8c67033e-dba6-4638-a58a-0e79c586e545.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8e9bb3a7-53cf-4d98-b7bb-9e185bd60e8b.JPG",
+      "size": 159803,
+      "hash": "e96ee078c8fa188f7ffab86d4d4b05e8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/8ebd72da-f17e-433c-956e-16795362e06f.png",
+      "size": 1524538,
+      "hash": "300325d5fae02cf55424239b0d69a31c",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/9367b1e8-a10c-4351-8f9e-271e73da847d.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/94873a4e-0aad-46db-aee7-053324a72b33.mp4",
+      "size": 2414224,
+      "hash": "4bb1eef6b72bdbcbc476d9781b0ecb0b",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/9b8fd522-7540-4f86-b69b-1f3461e502bc.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/9cfcc48c-89e7-4397-8c63-c108a4baeceb.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/9f807895-4476-4659-be0d-fb0104f10835.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/a0c540b9-b4ab-41c1-89dc-fbfdf3fabd2e.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/a1dc5680-a02f-48bc-8544-80994f01cda7.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/a3d14d89-f869-41ff-beae-f7d02cddf64a.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/a858d54c-fff5-44bf-9dce-705bfda10e56.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/a955da11-3b55-4d6b-8c31-b760192529ba.mp4",
+      "size": 2069937,
+      "hash": "335ae725476111d5fba6c086003775d7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/abc66454-2b67-4a34-b442-a267c95202f8.png",
+      "size": 2369030,
+      "hash": "695de7851ed570247e58b66bac73ff87",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/aea6a130-a9e5-493e-a8d2-8ffd6ff98fc4.png",
+      "size": 1524538,
+      "hash": "300325d5fae02cf55424239b0d69a31c",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/b3e8ed61-8ef5-4a21-a1bc-ca950912036d.mp4",
+      "size": 3520867,
+      "hash": "14c0333bc8b115d30f8f12932b210285",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/b4446b04-6637-488b-ae20-0c466eb0ee05.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/bb6cb635-2141-4992-adb9-4e8aa0835b06.jpg",
+      "size": 63440,
+      "hash": "89aca0415f3df37947b719ed7e8b857c",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/bcc20933-2532-418c-a390-b6e9f6044f29.png",
+      "size": 1592728,
+      "hash": "acdd14dc2ef6b6bd4a5556d9a0a8779e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/bd0141c2-c9ef-4f1e-9ead-9e1af4e8cdcd.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/bd5b7c54-d681-4511-ba60-018c5583bce4.jpg",
+      "size": 118659,
+      "hash": "95c58eda0f4c5ae21b1715279ec6483d",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/be8af841-c3ca-4c9c-9255-3c6b4a16b685.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c07adce1-7209-4179-a2c4-9be6647cfde3.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c080cedd-8c80-4470-8cee-d915277c6601.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c1988fbc-99fd-4885-899a-574fc2ed116a.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c2859c39-f81b-4de3-89d6-f8dd4643df60.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c28be2d9-dbbb-4958-9878-053cbace972d.png",
+      "size": 1714740,
+      "hash": "8277592192590e1194582fc57dbaf970",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c3f8882b-0bac-480e-b603-8eda5d70e6fc.png",
+      "size": 892936,
+      "hash": "cf18008c1cb61050bb3f3352cf3e0fd8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c5ad3f3c-81ff-44dd-95cc-49b5d724a04d.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/c5d28fad-94c5-4921-91e0-098eacdef33c.png",
+      "size": 1708641,
+      "hash": "e2f98ce60fbc5f46c453d2267d52f152",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/cb6208e0-c1e4-4c1b-a970-0e2ac4bdacdf.mp4",
+      "size": 3520867,
+      "hash": "14c0333bc8b115d30f8f12932b210285",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d05fd465-e097-46e3-849f-a0271ade24ad.mp4",
+      "size": 3208037,
+      "hash": "bf5bae2c2de71e4a5bc718e308da61a4",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d2492c2d-1d85-45b6-8d17-ecbd51bdb46e.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d40606c6-7fea-4b3c-81d1-cdbabab29535.mp4",
+      "size": 243782,
+      "hash": "3f0f200259fecfed842b81ee0f850d68",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d4c3d633-71f4-484e-b219-3f8804a1580b.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d5a03976-8436-472b-a234-5f4164a9c458.png",
+      "size": 1561755,
+      "hash": "64d99ae4c21a898395abe0019206ba4b",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d5b12e47-8e76-4aec-923e-f3ad31f46de6.png",
+      "size": 1714740,
+      "hash": "8277592192590e1194582fc57dbaf970",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d6382dc8-06d4-4e47-907e-765bc179730f.png",
+      "size": 1552296,
+      "hash": "2875646fb26290efd6a4619e1d22bef8",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d68612e1-fefe-43f3-9f2f-431965175a8e.png",
+      "size": 892331,
+      "hash": "932122bcc5bdeca5d048906c2d99c454",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/d723e03f-aaaf-4c94-96c3-2d69fabe15cc.jpg",
+      "size": 4696594,
+      "hash": "cfbf6ef5d1fdc6a68312eff402c0ab10",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/df2bccec-80cb-410d-a222-af8c1c1e1091.jpg",
+      "size": 152769,
+      "hash": "a357328ce749e679e943ecf0f49873ff",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/e0015a77-e01d-466d-bbdb-91eb055d8e79.jpg",
+      "size": 82261,
+      "hash": "131a771f211daf93abcf91f49f47e25f",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/e3d5ad69-934d-4423-981e-6cf40f68a990.jpg",
+      "size": 259929,
+      "hash": "b428f20a1028661d277f1e63cad5a394",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/e4718074-97d4-4a99-be12-7aadfe8f311e.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/e5da97c7-30f9-4cee-8017-242d2a274f16.png",
+      "size": 1581416,
+      "hash": "a042d30fbf3399d9c445e59c2530d707",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/eb3a1aeb-6d6a-4185-9b77-6048bdd4878e.png",
+      "size": 892331,
+      "hash": "932122bcc5bdeca5d048906c2d99c454",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/ed3c98d7-039f-4c2e-89db-35db960bce36.png",
+      "size": 892331,
+      "hash": "932122bcc5bdeca5d048906c2d99c454",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/f31be123-99df-4478-9cc8-e05b690b9370.jpg",
+      "size": 82261,
+      "hash": "131a771f211daf93abcf91f49f47e25f",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/f48fc577-def3-486e-a194-559c6ef125d2.jpg",
+      "size": 300420,
+      "hash": "4787f2fc1cea3304b7dc77c5bfd58a95",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/f6197d6f-564a-44ce-8642-7bb3f8b7dcc3.JPG",
+      "size": 145160,
+      "hash": "ce9155e029093ed50651cabea0cd49eb",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/f90842d0-1886-48cf-9ea5-8e286fe8bbbd.jpg",
+      "size": 117908,
+      "hash": "d7b1aa9ba0a4873500ced6a9934040f1",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/f9b7a5b1-8325-44be-805d-ca5bb9d744dc.png",
+      "size": 1954155,
+      "hash": "ab4fc163fb947b6938b45e7a0777140e",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/f9e4fcc1-e21f-4a78-95ca-76dd11aade57.png",
+      "size": 1571596,
+      "hash": "2f60503f1e3b43b5a48bcc20f64f70ac",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/fb15c0a0-b6fa-4992-a080-1d9ac5bd46ab.jpg",
+      "size": 144234,
+      "hash": "874c320d021b9eaa41b84b4abfe3e3c7",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/fc07eb7b-122c-426b-9a57-c638a06875a6.JPG",
+      "size": 139228,
+      "hash": "613bb66ade2c7d25d8b3a2a9ae62266a",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/fc99caa6-d228-449e-b742-7da43e300fc8.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "objects/local-upload/fe089dad-c2eb-4707-8cc6-2e89ee4b0de4.png",
+      "size": 1334815,
+      "hash": "64ccd3d51d914dd80129862b6b73fd69",
+      "category": "other"
+    },
+    {
+      "path": "package.json",
+      "size": 4520,
+      "hash": "0723aea571f364398f01823ee657bae6",
+      "category": "code"
+    },
+    {
+      "path": "photobooksgallery-deploy.zip",
+      "size": 989805,
+      "hash": "0738e51463da7090334ed8a75caaa125",
+      "category": "other"
+    },
+    {
+      "path": "postcss.config.js",
+      "size": 80,
+      "hash": "190c877db466995bf1482f4a16abd06e",
+      "category": "code"
+    },
+    {
+      "path": "production.env",
+      "size": 1641,
+      "hash": "0582e7ac721e31155818c76f33106e2e",
+      "category": "code"
+    },
+    {
+      "path": "project-analysis.md",
+      "size": 8518,
+      "hash": "22de05b85d723b5a43dcc9ba2dbb9f9a",
+      "category": "other"
+    },
+    {
+      "path": "replit.md",
+      "size": 4874,
+      "hash": "494ab9570ef3ec3edc17413b70bd7f7c",
+      "category": "other"
+    },
+    {
+      "path": "SAFE_DEPLOY_QUICKSTART.md",
+      "size": 5800,
+      "hash": "e618ccc7c6e1cb0599ceef125ef29dca",
+      "category": "other"
+    },
+    {
+      "path": "scripts/deploy-release.sh",
+      "size": 9085,
+      "hash": "70fcc128c94e9a713940c5c4ac6e196a",
+      "category": "other"
+    },
+    {
+      "path": "scripts/deploy-safe.ps1",
+      "size": 1147,
+      "hash": "810a2d90e48f7b4cf14b170cc3a97a93",
+      "category": "other"
+    },
+    {
+      "path": "scripts/diff-manifests.mjs",
+      "size": 2619,
+      "hash": "96674571be750a30b76fb41a0b1e3eec",
+      "category": "code"
+    },
+    {
+      "path": "scripts/generate-manifest.mjs",
+      "size": 3828,
+      "hash": "c77e1ebcd2277c9ec8c497e40df8b449",
+      "category": "code"
+    },
+    {
+      "path": "scripts/init-currencies.ts",
+      "size": 2707,
+      "hash": "3adffcbcf935a8bfa5680ed7295efaf6",
+      "category": "code"
+    },
+    {
+      "path": "scripts/post-deploy-save-manifest.mjs",
+      "size": 742,
+      "hash": "fde04bc463f8f18d81f419e04b090fbb",
+      "category": "code"
+    },
+    {
+      "path": "scripts/predeploy-check.mjs",
+      "size": 2319,
+      "hash": "23a458bcfad181b7a63794d4fbf49d86",
+      "category": "code"
+    },
+    {
+      "path": "scripts/rollback-release.sh",
+      "size": 927,
+      "hash": "547e00df19654fae38df6479ae0cfae9",
+      "category": "other"
+    },
+    {
+      "path": "scripts/smoke-constructor.cjs",
+      "size": 1023,
+      "hash": "42b6136e6bdfff958152aabb226302c4",
+      "category": "code"
+    },
+    {
+      "path": "scripts/smoke-test.mjs",
+      "size": 1768,
+      "hash": "39594bfb9d699fb7447a2b724044dcaf",
+      "category": "code"
+    },
+    {
+      "path": "server/bannerService.ts",
+      "size": 7241,
+      "hash": "9b012d24abc75a7ba3ca98c9b9521e74",
+      "category": "code"
+    },
+    {
+      "path": "server/constructor-feature.ts",
+      "size": 17665,
+      "hash": "2341ceb1d809abc0204f595a4fed6745",
+      "category": "code"
+    },
+    {
+      "path": "server/db.ts",
+      "size": 2502,
+      "hash": "7d65ea82327dba3fc4fc018ad233be2e",
+      "category": "code"
+    },
+    {
+      "path": "server/index.ts",
+      "size": 2414,
+      "hash": "375e3f34fb6cdf1b095564fee2b4cdba",
+      "category": "code"
+    },
+    {
+      "path": "server/localStorage.ts",
+      "size": 5256,
+      "hash": "ba614a36ae21b13174e17c7aebd38871",
+      "category": "code"
+    },
+    {
+      "path": "server/objectStorage.ts",
+      "size": 8259,
+      "hash": "27ab542e914d68fb1f4f5bc0f482e32d",
+      "category": "code"
+    },
+    {
+      "path": "server/replitAuth.ts",
+      "size": 4694,
+      "hash": "a5987db0dd2f6bec917b445bb697d43a",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/banner-router.ts",
+      "size": 7474,
+      "hash": "ac99c0fe84885db1e51bf1bf435a5946",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/content-router.ts",
+      "size": 11204,
+      "hash": "213665438ae1cd16ffb83c573ba15174",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/dashboard-router.ts",
+      "size": 7365,
+      "hash": "1e452f69a4388976dc9c47560dbffd96",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/ecommerce-router.ts",
+      "size": 12793,
+      "hash": "ebf0578b954700ade0f794d28f536110",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/file-router.ts",
+      "size": 9834,
+      "hash": "7c9d127e6efebef2476da8c4ad923e09",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/finance-router.ts",
+      "size": 4678,
+      "hash": "c65e210e43c867a52b2c07f82267231f",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/health-router.ts",
+      "size": 2940,
+      "hash": "7bf3d94b97ecd0533195c9a5aa643b87",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/middleware.ts",
+      "size": 2810,
+      "hash": "9074289adc4fec7291564c7dfd3a6bc7",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/settings-router.ts",
+      "size": 6939,
+      "hash": "a467dd916ed52578547232ba7f1e4b8d",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/site-pages-router.ts",
+      "size": 2412,
+      "hash": "4e4fa3f51c8995704cef0093dd88f94a",
+      "category": "code"
+    },
+    {
+      "path": "server/routers/special-offers-router.ts",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "server/ROUTERS_ARCHITECTURE.md",
+      "size": 4941,
+      "hash": "a2a888a5a8c4a0c175adc269de0b2253",
+      "category": "code"
+    },
+    {
+      "path": "server/routes.ts",
+      "size": 4908,
+      "hash": "7825c788258c69e44a4096d6c4adecf1",
+      "category": "code"
+    },
+    {
+      "path": "server/storage.ts",
+      "size": 21415,
+      "hash": "bbd4bffbc9cb84fe91e97086312f69c0",
+      "category": "code"
+    },
+    {
+      "path": "server/vite.ts",
+      "size": 2359,
+      "hash": "60651f5f44d18607465fca97141053cb",
+      "category": "code"
+    },
+    {
+      "path": "SERVER_SETUP_INSTRUCTIONS.md",
+      "size": 6328,
+      "hash": "cff5f385e6ff88072db373031d78dbe4",
+      "category": "other"
+    },
+    {
+      "path": "shared/schema-from-vps.js",
+      "size": 25003,
+      "hash": "8e3e38d7c3f65b52f982086dc0f35b8c",
+      "category": "code"
+    },
+    {
+      "path": "shared/schema.ts",
+      "size": 44382,
+      "hash": "112c80cb230a42ac90e14e043f7fb5bb",
+      "category": "code"
+    },
+    {
+      "path": "simple-constructor-endpoint.js",
+      "size": 1488,
+      "hash": "d73ac6f17988f747ba7b2fdd2151728b",
+      "category": "code"
+    },
+    {
+      "path": "simple-endpoint.js",
+      "size": 1862,
+      "hash": "905d81399f9f6642776d9d5eb5d120b1",
+      "category": "code"
+    },
+    {
+      "path": "simple-find-broken-images.cjs",
+      "size": 4591,
+      "hash": "1db51b12c5136fe5dce0df6945ff74e1",
+      "category": "code"
+    },
+    {
+      "path": "start-server.js",
+      "size": 758,
+      "hash": "9ea5933a2aef366dd23491af4bfbded6",
+      "category": "code"
+    },
+    {
+      "path": "tailwind.config.ts",
+      "size": 2755,
+      "hash": "b2479cf2e5ee0a0fa99f38c418477ea8",
+      "category": "code"
+    },
+    {
+      "path": "technical-documentation.md",
+      "size": 10726,
+      "hash": "779c955ba0ae44d25eeb7e1b8fb2fdc1",
+      "category": "other"
+    },
+    {
+      "path": "test-api.bat",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "test-api.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "test-banner-service.ts",
+      "size": 1183,
+      "hash": "2d264dc946c24b35ff27a538c8df2c93",
+      "category": "code"
+    },
+    {
+      "path": "test-banners-api.ts",
+      "size": 1708,
+      "hash": "a17f73035440945a00ce3c7217ad4852",
+      "category": "code"
+    },
+    {
+      "path": "test-block.json",
+      "size": 97,
+      "hash": "1272e90beb1947b20784248f46faccc6",
+      "category": "code"
+    },
+    {
+      "path": "test-data.json",
+      "size": 40,
+      "hash": "b53c833a0fc67586d9c22c72dcd0b7dc",
+      "category": "code"
+    },
+    {
+      "path": "test-data2.json",
+      "size": 45,
+      "hash": "6047b57bd0882a68fa6423521b5ae80c",
+      "category": "code"
+    },
+    {
+      "path": "test-data3.json",
+      "size": 52,
+      "hash": "397186f9ff58abecf56d09959881bf84",
+      "category": "code"
+    },
+    {
+      "path": "test-data4.json",
+      "size": 53,
+      "hash": "60be370858bac0a82a3bae564fcbf9e1",
+      "category": "code"
+    },
+    {
+      "path": "test-full-api.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "test-full.bat",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "test-image.html",
+      "size": 2341,
+      "hash": "1eccc4b60683e2d11264e01793a5984a",
+      "category": "other"
+    },
+    {
+      "path": "test-image.png",
+      "size": 1630481,
+      "hash": "4a546c11a226b5aeb42d2cf535c89db3",
+      "category": "other"
+    },
+    {
+      "path": "test-login.bat",
+      "size": 166,
+      "hash": "90c87bad98d0355836c05ddf8f396dab",
+      "category": "other"
+    },
+    {
+      "path": "test-server.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "test-settings.js",
+      "size": 1111,
+      "hash": "38db6a473df7ddd0962082cc437bb01a",
+      "category": "code"
+    },
+    {
+      "path": "test-special-offers.js",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "code"
+    },
+    {
+      "path": "tsconfig.json",
+      "size": 765,
+      "hash": "f7ac34975bcb1367d593c4ba54bb3b93",
+      "category": "code"
+    },
+    {
+      "path": "tsconfig.server.json",
+      "size": 490,
+      "hash": "e1bcae282c9a5a615bafbe9b9a3448f6",
+      "category": "code"
+    },
+    {
+      "path": "update-banner.sql",
+      "size": 0,
+      "hash": "e3b0c44298fc1c149afbf4c8996fb924",
+      "category": "other"
+    },
+    {
+      "path": "updated-dist.zip",
+      "size": 973762,
+      "hash": "2c2aef9b0af5b450ce2c552aefbdb35d",
+      "category": "other"
+    },
+    {
+      "path": "verify-all-images.cjs",
+      "size": 4168,
+      "hash": "6df31bf114b357de3f62845b7b42998e",
+      "category": "code"
+    },
+    {
+      "path": "verify-images-correct-paths.cjs",
+      "size": 3922,
+      "hash": "a23587e7dec300c820869299ccb60819",
+      "category": "code"
+    },
+    {
+      "path": "vite.config.js",
+      "size": 1387,
+      "hash": "a9a1d1f699bc4013df66ab4b8ff86ca1",
+      "category": "code"
+    },
+    {
+      "path": "vite.config.ts",
+      "size": 1613,
+      "hash": "b184ce0461c12f8fd47a573fc3ceb319",
+      "category": "code"
+    }
+  ]
+}

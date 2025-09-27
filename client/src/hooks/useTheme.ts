@@ -16,7 +16,7 @@ export function useTheme() {
   const [currentThemeName, setCurrentThemeName] = useState<string>(() => {
     // Initialize with saved theme from localStorage if available
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('photocraft-theme') || 'default';
+      return localStorage.getItem('photobooksgallery-theme') || 'default';
     }
     return 'default';
   });
@@ -92,7 +92,7 @@ export function useTheme() {
   // For unauthenticated users, use localStorage fallback
   useEffect(() => {
     if (!isAuthenticated) {
-      const savedTheme = localStorage.getItem('photocraft-theme') || 'default';
+      const savedTheme = localStorage.getItem('photobooksgallery-theme') || 'default';
       if (savedTheme !== currentThemeName) {
         applyTheme(savedTheme);
       }
@@ -116,7 +116,7 @@ export function useTheme() {
       }
     } else {
       // Save to localStorage for unauthenticated users
-      localStorage.setItem('photocraft-theme', themeName);
+      localStorage.setItem('photobooksgallery-theme', themeName);
     }
   };
 

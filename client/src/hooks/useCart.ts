@@ -3,7 +3,7 @@ import type { Product } from '@shared/schema';
 import type { CartItem, LocalizedText } from '@/types';
 
 // Storage key for localStorage
-const CART_STORAGE_KEY = 'photocraft-cart';
+const CART_STORAGE_KEY = 'photobooksgallery-cart';
 
 // Global cart state and listeners
 let globalCartItems: CartItem[] = [];

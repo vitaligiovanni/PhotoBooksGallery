@@ -29,9 +29,9 @@ export function PhotoEditor() {
           id: `photo-${i}-${index}`,
           file,
           x: (index % 2) * 50,
-          y: Math.floor(index / 2) * 50,
-          width: 45,
-          height: 45
+          y: Math.floor(index / 2) * 40,
+          width: 48, // Увеличиваем размер для лучшего заполнения
+          height: 35 // Увеличиваем размер для лучшего заполнения
         }))
       });
     }

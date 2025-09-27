@@ -8,6 +8,7 @@ import { Upload, X } from "lucide-react";
 interface ObjectUploaderProps {
   maxNumberOfFiles?: number;
   maxFileSize?: number;
+  accept?: string;
   onGetUploadParameters: () => Promise<{
     method: "PUT";
     url: string;
@@ -21,6 +22,7 @@ interface ObjectUploaderProps {
 export function ObjectUploader({
   maxNumberOfFiles = 1,
   maxFileSize = 10485760, // 10MB default
+  accept = "image/*",
   onGetUploadParameters,
   onComplete,
   onFilesAdded,
@@ -41,13 +43,17 @@ export function ObjectUploader({
     for (const file of fileArray) {
       // Check file size
       if (file.size > maxFileSize) {
-        alert(`Файл "${file.name}" слишком большой. Максимальный размер: ${Math.round(maxFileSize / 1024 / 1024)}MB`);
+        alert(t('fileTooLarge', { fileName: file.name, maxSize: Math.round(maxFileSize / 1024 / 1024) }));
         return;
       }
 
-      // Check file type
-      if (!file.type.startsWith('image/')) {
+      // Check file type based on accept prop
+      if (accept === "image/*" && !file.type.startsWith('image/')) {
         alert(t('onlyImages'));
+        return;
+      }
+      if (accept === "video/*" && !file.type.startsWith('video/')) {
+        alert(t('onlyVideos'));
         return;
       }
     }
@@ -68,24 +74,22 @@ export function ObjectUploader({
       for (const file of fileArray) {
         console.log(`Uploading file: ${file.name}`);
         
-        // Get unique upload parameters for each file
-        const uploadParams = await onGetUploadParameters();
-        console.log('Upload params received:', uploadParams);
+        // Используем POST запрос с FormData вместо PUT с сырым файлом
+        const formData = new FormData();
+        formData.append("file", file);
 
-        const response = await fetch(uploadParams.url, {
-          method: uploadParams.method,
-          body: file,
-          headers: {
-            'Content-Type': file.type,
-          },
+        const response = await fetch('/api/local-upload', {
+          method: "POST",
+          body: formData,
         });
 
         console.log(`Upload response for ${file.name}:`, response.status, response.statusText);
 
         if (response.ok) {
-          console.log(`Upload successful for ${file.name}, URL:`, uploadParams.url);
+          const result = await response.json();
+          console.log(`Upload successful for ${file.name}, URL:`, result.url);
           successfulUploads.push({
-            uploadURL: uploadParams.url
+            uploadURL: result.url
           });
         } else {
           throw new Error(`Upload failed for ${file.name}: ${response.statusText}`);
@@ -132,7 +136,7 @@ export function ObjectUploader({
         {isUploading ? (
           <>
             <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-            Загрузка...
+            {t("uploading")}
           </>
         ) : (
           children
@@ -142,7 +146,7 @@ export function ObjectUploader({
       <Input
         ref={fileInputRef}
         type="file"
-        accept="image/*"
+        accept={accept}
         onChange={handleFileChange}
         style={{ display: 'none' }}
         multiple={maxNumberOfFiles > 1}

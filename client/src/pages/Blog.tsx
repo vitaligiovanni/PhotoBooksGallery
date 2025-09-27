@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calendar, Clock, User, Search, ArrowRight, Eye } from "lucide-react";
+import { Calendar, Clock, User, Search, ArrowRight, Eye, MessageCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useState } from "react";
 import { Header } from "@/components/Header";
@@ -22,6 +22,7 @@ type BlogPost = {
   publishedAt: string | null;
   tags: string[];
   viewCount: number;
+  commentCount?: number;
   createdAt: string;
   author?: {
     firstName: string;
@@ -51,10 +52,28 @@ export default function Blog() {
 
   const { data: posts, isLoading: postsLoading } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog/posts", searchQuery, selectedCategory],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (searchQuery) params.append('search', searchQuery);
+      if (selectedCategory) params.append('category', selectedCategory);
+      
+      const response = await fetch(`/api/blog/posts?${params.toString()}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch blog posts');
+      }
+      return response.json();
+    },
   });
 
   const { data: categories, isLoading: categoriesLoading } = useQuery<BlogCategory[]>({
     queryKey: ["/api/blog/categories"],
+    queryFn: async () => {
+      const response = await fetch('/api/blog/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch blog categories');
+      }
+      return response.json();
+    },
   });
 
   const formatDate = (dateString: string) => {
@@ -102,9 +121,9 @@ export default function Blog() {
         <div className="relative container mx-auto px-4 py-16 lg:py-24">
           <div className="text-center max-w-4xl mx-auto">
             <h1 className="text-4xl lg:text-6xl font-bold mb-6 bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent">
-              {currentLang === "ru" && "Блог ФотоКрафт"}
-              {currentLang === "hy" && "ՖոտոԿրաֆտ Բլոգ"}
-              {currentLang === "en" && "PhotoCraft Blog"}
+              {currentLang === "ru" && "Блог PhotoBooksGallery"}
+              {currentLang === "hy" && "PhotoBooksGallery Բլոգ"}
+              {currentLang === "en" && "PhotoBooksGallery Blog"}
             </h1>
             <p className="text-xl lg:text-2xl text-blue-100 mb-8 leading-relaxed">
               {currentLang === "ru" && "Советы по фотографии, идеи для альбомов и вдохновение для ваших воспоминаний"}
@@ -232,6 +251,12 @@ export default function Blog() {
                       <div className="flex items-center gap-1">
                         <Eye className="h-4 w-4" />
                         <span data-testid={`text-views-${post.slug}`}>{post.viewCount}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MessageCircle className="h-4 w-4" />
+                        <span data-testid={`text-comments-${post.slug}`}>
+                          {post.commentCount || 0}
+                        </span>
                       </div>
                     </div>
                   </div>

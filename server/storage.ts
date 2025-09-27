@@ -91,9 +91,9 @@ export interface IStorage {
   deleteComment(id: string): Promise<void>;
 
   // Settings operations
-  getSettings(): Promise<Setting[]>;
+  getSettings(): Promise<Record<string, any>>;
   getSetting(key: string): Promise<Setting | undefined>;
-  updateSetting(key: string, value: string, description?: string): Promise<Setting>;
+  updateSetting(key: string, value: any, description?: string): Promise<Setting>;
 
   // User theme operations
   getUserTheme(userId: string): Promise<UserTheme | undefined>;
@@ -418,40 +418,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(comments).where(eq(comments.id, id));
   }
 
-  // Settings operations
-  async getSettings(): Promise<Setting[]> {
-    return await db.select().from(settings).orderBy(settings.key);
-  }
-
-  async getSetting(key: string): Promise<Setting | undefined> {
-    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
-    return setting;
-  }
-
-  async updateSetting(key: string, value: string, description?: string): Promise<Setting> {
-    // First try to update existing setting
-    const [updatedSetting] = await db
-      .update(settings)
-      .set({ 
-        value, 
-        description: description || null,
-        updatedAt: new Date()
-      })
-      .where(eq(settings.key, key))
-      .returning();
-
-    // If no setting was updated, create a new one
-    if (!updatedSetting) {
-      const [newSetting] = await db
-        .insert(settings)
-        .values({ key, value, description: description || null })
-        .returning();
-      return newSetting;
-    }
-
-    return updatedSetting;
-  }
-
   // User theme operations
   async getUserTheme(userId: string): Promise<UserTheme | undefined> {
     const [theme] = await db.select().from(userThemes).where(eq(userThemes.userId, userId));
@@ -484,13 +450,16 @@ export class DatabaseStorage implements IStorage {
 
   // Review operations
   async getReviews(status?: string): Promise<Review[]> {
-    let query = db.select().from(reviews).orderBy(desc(reviews.createdAt));
-    
     if (status) {
-      query = query.where(eq(reviews.status, status as any));
+      return await db.select()
+        .from(reviews)
+        .where(eq(reviews.status, status as any))
+        .orderBy(desc(reviews.createdAt));
+    } else {
+      return await db.select()
+        .from(reviews)
+        .orderBy(desc(reviews.createdAt));
     }
-    
-    return await query;
   }
 
   async getApprovedReviews(): Promise<Review[]> {
@@ -673,6 +642,57 @@ export class DatabaseStorage implements IStorage {
 
   async deleteExchangeRate(id: string): Promise<void> {
     await db.delete(exchangeRates).where(eq(exchangeRates.id, id));
+  }
+
+  // Settings operations
+  async getSettings(): Promise<Record<string, any>> {
+    const allSettings = await db.select().from(settings);
+    const settingsMap: Record<string, any> = {};
+    
+    allSettings.forEach(setting => {
+      settingsMap[setting.key] = setting.value;
+    });
+    
+    return settingsMap;
+  }
+
+  async getSetting(key: string): Promise<Setting | undefined> {
+    const [setting] = await db.select().from(settings).where(eq(settings.key, key));
+    return setting;
+  }
+
+  async updateSetting(key: string, value: any, description?: string): Promise<Setting> {
+    const [existingSetting] = await db.select().from(settings).where(eq(settings.key, key));
+    
+    if (existingSetting) {
+      // Update existing setting
+      const [updatedSetting] = await db
+        .update(settings)
+        .set({ 
+          value,
+          description: description || existingSetting.description,
+          updatedAt: new Date()
+        })
+        .where(eq(settings.key, key))
+        .returning();
+      return updatedSetting;
+    } else {
+      // Create new setting
+      const [newSetting] = await db
+        .insert(settings)
+        .values({
+          key,
+          value,
+          description,
+          updatedAt: new Date()
+        })
+        .returning();
+      return newSetting;
+    }
+  }
+
+  async deleteSetting(key: string): Promise<void> {
+    await db.delete(settings).where(eq(settings.key, key));
   }
 }
 

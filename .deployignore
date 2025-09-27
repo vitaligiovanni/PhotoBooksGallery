@@ -1,0 +1,9 @@
+uploads
+debug.log
+server.log
+*.zip
+*.tar.gz
+*.md
+.env
+.env.local
+coverage

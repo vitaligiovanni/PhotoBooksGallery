@@ -1,6 +1,6 @@
 # Overview
 
-ФотоКрафт is a full-stack photo product e-commerce application built for creating and selling custom photobooks and photo souvenirs. The application is designed as an online store where users can browse products, use an online editor to create custom photobooks, and place orders. It supports three languages (Russian, Armenian, English) and includes both customer-facing features and administrative functionality.
+PhotoBooksGallery is a full-stack photo product e-commerce application built for creating and selling custom photobooks and photo souvenirs. The application is designed as an online store where users can browse products, use an online editor to create custom photobooks, and place orders. It supports three languages (Russian, Armenian, English) and includes both customer-facing features and administrative functionality.
 
 # User Preferences
 

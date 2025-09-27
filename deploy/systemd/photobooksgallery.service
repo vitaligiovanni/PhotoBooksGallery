@@ -1,0 +1,20 @@
+[Unit]
+Description=PhotoBooksGallery App
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+Environment=NODE_ENV=production
+WorkingDirectory=/var/www/photobooksgallery/releases/current
+ExecStart=/usr/bin/node dist/server/index.js
+Restart=on-failure
+RestartSec=5
+User=www-data
+Group=www-data
+StandardOutput=append:/var/www/photobooksgallery/persistent/logs/app.log
+StandardError=append:/var/www/photobooksgallery/persistent/logs/app-error.log
+EnvironmentFile=/var/www/photobooksgallery/persistent/.env
+
+[Install]
+WantedBy=multi-user.target

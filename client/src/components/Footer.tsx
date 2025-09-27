@@ -12,7 +12,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Camera className="text-primary text-2xl" />
-              <span className="font-serif font-bold text-xl">ФотоКрафт</span>
+              <span className="font-serif font-bold text-xl">PhotoBooksGallery</span>
             </div>
             <p className="text-background/80 text-sm leading-relaxed">
               {t('companyDescription')}
@@ -68,7 +68,7 @@ export function Footer() {
 
         <div className="border-t border-background/20 mt-12 pt-8 text-center">
           <p className="text-background/60 text-sm">
-            © 2024 ФотоКрафт. {t('allRightsReserved')}. | 
+            © 2024 PhotoBooksGallery. {t('allRightsReserved')}. | 
             <a href="#" className="hover:text-primary transition-colors ml-1">{t('privacyPolicy')}</a> | 
             <a href="#" className="hover:text-primary transition-colors ml-1">{t('termsOfService')}</a>
           </p>

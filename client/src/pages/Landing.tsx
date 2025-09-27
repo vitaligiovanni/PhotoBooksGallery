@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useCallback } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,11 @@ import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { CategoryCard } from "@/components/CategoryCard";
 import { ProductCard } from "@/components/ProductCard";
+import { TrustIndicators } from "@/components/TrustIndicators";
+import { FAQSection } from "@/components/FAQSection";
+import { PremiumServices } from "@/components/PremiumServices";
+import { HeroButtonGroup, CreatePhotobookButton, ViewExamplesButton } from "@/components/PremiumButtons";
+import ContactSection from "@/components/ContactSection";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Medal, Truck, Palette, Headphones, Star, Plus, Upload } from "lucide-react";
@@ -20,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useCart } from "@/hooks/useCart";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Category, Product, Review } from "@shared/schema";
+import QuickPhotobookPreview from "@/components/QuickPhotobookPreview";
 
 function CategoriesGrid() {
   const { t } = useTranslation();
@@ -86,7 +93,7 @@ function ReviewsSection() {
     queryKey: ["/api/reviews"],
   });
 
-  const { data: products } = useQuery({
+  const { data: products } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
 
@@ -147,45 +154,25 @@ function ReviewsSection() {
     console.log('Starting photo upload process', { fileName: file.name, fileSize: file.size, fileType: file.type });
     setUploadingPhoto(true);
     try {
-      // Get upload URL
-      console.log('Step 1: Getting upload URL...');
-      const uploadResponseRaw = await apiRequest("POST", "/api/objects/upload");
-      const uploadResponse = await uploadResponseRaw.json();
-      console.log('Upload URL response:', uploadResponse);
-      const uploadURL = uploadResponse.uploadURL;
+      // Use the new POST endpoint with FormData
+      console.log('Step 1: Creating FormData for upload...');
+      const formData = new FormData();
+      formData.append('file', file);
       
-      if (!uploadURL) {
-        console.error('uploadURL is undefined in response:', uploadResponse);
-        throw new Error('Upload URL not received from server');
-      }
-
-      // Upload the file
-      console.log('Step 2: Uploading file to:', uploadURL);
-      const uploadResult = await fetch(uploadURL, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
+      console.log('Step 2: Uploading file to /api/local-upload...');
+      const uploadResult = await fetch('/api/local-upload', {
+        method: 'POST',
+        body: formData,
       });
       
       console.log('Upload result:', { status: uploadResult.status, statusText: uploadResult.statusText, ok: uploadResult.ok });
 
       if (uploadResult.ok) {
-        // Normalize the uploaded file path
-        console.log('Step 3: Normalizing path...');
-        const rawPath = uploadURL.split('?')[0];
-        console.log('Raw path for normalization:', rawPath);
+        const uploadResponse = await uploadResult.json();
+        console.log('Upload response:', uploadResponse);
         
-        const normalizeResponseRaw = await apiRequest("POST", "/api/objects/normalize", {
-          rawPath: rawPath
-        });
-        const normalizeResponse = await normalizeResponseRaw.json();
-        
-        console.log('Normalize response:', normalizeResponse);
-        
-        // Set profile photo in form with normalized path
-        reviewForm.setValue('profilePhoto', normalizeResponse.normalizedPath);
+        // Set profile photo in form with the returned URL
+        reviewForm.setValue('profilePhoto', uploadResponse.url);
         setProfilePreview(URL.createObjectURL(file));
         console.log('Photo upload completed successfully!');
         toast({
@@ -197,12 +184,13 @@ function ReviewsSection() {
         console.error('Upload failed with details:', { status: uploadResult.status, statusText: uploadResult.statusText, errorText });
         throw new Error(`Upload failed with status: ${uploadResult.status} - ${errorText}`);
       }
-    } catch (error) {
+    } catch (error: unknown) {
+      const err = error as { message?: string; stack?: string };
       console.error('Photo upload error:', error);
-      console.error('Error details:', { message: error.message, stack: error.stack });
+      console.error('Error details:', { message: err?.message, stack: err?.stack });
       toast({
         title: "Ошибка",
-        description: `Не удалось загрузить фотографию: ${error.message}`,
+        description: `Не удалось загрузить фотографию: ${err?.message ?? 'Неизвестная ошибка'}`,
         variant: "destructive",
       });
     } finally {
@@ -299,12 +287,13 @@ function ReviewsSection() {
                           {(() => {
                             const product = products?.find((p: any) => p.id === review.productId);
                             if (product) {
-                              const productName = typeof product.name === 'object' 
-                                ? product.name.ru || product.name.hy || product.name.en 
-                                : product.name;
+                              type Localized = { ru?: string; hy?: string; en?: string };
+                              const productName = typeof product.name === 'object'
+                                ? ((product.name as Localized).ru ?? (product.name as Localized).hy ?? (product.name as Localized).en ?? 'Товар')
+                                : (product.name ?? 'Товар');
                               return (
                                 <span className="text-xs text-primary font-medium bg-primary/10 px-2 py-1 rounded-full">
-                                  {productName}
+                                  {String(productName)}
                                 </span>
                               );
                             }
@@ -548,6 +537,7 @@ export default function Landing() {
   const { toast } = useToast();
   const { addToCart } = useCart();
   const [dragActive, setDragActive] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<File[]>([]);
 
   const scrollToEditor = () => {
     document.getElementById('editor')?.scrollIntoView({ behavior: 'smooth' });
@@ -565,16 +555,13 @@ export default function Landing() {
   };
 
   const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
+    const files = Array.from(event.target.files || []).filter(f => f.type.startsWith('image/'));
     if (files.length > 0) {
+      setSelectedPhotos(files);
       toast({
         title: "Фото загружены!",
-        description: `Загружено ${files.length} фото. Перенаправляем в редактор...`,
+        description: `Загружено ${files.length} фото. Создаём мгновенный предпросмотр…`,
       });
-      // Redirect to editor with photos
-      setTimeout(() => {
-        window.location.href = '/editor';
-      }, 1000);
     }
   }, [toast]);
 
@@ -586,13 +573,11 @@ export default function Landing() {
     );
     
     if (files.length > 0) {
+      setSelectedPhotos(files);
       toast({
         title: "Фото загружены!",
-        description: `Загружено ${files.length} фото. Перенаправляем в редактор...`,
+        description: `Загружено ${files.length} фото. Создаём мгновенный предпросмотр…`,
       });
-      setTimeout(() => {
-        window.location.href = '/editor';
-      }, 1000);
     }
   }, [toast]);
 
@@ -616,8 +601,42 @@ export default function Landing() {
   };
 
   return (
-    <div className="min-h-screen page-bg">
-      <Header />
+    <>
+      <Helmet>
+        <title>{t('landingPageTitle')}</title>
+        <meta name="description" content={t('landingPageDescription')} />
+        <meta name="keywords" content={t('landingPageKeywords')} />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://photobooksgallery.am/" />
+        <meta property="og:title" content={t('landingPageTitle')} />
+        <meta property="og:description" content={t('landingPageDescription')} />
+        <meta property="og:image" content="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="og:site_name" content="PhotoBooksGallery" />
+        
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://photobooksgallery.am/" />
+        <meta property="twitter:title" content={t('landingPageTitle')} />
+        <meta property="twitter:description" content={t('landingPageDescription')} />
+        <meta property="twitter:image" content="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta name="twitter:site" content="@photobooksgallery" />
+        
+        {/* Additional SEO */}
+        <meta name="robots" content="index, follow" />
+        <meta name="author" content="PhotoBooksGallery" />
+        <link rel="canonical" href="https://photobooksgallery.am/" />
+        
+        {/* hreflang for multilingual support */}
+        <link rel="alternate" hrefLang="ru" href="https://photobooksgallery.am/ru" />
+        <link rel="alternate" hrefLang="hy" href="https://photobooksgallery.am/hy" />
+        <link rel="alternate" hrefLang="en" href="https://photobooksgallery.am/en" />
+        <link rel="alternate" hrefLang="x-default" href="https://photobooksgallery.am/" />
+      </Helmet>
+      
+      <div className="min-h-screen page-bg">
+        <Header />
       {/* Hero Section */}
       <section className="hero-gradient text-white py-20 lg:py-32 bg-[#5c6d91]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -629,24 +648,13 @@ export default function Landing() {
               <p className="text-xl opacity-90 leading-relaxed" data-testid="text-hero-subtitle">
                 {t('heroSubtitle')}
               </p>
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  size="lg"
-                  className="bg-white text-primary hover:bg-white/90 shadow-lg"
-                  onClick={scrollToEditor}
-                  data-testid="button-create-photobook"
-                >
-                  {t('createPhotobook')}
-                </Button>
-                <Button 
-                  size="lg"
-                  variant="outline"
-                  className="border-white text-white hover:bg-white hover:text-primary"
-                  data-testid="button-view-examples"
-                >
-                  {t('viewExamples')}
-                </Button>
-              </div>
+              <HeroButtonGroup
+                onCreateClick={scrollToEditor}
+                onViewClick={() => {
+                  // Прокрутка к примерам работ
+                  document.getElementById('examples')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+              />
             </div>
             
             <div className="relative">
@@ -683,6 +691,17 @@ export default function Landing() {
           <CategoriesGrid />
         </div>
       </section>
+
+      {/* Trust Indicators Section */}
+      <section className="py-16 bg-gradient-to-b from-gray-50 to-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <TrustIndicators />
+        </div>
+      </section>
+
+      {/* Premium Services Section */}
+      <PremiumServices />
+
       {/* Featured Products */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -701,87 +720,238 @@ export default function Landing() {
           <ProductsGrid onAddToCart={handleAddToCart} />
         </div>
       </section>
-      {/* Photo Editor Section */}
-      <section id="editor" className="py-16 bg-card">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold text-foreground mb-4" data-testid="text-editor-title">
-              {t('editorTitle')}
+      {/* Photo Editor Section - Enhanced with WOW Effect */}
+      <section id="editor" className="py-24 bg-gradient-to-br from-indigo-50 via-white to-cyan-50 relative overflow-hidden">
+        {/* Animated background elements */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-10 -right-10 w-32 h-32 bg-gradient-to-br from-blue-400/20 to-purple-400/20 rounded-full animate-pulse"></div>
+          <div className="absolute top-1/2 -left-10 w-20 h-20 bg-gradient-to-br from-cyan-400/20 to-blue-400/20 rounded-full animate-bounce"></div>
+          <div className="absolute bottom-20 right-1/4 w-16 h-16 bg-gradient-to-br from-purple-400/20 to-pink-400/20 rounded-full animate-ping"></div>
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-2 rounded-full mb-6">
+              <span className="animate-pulse mr-2">✨</span>
+              <span className="font-semibold">{t('interactiveEditorMagic')}</span>
+              <span className="animate-pulse ml-2">✨</span>
+            </div>
+            <h2 className="font-serif text-4xl sm:text-5xl font-bold text-gray-900 mb-6" data-testid="text-editor-title">
+              {t('interactiveEditorMainTitle')}
             </h2>
-            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
-              {t('editorSubtitle')}
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-4">
+              {t('interactiveEditorDescription')}
             </p>
+            <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+              <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full">{t('interactiveEditorBadge1')}</span>
+              <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">{t('interactiveEditorBadge2')}</span>
+              <span className="bg-purple-100 text-purple-800 px-3 py-1 rounded-full">{t('interactiveEditorBadge3')}</span>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">1</div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">{t('uploadPhotos')}</h3>
-                  <p className="text-muted-foreground">{t('uploadPhotosDesc')}</p>
-                </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left side - Process steps with animations */}
+            <div className="space-y-8">
+              <div className="text-center lg:text-left mb-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('interactiveEditorHowTitle')}</h3>
+                <p className="text-gray-600">{t('interactiveEditorHowSubtitle')}</p>
               </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">2</div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">{t('autoLayout')}</h3>
-                  <p className="text-muted-foreground">{t('autoLayoutDesc')}</p>
+
+              {/* Step 1 */}
+              <div className="flex items-start space-x-6 group">
+                <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  1
                 </div>
-              </div>
-              
-              <div className="flex items-start space-x-4">
-                <div className="bg-primary text-primary-foreground rounded-full w-8 h-8 flex items-center justify-center font-bold">3</div>
-                <div>
-                  <h3 className="font-semibold text-foreground mb-2">{t('personalize')}</h3>
-                  <p className="text-muted-foreground">{t('personalizeDesc')}</p>
+                <div className="flex-1">
+                  <h4 className="font-bold text-lg text-gray-900 mb-2 flex items-center">
+                    {t('editorStep1Title')}
+                    <span className="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full animate-bounce">
+                      {t('editorStep1Badge')}
+                    </span>
+                  </h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    {t('editorStep1Description')}
+                  </p>
+                  <div className="flex items-center mt-2 text-sm text-blue-600">
+                    <span className="animate-pulse">⚡</span>
+                    <span className="ml-1">{t('editorStep1Feature')}</span>
+                  </div>
                 </div>
               </div>
 
-              <Button 
-                size="lg"
-                className="bg-secondary text-secondary-foreground hover:bg-secondary/90"
-                onClick={() => window.location.href = '/api/login'}
-                data-testid="button-start-creating"
-              >
-                {t('startCreating')}
-              </Button>
+              {/* Step 2 */}
+              <div className="flex items-start space-x-6 group">
+                <div className="bg-gradient-to-br from-purple-500 to-purple-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  2
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-lg text-gray-900 mb-2 flex items-center">
+                    {t('editorStep2Title')}
+                    <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full animate-pulse">
+                      {t('editorStep2Badge')}
+                    </span>
+                  </h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    {t('editorStep2Description')}
+                  </p>
+                  <div className="flex items-center mt-2 text-sm text-purple-600">
+                    <span className="animate-spin">🔄</span>
+                    <span className="ml-1">{t('editorStep2Feature')}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="flex items-start space-x-6 group">
+                <div className="bg-gradient-to-br from-green-500 to-green-600 text-white rounded-full w-12 h-12 flex items-center justify-center font-bold text-lg shadow-lg group-hover:scale-110 transition-transform duration-300">
+                  3
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-bold text-lg text-gray-900 mb-2 flex items-center">
+                    {t('editorStep3Title')}
+                    <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                      {t('editorStep3Badge')}
+                    </span>
+                  </h4>
+                  <p className="text-gray-600 leading-relaxed">
+                    {t('editorStep3Description')}
+                  </p>
+                  <div className="flex items-center mt-2 text-sm text-green-600">
+                    <span>👆</span>
+                    <span className="ml-1">{t('editorStep3Feature')}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA section */}
+              <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl p-6 border border-indigo-200">
+                <h4 className="font-bold text-lg text-gray-900 mb-2">🚀 Готовы попробовать?</h4>
+                <p className="text-gray-600 mb-4">Начните создавать свою фотокнигу прямо сейчас!</p>
+                <CreatePhotobookButton 
+                  onClick={() => window.location.href = '/api/login'}
+                  className="data-testid-button-start-creating"
+                >
+                  Начать создание
+                </CreatePhotobookButton>
+              </div>
             </div>
 
+            {/* Right side - Interactive editor area */}
             <div className="relative">
               <Card 
-                className={`border-2 border-dashed cursor-pointer transition-all duration-200 ${
+                className={`border-2 border-dashed cursor-pointer transition-all duration-500 relative overflow-hidden ${
                   dragActive 
-                    ? 'border-primary bg-primary/5 scale-105' 
-                    : 'border-border hover:border-primary/50 hover:bg-primary/2'
+                    ? 'border-blue-500 bg-blue-50 scale-105 shadow-2xl' 
+                    : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50 hover:scale-102 shadow-lg hover:shadow-xl'
                 }`}
                 onDrop={handleDrop}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onClick={handleClick}
               >
-                <CardContent className="p-8 text-center space-y-6">
-                  <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto transition-colors ${
-                    dragActive ? 'bg-primary text-white' : 'bg-primary/20 text-primary'
+                {/* Animated background pattern */}
+                <div className="absolute inset-0 opacity-5">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-500"></div>
+                  <div className="absolute inset-0" style={{
+                    backgroundImage: `url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.3'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3C/g%3E%3C/svg%3E")`,
+                    animation: 'float 6s ease-in-out infinite'
+                  }}></div>
+                </div>
+
+                <CardContent className="p-12 text-center space-y-8 relative z-10">
+                  <div className={`w-20 h-20 rounded-full flex items-center justify-center mx-auto transition-all duration-500 ${
+                    dragActive ? 'bg-blue-600 text-white scale-110' : 'bg-gradient-to-br from-blue-100 to-purple-100 text-blue-600'
                   }`}>
-                    <Upload className="text-2xl h-8 w-8" />
+                    <Upload className={`transition-all duration-500 ${dragActive ? 'w-10 h-10 animate-bounce' : 'w-8 h-8'}`} />
                   </div>
+                  
                   <div>
-                    <h3 className="font-semibold text-foreground mb-2">
-                      {dragActive ? t('releasePhotosHere') : t('dragPhotosHere')}
+                    <h3 className={`font-bold text-xl mb-3 transition-colors duration-300 ${
+                      dragActive ? 'text-blue-600' : 'text-gray-900'
+                    }`}>
+                      {dragActive ? '🎉 Отпустите для создания магии!' : '📸 Перетащите фото сюда'}
                     </h3>
-                    <p className="text-muted-foreground text-sm">
-                      {dragActive ? 'Загружаем ваши фото...' : 'или нажмите для выбора файлов'}
+                    <p className={`transition-colors duration-300 ${
+                      dragActive ? 'text-blue-700' : 'text-gray-600'
+                    }`}>
+                      {dragActive ? 'Создаем ваш шедевр...' : 'или нажмите для выбора файлов'}
                     </p>
                   </div>
+
                   {!dragActive && (
-                    <Button variant="outline" size="sm">
-                      {t('selectFiles')}
-                    </Button>
+                    <div className="space-y-4">
+                      <Button 
+                        variant="outline" 
+                        size="lg"
+                        className="border-2 border-blue-300 text-blue-600 hover:bg-blue-50 hover:border-blue-400 transition-all duration-300"
+                      >
+                        <span className="mr-2">📁</span>
+                        Выбрать файлы
+                      </Button>
+                      <div className="flex items-center justify-center space-x-4 text-sm text-gray-500">
+                        <span className="bg-gray-100 px-3 py-1 rounded-full">JPG</span>
+                        <span className="bg-gray-100 px-3 py-1 rounded-full">PNG</span>
+                        <span className="bg-gray-100 px-3 py-1 rounded-full">HEIC</span>
+                      </div>
+                    </div>
                   )}
                 </CardContent>
               </Card>
+
+              {selectedPhotos.length > 0 && (
+                <div className="mt-8 animate-in slide-in-from-bottom duration-500">
+                  {/* Success message */}
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                    <div className="flex items-center">
+                      <div className="bg-green-500 text-white rounded-full w-6 h-6 flex items-center justify-center mr-3">
+                        ✓
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-green-800">Отлично! Фото загружены</h4>
+                        <p className="text-green-600 text-sm">Готовим для вас 10 разворотов...</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <QuickPhotobookPreview photos={selectedPhotos} />
+                  
+                  <div className="mt-6 bg-gradient-to-r from-gray-50 to-blue-50 rounded-xl p-6 border border-gray-200">
+                    <div className="flex flex-wrap gap-4 items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="text-sm text-gray-600">
+                          Выбрано фото: <span className="font-bold text-gray-900">{selectedPhotos.length}</span>
+                        </div>
+                        <div className="text-sm text-green-600 flex items-center">
+                          <span className="animate-pulse mr-1">🟢</span>
+                          Готово к созданию
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => setSelectedPhotos([])}
+                          data-testid="button-clear-selected-photos"
+                          className="hover:bg-red-50 hover:border-red-300 hover:text-red-600"
+                        >
+                          <span className="mr-2">🗑️</span>
+                          Очистить
+                        </Button>
+                        <CreatePhotobookButton
+                          onClick={() => (window.location.href = '/api/login?redirect=/editor')}
+                          className="data-testid-button-proceed-to-editor"
+                        >
+                          Продолжить в редакторе
+                        </CreatePhotobookButton>
+                      </div>
+                    </div>
+                    
+                    <div className="mt-4 text-xs text-gray-500 text-center">
+                      💡 После регистрации вас ждет полный редактор с готовыми 10 разворотами
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -829,7 +999,19 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* FAQ Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <FAQSection />
+        </div>
+      </section>
+
       <ReviewsSection />
+      
+      {/* Contact Section */}
+      <ContactSection />
+      
       {/* Call to Action */}
       <section className="py-20 hero-gradient text-white">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -860,6 +1042,7 @@ export default function Landing() {
         </div>
       </section>
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }

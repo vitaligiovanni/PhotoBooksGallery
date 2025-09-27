@@ -1,6 +1,129 @@
-node_modules
-dist
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Production builds
+dist/
+build/
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# IDE/Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
 .DS_Store
-server/public
-vite.config.ts.*
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+server.log
+debug.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# nyc test coverage
+.nyc_output
+
+# Temporary folders
+tmp/
+temp/
+.tmp/
+.temp/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# Local development files
+.local/
+.replit
+replit.nix
+
+# Deploy artifacts
+.deploy/
 *.tar.gz
+release-*.tar.gz
+backup_*.tar.gz
+photobooksgallery-deploy.zip
+updated-dist.zip
+fixed-validation-dist.zip
+
+# Database files
+*.db
+*.sqlite
+
+# Uploads (на сервере будет отдельная папка)
+uploads/
+
+# Test files и отладочные скрипты
+test-*.js
+test-*.bat
+test-*.html
+test-*.png
+test-*.json
+debug-*.js
+check-*.js
+check-*.cjs
+find-*.js
+find-*.cjs
+fix-*.js
+fix-*.cjs
+verify-*.cjs
+detailed-*.cjs
+enhanced-*.cjs
+
+# Временные файлы проекта
+*.report.txt
+broken-images-report.txt
+enhanced-broken-images-report.txt
+
+# Служебные файлы
+api-server*.cjs
+api-server*.js
+simple-*.js
+constructor-*.js
+additional-*.js
+all-endpoints-*.js
+blog-endpoints.js
+missing-endpoints.js
+endpoint-*.js
+start-server.js
+
+# SQL backup файлы (миграции оставляем)
+*.sql
+!migrations/*.sql
+
+# Nginx конфигурации  
+nginx-config*
+
+# Производственные файлы
+production.env
+
+# Server public (если генерируется)
+server/public

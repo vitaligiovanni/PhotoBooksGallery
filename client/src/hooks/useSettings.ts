@@ -1,14 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
-import type { Setting } from "@shared/schema";
 
 export function useSettings() {
-  const { data: settings = [] } = useQuery<Setting[]>({ 
+  const { data: settings = {} } = useQuery<Record<string, any>>({ 
     queryKey: ["/api/settings"] 
   });
 
   const getSetting = (key: string, defaultValue?: string): string => {
-    const setting = settings.find(s => s.key === key);
-    return setting?.value || defaultValue || '';
+    return settings[key] || defaultValue || '';
   };
 
   const getFreeShippingThreshold = (): number => {

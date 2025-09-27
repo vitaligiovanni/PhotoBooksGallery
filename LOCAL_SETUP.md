@@ -1,6 +1,6 @@
-# Локальная установка ФотоКрафт
+# Локальная установка PhotoBooksGallery
 
-Пошаговая инструкция для установки проекта ФотоКрафт на локальный компьютер.
+Пошаговая инструкция для установки проекта PhotoBooksGallery на локальный компьютер.
 
 ## Требования
 
@@ -19,7 +19,7 @@
 ### Вариант B: Клонировать через Git (если есть репозиторий)
 ```bash
 git clone [URL_РЕПОЗИТОРИЯ]
-cd fotokraft
+cd photobooksgallery
 ```
 
 ## 2. Установка зависимостей
@@ -59,12 +59,12 @@ sudo systemctl enable postgresql
 # Подключитесь к PostgreSQL
 sudo -u postgres psql
 
-# Создайте базу данных
-CREATE DATABASE fotokraft;
+```sql
+CREATE DATABASE photobooksgallery;
 
-# Создайте пользователя (опционально)
-CREATE USER fotokraft_user WITH PASSWORD 'your_password';
-GRANT ALL PRIVILEGES ON DATABASE fotokraft TO fotokraft_user;
+-- Создание пользователя
+CREATE USER photobooksgallery_user WITH PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE photobooksgallery TO photobooksgallery_user;
 
 # Выйдите
 \q
@@ -75,11 +75,11 @@ GRANT ALL PRIVILEGES ON DATABASE fotokraft TO fotokraft_user;
 Создайте файл `.env` в корне проекта:
 
 ```env
-# База данных
-DATABASE_URL=postgresql://postgres:your_password@localhost:5432/fotokraft
+# Вариант 1: Подключение через пользователя postgres (проще)
+DATABASE_URL=postgresql://postgres:your_password@localhost:5432/photobooksgallery
 
-# Или если создали отдельного пользователя:
-# DATABASE_URL=postgresql://fotokraft_user:your_password@localhost:5432/fotokraft
+# Вариант 2: Подключение через созданного пользователя
+# DATABASE_URL=postgresql://photobooksgallery_user:your_password@localhost:5432/photobooksgallery
 
 # Сессии
 SESSION_SECRET=your_very_long_random_secret_key_here
@@ -148,8 +148,8 @@ services:
   postgres:
     image: postgres:14
     environment:
-      POSTGRES_DB: fotokraft
-      POSTGRES_USER: fotokraft
+      POSTGRES_DB: photobooksgallery
+      POSTGRES_USER: photobooksgallery
       POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
@@ -199,7 +199,7 @@ npm install
 
 ### Структура проекта
 ```
-fotokraft/
+photobooksgallery/
 ├── client/          # React фронтенд
 ├── server/          # Express бэкенд
 ├── shared/          # Общие типы и схемы

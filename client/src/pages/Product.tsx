@@ -28,6 +28,7 @@ export default function ProductPage() {
   const [quantity, setQuantity] = useState(1);
   const [spreads, setSpreads] = useState(10); // Default to minimum spreads
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [showVideo, setShowVideo] = useState(false);
 
   const { data: product, isLoading } = useQuery<Product>({
     queryKey: ["/api/products", id],
@@ -43,6 +44,44 @@ export default function ProductPage() {
     },
     enabled: !!id,
   });
+
+  // Move conditional returns AFTER all hooks are declared
+  if (isLoading) {
+    return (
+      <div className="min-h-screen page-bg">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Skeleton className="aspect-square w-full" />
+            <div className="space-y-4">
+              <Skeleton className="h-8 w-3/4" />
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-20 w-full" />
+              <Skeleton className="h-10 w-40" />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="min-h-screen page-bg">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="text-center py-12">
+            <h1 className="text-2xl font-bold text-foreground mb-4">{t("productNotFound")}</h1>
+            <p className="text-muted-foreground mb-8">{t("productNotFoundDesc")}</p>
+            <Button onClick={() => window.location.href = '/catalog'}>
+              {t("backToCatalog")}
+            </Button>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const handleAddToCart = () => {
     if (!product) return;
@@ -69,8 +108,8 @@ export default function ProductPage() {
     
     const productName = (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Товар';
     toast({
-      title: "Добавлено в корзину",
-      description: `${productName} добавлен в корзину`,
+      title: t("addedToCart"),
+      description: t("productAddedToCart", { productName }),
     });
   };
 
@@ -95,51 +134,19 @@ export default function ProductPage() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen page-bg">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <Skeleton className="aspect-square w-full" />
-            <div className="space-y-4">
-              <Skeleton className="h-8 w-3/4" />
-              <Skeleton className="h-6 w-1/2" />
-              <Skeleton className="h-20 w-full" />
-              <Skeleton className="h-10 w-40" />
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!product) {
-    return (
-      <div className="min-h-screen page-bg">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="text-center py-12">
-            <h1 className="text-2xl font-bold text-foreground mb-4">Товар не найден</h1>
-            <p className="text-muted-foreground mb-8">Возможно, товар был удален или ссылка неверна</p>
-            <Button onClick={() => window.location.href = '/catalog'}>
-              Вернуться в каталог
-            </Button>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   const name = (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Untitled';
   const description = (product.description as LocalizedText)?.[i18n.language as keyof LocalizedText] || '';
   const options = (product.options as Record<string, any>) || {};
 
   // Get all available images
-  const images = product.images && product.images.length > 0 
-    ? product.images 
+  const images = product.images && product.images.length > 0
+    ? product.images
     : [product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600'];
+
+  // Get all available videos
+  const videos = product.videos || [];
+  const hasVideos = videos.length > 0 || product.videoUrl;
 
   const hasMultipleImages = images.length > 1;
 
@@ -152,7 +159,7 @@ export default function ProductPage() {
         <Breadcrumb className="mb-6">
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/">Главная</BreadcrumbLink>
+              <BreadcrumbLink href="/">{t("home")}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -168,18 +175,62 @@ export default function ProductPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Product Image Gallery */}
           <div className="space-y-4">
-            {/* Main Image */}
-            <div className="aspect-square overflow-hidden rounded-lg border border-border">
-              <img 
-                src={images[activeImageIndex]} 
-                alt={name}
-                className="w-full h-full object-cover transition-transform duration-300"
-                data-testid="img-product-main"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600';
-                }}
-              />
+            {/* Main Image or Video */}
+            <div className="aspect-square overflow-hidden rounded-lg border border-border relative">
+              {showVideo && hasVideos ? (
+                <video
+                  src={product.videoUrl || videos[0]}
+                  className="w-full h-full object-cover"
+                  controls
+                  autoPlay
+                  muted
+                  data-testid="video-product-main"
+                  onError={(e) => {
+                    const target = e.target as HTMLVideoElement;
+                    console.error('Video playback error:', target.error);
+                    setShowVideo(false);
+                  }}
+                />
+              ) : (
+                <img
+                  src={images[activeImageIndex]}
+                  alt={name}
+                  className="w-full h-full object-cover transition-transform duration-300"
+                  data-testid="img-product-main"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=600';
+                  }}
+                />
+              )}
+              
+              {/* Video Play Button */}
+              {hasVideos && !showVideo && (
+                <button
+                  onClick={() => setShowVideo(true)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 hover:opacity-100 transition-opacity duration-300"
+                  data-testid="button-play-video"
+                >
+                  <div className="bg-blue-500 text-white rounded-full p-4">
+                    <svg className="h-8 w-8" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M8 5v14l11-7z"/>
+                    </svg>
+                  </div>
+                </button>
+              )}
+              
+              {/* Video Close Button */}
+              {showVideo && (
+                <button
+                  onClick={() => setShowVideo(false)}
+                  className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-1"
+                  data-testid="button-close-video"
+                >
+                  <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                </button>
+              )}
             </div>
             
             {/* Thumbnail gallery */}
@@ -210,6 +261,45 @@ export default function ProductPage() {
                 ))}
               </div>
             )}
+            
+            {/* Video Thumbnails */}
+            {hasVideos && videos.length > 0 && (
+              <div className="space-y-2">
+                <h4 className="font-semibold text-sm">{t("videos")}</h4>
+                <div className="flex gap-2 overflow-x-auto pb-2">
+                  {videos.map((video, index) => (
+                    <div
+                      key={index}
+                      className="flex-shrink-0 w-16 h-16 rounded border border-border overflow-hidden cursor-pointer relative group"
+                      onClick={() => {
+                        setShowVideo(true);
+                        // Set the video to play
+                        if (product.videoUrl) {
+                          // Handle main video URL
+                        }
+                      }}
+                      data-testid={`video-thumbnail-${index}`}
+                    >
+                      <video
+                        src={video}
+                        className="w-full h-full object-cover"
+                        muted
+                        onLoadedData={(e) => {
+                          // Capture thumbnail from video
+                          const video = e.target as HTMLVideoElement;
+                          video.currentTime = 1; // Seek to 1 second for thumbnail
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <svg className="h-6 w-6 text-white" fill="currentColor" viewBox="0 0 24 24">
+                          <path d="M8 5v14l11-7z"/>
+                        </svg>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Product Details */}
@@ -224,7 +314,7 @@ export default function ProductPage() {
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-current text-accent" />
                   ))}
-                  <span className="text-sm text-muted-foreground ml-2">(24 отзыва)</span>
+                  <span className="text-sm text-muted-foreground ml-2">({t("reviewsCount", { count: 24 })})</span>
                 </div>
                 {product.inStock ? (
                   <Badge variant="secondary" className="bg-green-500 text-white">{t('inStock')}</Badge>
@@ -233,12 +323,12 @@ export default function ProductPage() {
                 )}
                 {product.isOnSale && product.discountPercentage && product.discountPercentage > 0 && (
                   <Badge className="bg-red-500 text-white">
-                    -{product.discountPercentage}% скидка
+                    {t("discountPercentage", { percentage: product.discountPercentage })}
                   </Badge>
                 )}
                 {product.stockQuantity !== undefined && (
                   <span className="text-sm text-muted-foreground">
-                    Осталось: {product.stockQuantity} шт.
+                    {t("stockLeft", { quantity: product.stockQuantity })}
                   </span>
                 )}
               </div>
@@ -251,74 +341,74 @@ export default function ProductPage() {
             {/* Photobook Information */}
             {product.photobookFormat && product.photobookFormat !== "none" && (
               <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg space-y-3">
-                <h3 className="font-semibold text-lg">Параметры фотокниги</h3>
+                <h3 className="font-semibold text-lg">{t("photobookParameters")}</h3>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Формат:</span>
+                    <span className="text-muted-foreground">{t("format")}:</span>
                     <span className="ml-2 font-medium">
                       {PHOTOBOOK_FORMAT_LABELS[product.photobookFormat as keyof typeof PHOTOBOOK_FORMAT_LABELS] || product.photobookFormat}
                     </span>
                   </div>
                   {product.photobookSize && (
                     <div>
-                      <span className="text-muted-foreground">Размер:</span>
-                      <span className="ml-2 font-medium">{product.photobookSize} см</span>
+                      <span className="text-muted-foreground">{t("size")}:</span>
+                      <span className="ml-2 font-medium">{product.photobookSize} {t("cm")}</span>
                     </div>
                   )}
                   <div>
-                    <span className="text-muted-foreground">Мин. разворотов:</span>
+                    <span className="text-muted-foreground">{t("minSpreads")}:</span>
                     <span className="ml-2 font-medium">{product.minSpreads || 10}</span>
                   </div>
                   {product.additionalSpreadPrice && Number(product.additionalSpreadPrice) > 0 && (
                     <div>
-                      <span className="text-muted-foreground">Доп. разворот:</span>
+                      <span className="text-muted-foreground">{t("additionalSpreadPrice")}:</span>
                       <span className="ml-2 font-medium">₽{Number(product.additionalSpreadPrice).toLocaleString()}</span>
                     </div>
                   )}
                   {product.paperType && (
                     <div>
-                      <span className="text-muted-foreground">Тип бумаги:</span>
+                      <span className="text-muted-foreground">{t("paperType")}:</span>
                       <span className="ml-2 font-medium">
-                        {product.paperType === 'matte' ? 'Матовая' : 
-                         product.paperType === 'glossy' ? 'Глянцевая' : 
-                         product.paperType === 'satin' ? 'Сатиновая' : 
-                         product.paperType === 'premium' ? 'Премиум' : product.paperType}
+                        {product.paperType === 'matte' ? t("matte") :
+                         product.paperType === 'glossy' ? t("glossy") :
+                         product.paperType === 'satin' ? t("satin") :
+                         product.paperType === 'premium' ? t("premium") : product.paperType}
                       </span>
                     </div>
                   )}
                   {product.coverMaterial && (
                     <div>
-                      <span className="text-muted-foreground">Обложка:</span>
+                      <span className="text-muted-foreground">{t("coverMaterial")}:</span>
                       <span className="ml-2 font-medium">
-                        {product.coverMaterial === 'hardcover' ? 'Твердая' : 
-                         product.coverMaterial === 'softcover' ? 'Мягкая' : 
-                         product.coverMaterial === 'leatherette' ? 'Кожзам' : 
-                         product.coverMaterial === 'fabric' ? 'Ткань' : product.coverMaterial}
+                        {product.coverMaterial === 'hardcover' ? t("hardcover") :
+                         product.coverMaterial === 'softcover' ? t("softcover") :
+                         product.coverMaterial === 'leatherette' ? t("leatherette") :
+                         product.coverMaterial === 'fabric' ? t("fabric") : product.coverMaterial}
                       </span>
                     </div>
                   )}
                   {product.bindingType && (
                     <div>
-                      <span className="text-muted-foreground">Переплет:</span>
+                      <span className="text-muted-foreground">{t("bindingType")}:</span>
                       <span className="ml-2 font-medium">
-                        {product.bindingType === 'spiral' ? 'Спираль' : 
-                         product.bindingType === 'perfect' ? 'Клеевой' : 
-                         product.bindingType === 'saddle-stitch' ? 'Скрепка' : 
-                         product.bindingType === 'ring' ? 'Кольца' : product.bindingType}
+                        {product.bindingType === 'spiral' ? t("spiral") :
+                         product.bindingType === 'perfect' ? t("perfect") :
+                         product.bindingType === 'saddle-stitch' ? t("saddleStitch") :
+                         product.bindingType === 'ring' ? t("ring") : product.bindingType}
                       </span>
                     </div>
                   )}
                   {product.allowCustomization && (
                     <div>
-                      <span className="text-muted-foreground">Кастомизация:</span>
-                      <span className="ml-2 font-medium text-green-600">Доступна</span>
+                      <span className="text-muted-foreground">{t("customization")}:</span>
+                      <span className="ml-2 font-medium text-green-600">{t("available")}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Spreads Selector */}
                 <div className="mt-4">
-                  <label className="text-sm font-medium mb-2 block">Количество разворотов</label>
+                  <label className="text-sm font-medium mb-2 block">{t("spreadsCount")}</label>
                   <div className="flex items-center space-x-4">
                     <Select value={spreads.toString()} onValueChange={(value) => setSpreads(Number(value))}>
                       <SelectTrigger className="w-32" data-testid="select-spreads">
@@ -327,14 +417,14 @@ export default function ProductPage() {
                       <SelectContent>
                         {Array.from({ length: 41 }, (_, i) => i + 10).map((num) => (
                           <SelectItem key={num} value={num.toString()}>
-                            {num} разворотов
+                            {t("spreadsCountValue", { count: num })}
                           </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                     {spreads > (product.minSpreads || 10) && (
                       <span className="text-sm text-muted-foreground">
-                        +{spreads - (product.minSpreads || 10)} дополнительных
+                        {t("additionalSpreads", { count: spreads - (product.minSpreads || 10) })}
                       </span>
                     )}
                   </div>
@@ -361,7 +451,10 @@ export default function ProductPage() {
                 )}
                 {product.photobookFormat && spreads > (product.minSpreads || 10) && (
                   <span className="text-sm text-muted-foreground">
-                    Базовая: ₽{Number(product.price).toLocaleString()} + ₽{(calculateTotalPrice() - Number(product.price)).toLocaleString()} за доп. развороты
+                    {t("basePricePlusAdditional", {
+                      basePrice: Number(product.price).toLocaleString(),
+                      additionalPrice: (calculateTotalPrice() - Number(product.price)).toLocaleString()
+                    })}
                   </span>
                 )}
               </div>
@@ -370,7 +463,7 @@ export default function ProductPage() {
             {/* Options */}
             {Object.keys(options).length > 0 && (
               <div className="space-y-4">
-                <h3 className="font-semibold text-foreground">Опции</h3>
+                <h3 className="font-semibold text-foreground">{t("options")}</h3>
                 
                 {Object.entries(options).map(([key, values]) => (
                   <div key={key}>
@@ -382,7 +475,7 @@ export default function ProductPage() {
                       onValueChange={(value) => setSelectedOptions(prev => ({ ...prev, [key]: value }))}
                     >
                       <SelectTrigger data-testid={`select-${key}`}>
-                        <SelectValue placeholder={`Выберите ${key}`} />
+                        <SelectValue placeholder={t("selectOption", { option: key })} />
                       </SelectTrigger>
                       <SelectContent>
                         {Array.isArray(values) ? values.map((value: string) => (
@@ -399,7 +492,7 @@ export default function ProductPage() {
 
             {/* Quantity */}
             <div>
-              <label className="text-sm font-medium mb-2 block">Количество</label>
+              <label className="text-sm font-medium mb-2 block">{t("quantity")}</label>
               <Select value={quantity.toString()} onValueChange={(value) => setQuantity(Number(value))}>
                 <SelectTrigger className="w-24" data-testid="select-quantity">
                   <SelectValue />
@@ -416,14 +509,14 @@ export default function ProductPage() {
             <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
               <h3 className="font-semibold text-foreground mb-2 flex items-center gap-2">
                 <Package className="h-4 w-4" />
-                Информация о доставке
+                {t("shippingInfo")}
               </h3>
               <div className="space-y-2 text-sm">
                 {product.photobookFormat ? (
                   <>
                     {calculateTotalPrice() * quantity >= getFreeShippingThreshold() ? (
                       <div className="text-green-600 font-medium">
-                        🎉 Бесплатная доставка (заказ от ₽{getFreeShippingThreshold().toLocaleString()})
+                        🎉 {t("freeShippingThreshold", { threshold: getFreeShippingThreshold().toLocaleString() })}
                       </div>
                     ) : (
                       <div className="text-muted-foreground">
@@ -438,7 +531,7 @@ export default function ProductPage() {
                   <>
                     {Number(product.price) * quantity >= getFreeShippingThreshold() ? (
                       <div className="text-green-600 font-medium">
-                        🎉 Бесплатная доставка (заказ от ₽{getFreeShippingThreshold().toLocaleString()})
+                        🎉 {t("freeShippingThreshold", { threshold: getFreeShippingThreshold().toLocaleString() })}
                       </div>
                     ) : (
                       <div className="text-muted-foreground">
@@ -451,10 +544,10 @@ export default function ProductPage() {
                   </>
                 )}
                 <div className="text-xs text-muted-foreground">
-                  Время изготовления: {product.productionTime || 7} дней
+                  {t("productionTime")}: {product.productionTime || 7} {t("days")}
                 </div>
                 <div className="text-xs text-muted-foreground">
-                  Время доставки: {product.shippingTime || 1} день
+                  {t("shippingTime")}: {product.shippingTime || 1} {t("day")}
                 </div>
               </div>
             </div>
@@ -525,7 +618,7 @@ export default function ProductPage() {
 
         {/* Reviews Section */}
         <div className="mt-16">
-          <h2 className="font-serif text-2xl font-bold text-foreground mb-8">Отзывы покупателей</h2>
+          <h2 className="font-serif text-2xl font-bold text-foreground mb-8">{t("customerReviews")}</h2>
           
           <div className="grid gap-6">
             {/* Mock reviews */}

@@ -1,0 +1,71 @@
+# robots.txt для PhotoBooksGallery
+# Дата: 24 сентября 2025
+# Домен: photobooksgallery.am
+
+User-agent: *
+Allow: /
+
+# Разрешаем индексацию основных страниц
+Allow: /ru/
+Allow: /hy/
+Allow: /en/
+Allow: /about
+Allow: /contacts
+Allow: /catalog
+Allow: /editor
+Allow: /blog
+
+# Запрещаем индексацию административных и служебных разделов
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Disallow: /uploads/temp/
+Disallow: /server/
+Disallow: /.local/
+Disallow: /migrations/
+Disallow: /objects/
+Disallow: /scripts/
+
+# Разрешаем доступ к изображениям
+Allow: /images/
+Allow: /uploads/
+Allow: *.jpg
+Allow: *.jpeg
+Allow: *.png
+Allow: *.gif
+Allow: *.webp
+Allow: *.svg
+
+# Разрешаем доступ к статическим ресурсам
+Allow: /css/
+Allow: /js/
+Allow: /assets/
+Allow: /*.css
+Allow: /*.js
+
+# Специальные настройки для поисковых ботов
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 1
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 1
+
+User-agent: facebookexternalhit/
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+# Sitemap
+Sitemap: https://photobooksgallery.am/sitemap.xml
+
+# Дополнительная информация
+# Сайт: PhotoBooksGallery - Создание фотокниг и фотосувениров в Армении
+# Контакты: support@photobooksgallery.am
+# Социальные сети: @photobooksgallery

@@ -49,6 +49,13 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
     queryKey: ['/api/exchange-rates'],
   });
 
+  // Set base currency as current if not set
+  useEffect(() => {
+    if (baseCurrency && !currentCurrencyId) {
+      setCurrentCurrencyId(baseCurrency.id);
+    }
+  }, [baseCurrency, currentCurrencyId]);
+
   const isLoading = currenciesLoading || baseCurrencyLoading || exchangeRatesLoading;
 
   // Set default currency when currencies load
@@ -80,6 +87,11 @@ export function CurrencyProvider({ children }: CurrencyProviderProps) {
 
   const convertPrice = (amount: number, fromCurrencyId: string, toCurrencyId?: string): number => {
     const targetCurrencyId = toCurrencyId || currentCurrencyId;
+    
+    // If currencies not loaded or IDs are empty, return original amount
+    if (!fromCurrencyId || !targetCurrencyId || currencies.length === 0) {
+      return amount;
+    }
     
     // If same currency, no conversion needed
     if (fromCurrencyId === targetCurrencyId) {

@@ -80,22 +80,53 @@ export default function BlogPost() {
 
   const { data: post, isLoading: postLoading } = useQuery<BlogPost>({
     queryKey: ["/api/blog/posts", params?.slug],
+    queryFn: async () => {
+      const response = await fetch(`/api/blog/posts/${params?.slug}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch blog post');
+      }
+      return response.json();
+    },
     enabled: !!params?.slug,
   });
 
   const { data: comments } = useQuery<Comment[]>({
     queryKey: ["/api/blog/comments", post?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/blog/comments/${post?.id}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch comments');
+      }
+      return response.json();
+    },
     enabled: !!post?.id,
   });
 
   const { data: relatedPosts } = useQuery<BlogPost[]>({
     queryKey: ["/api/blog/posts/related", post?.id],
+    queryFn: async () => {
+      const response = await fetch(`/api/blog/posts/${post?.id}/related`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch related posts');
+      }
+      return response.json();
+    },
     enabled: !!post?.id,
   });
 
   const commentMutation = useMutation({
     mutationFn: async (data: CommentForm) => {
-      return apiRequest(`/api/blog/posts/${post?.id}/comments`, "POST", data);
+      const response = await fetch(`/api/blog/posts/${post?.id}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to submit comment');
+      }
+      return response.json();
     },
     onSuccess: () => {
       toast({

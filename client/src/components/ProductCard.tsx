@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Link } from "wouter";
 import { PriceDisplay } from "./PriceDisplay";
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { getCategoryColors } from "@/lib/categoryColors";
 import { useState } from "react";
 import type { Product } from "@shared/schema";
 import type { LocalizedText } from "@/types";
@@ -23,15 +24,24 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
   const name = (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Untitled';
   const description = (product.description as LocalizedText)?.[i18n.language as keyof LocalizedText] || '';
 
+  // Определяем цветовую схему продукта (можно основывать на категории или теме)
+  const productSlug = product.photobookFormat || 'default';
+  const colors = getCategoryColors(productSlug);
+
   // Get all available images
-  const images = product.images && product.images.length > 0 
-    ? product.images 
+  const images = product.images && product.images.length > 0
+    ? product.images
     : [product.imageUrl || 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300'];
 
+  // Check if product has videos
+  const hasVideos = product.videos && product.videos.length > 0;
+  const hasVideoUrl = product.videoUrl;
+
   const hasMultipleImages = images.length > 1;
+  const showVideoIndicator = hasVideos || hasVideoUrl;
 
   return (
-    <Card className="product-card group overflow-hidden border-0 bg-gradient-to-br from-white to-gray-50/50 shadow-sm hover:shadow-xl transition-all duration-500 hover:-translate-y-2 hover:scale-[1.02] rounded-xl" data-testid={`card-product-${product.id}`}>
+    <Card className={`card-hover overflow-hidden border-0 bg-gradient-to-br ${colors.gradient} shadow-sm rounded-xl ${colors.border}`} data-testid={`card-product-${product.id}`}>
       <Link href={`/product/${product.id}`} className="block">
         <div className="flex gap-2 p-2">
           {/* Main Image */}
@@ -39,24 +49,36 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             <img 
               src={images[activeImageIndex]} 
               alt={name}
-              className="w-full h-full object-cover transition-all duration-500 group-hover:scale-110"
+              className="w-full h-full object-cover"
               data-testid={`img-product-${product.id}`}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
                 target.src = 'https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300';
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 hover:opacity-100 transition-opacity duration-300" />
+            
+            {/* Video Indicator */}
+            {showVideoIndicator && (
+              <div className="absolute top-2 right-2">
+                <Badge variant="secondary" className="bg-purple-500 text-white text-xs font-bold pulse-soft">
+                  <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z"/>
+                  </svg>
+                  {t('video')}
+                </Badge>
+              </div>
+            )}
             
             {/* Discount and Stock Badges */}
             <div className="absolute top-2 left-2 flex flex-col gap-1">
               {product.isOnSale && product.discountPercentage && product.discountPercentage > 0 && (
-                <Badge variant="destructive" className="text-xs font-bold">
+                <Badge variant="destructive" className="text-xs font-bold animate-pulse">
                   -{product.discountPercentage}%
                 </Badge>
               )}
               {product.inStock && (
-                <Badge variant="secondary" className="text-xs bg-green-500 text-white">
+                <Badge className={`text-xs ${colors.badge}`}>
                   {t('inStock')}
                 </Badge>
               )}
@@ -111,7 +133,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
       
       <CardContent className="p-6 relative">
         <Link href={`/product/${product.id}`} className="block">
-          <h3 className="font-serif text-xl font-bold text-foreground mb-3 line-clamp-2 group-hover:text-primary transition-colors duration-300" data-testid={`text-product-name-${product.id}`}>
+          <h3 className="font-serif text-xl font-bold text-foreground mb-3 line-clamp-2 hover:text-primary transition-colors duration-300" data-testid={`text-product-name-${product.id}`}>
             {name}
           </h3>
           {description && (
@@ -146,7 +168,7 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
           </div>
           <Button 
             size="sm"
-            className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all duration-300 transform hover:scale-105"
+            className="button-glow bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-md"
             onClick={(e) => {
               e.preventDefault();
               onAddToCart?.(product);

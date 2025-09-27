@@ -63,6 +63,8 @@ export const products = pgTable("products", {
   isOnSale: boolean("is_on_sale").default(false), // Sale status
   imageUrl: varchar("image_url"), // Primary image URL
   images: text("images").array(), // Array of image URLs
+  videoUrl: varchar("video_url"), // Primary video URL
+  videos: text("videos").array(), // Array of video URLs
   categoryId: varchar("category_id").references(() => categories.id),
   options: jsonb("options"), // {sizes: string[], coverTypes: string[], etc}
   // Photobook specific fields
@@ -263,6 +265,163 @@ export const reviews = pgTable("reviews", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Banner types enum
+export const bannerTypeEnum = pgEnum("banner_type", [
+  "header", // Верхний sticky баннер
+  "fullscreen", // Полноэкранный баннер
+  "sidebar", // Боковой баннер
+  "inline", // Встроенный баннер
+  "popup" // Попап баннер
+]);
+
+// Banner status enum
+export const bannerStatusEnum = pgEnum("banner_status", [
+  "draft",
+  "active",
+  "paused",
+  "expired"
+]);
+
+// Popup types enum
+export const popupTypeEnum = pgEnum("popup_type", [
+  "welcome", // Приветственный попап
+  "exit_intent", // Попап при попытке ухода
+  "newsletter", // Подписка на рассылку
+  "special_offer", // Специальное предложение
+  "cart_abandonment" // Брошенная корзина
+]);
+
+// Popup status enum
+export const popupStatusEnum = pgEnum("popup_status", [
+  "draft",
+  "active",
+  "paused",
+  "expired"
+]);
+
+// Special offer types enum
+export const specialOfferTypeEnum = pgEnum("special_offer_type", [
+  "flash_sale", // Молниеносная распродажа
+  "limited_time", // Ограниченное время
+  "personalized", // Персонализированная скидка
+  "bundle", // Комплект товаров
+  "free_shipping" // Бесплатная доставка
+]);
+
+// Special offer status enum
+export const specialOfferStatusEnum = pgEnum("special_offer_status", [
+  "draft",
+  "active",
+  "paused",
+  "expired"
+]);
+
+// Banners table
+export const banners = pgTable("banners", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  type: bannerTypeEnum("type").notNull(),
+  title: jsonb("title"), // {ru: string, en: string, hy: string}
+  content: jsonb("content"), // {ru: string, en: string, hy: string}
+  imageUrl: varchar("image_url"),
+  buttonText: jsonb("button_text"), // {ru: string, en: string, hy: string}
+  buttonLink: varchar("button_link"),
+  backgroundColor: varchar("background_color").default("#ffffff"),
+  textColor: varchar("text_color").default("#000000"),
+  position: varchar("position"), // top, bottom, left, right, center
+  size: jsonb("size"), // {width: number, height: number}
+  priority: integer("priority").default(0), // для сортировки
+  isActive: boolean("is_active").default(false),
+  status: bannerStatusEnum("status").default("draft"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  targetPages: text("target_pages").array(), // массив URL или паттернов
+  targetUsers: varchar("target_users"), // all, logged_in, guests, specific_roles
+  maxImpressions: integer("max_impressions"), // максимум показов
+  maxClicks: integer("max_clicks"), // максимум кликов
+  currentImpressions: integer("current_impressions").default(0),
+  currentClicks: integer("current_clicks").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Banner analytics table
+export const bannerAnalytics = pgTable("banner_analytics", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  bannerId: varchar("banner_id").references(() => banners.id, { onDelete: 'cascade' }),
+  eventType: varchar("event_type").notNull(), // impression, click, close
+  userId: varchar("user_id").references(() => users.id),
+  sessionId: varchar("session_id"),
+  pageUrl: varchar("page_url"),
+  userAgent: text("user_agent"),
+  ipAddress: varchar("ip_address"),
+  metadata: jsonb("metadata"), // дополнительные данные
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Popups table
+export const popups = pgTable("popups", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  type: popupTypeEnum("type").notNull(),
+  title: jsonb("title"), // {ru: string, en: string, hy: string}
+  content: jsonb("content"), // {ru: string, en: string, hy: string}
+  imageUrl: varchar("image_url"),
+  buttonText: jsonb("button_text"), // {ru: string, en: string, hy: string}
+  buttonLink: varchar("button_link"),
+  secondaryButtonText: jsonb("secondary_button_text"), // {ru: string, en: string, hy: string}
+  secondaryButtonLink: varchar("secondary_button_link"),
+  backgroundColor: varchar("background_color").default("#ffffff"),
+  textColor: varchar("text_color").default("#000000"),
+  size: jsonb("size"), // {width: number, height: number}
+  priority: integer("priority").default(0),
+  isActive: boolean("is_active").default(false),
+  status: popupStatusEnum("status").default("draft"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  targetPages: text("target_pages").array(),
+  targetUsers: varchar("target_users"), // all, logged_in, guests, specific_roles
+  showDelay: integer("show_delay").default(0), // задержка показа в секундах
+  showFrequency: varchar("show_frequency"), // once_per_session, once_per_day, always
+  maxImpressions: integer("max_impressions"),
+  maxClicks: integer("max_clicks"),
+  currentImpressions: integer("current_impressions").default(0),
+  currentClicks: integer("current_clicks").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Special offers table
+export const specialOffers = pgTable("special_offers", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name").notNull(),
+  type: specialOfferTypeEnum("type").notNull(),
+  title: jsonb("title"), // {ru: string, en: string, hy: string}
+  description: jsonb("description"), // {ru: string, en: string, hy: string}
+  imageUrl: varchar("image_url"),
+  discountType: varchar("discount_type"), // percentage, fixed, free_shipping
+  discountValue: decimal("discount_value", { precision: 10, scale: 2 }),
+  currencyId: varchar("currency_id").references(() => currencies.id),
+  minOrderAmount: decimal("min_order_amount", { precision: 10, scale: 2 }),
+  minOrderCurrencyId: varchar("min_order_currency_id").references(() => currencies.id),
+  buttonText: jsonb("button_text"), // {ru: string, en: string, hy: string}
+  buttonLink: varchar("button_link"),
+  backgroundColor: varchar("background_color").default("#ffffff"),
+  textColor: varchar("text_color").default("#000000"),
+  priority: integer("priority").default(0),
+  isActive: boolean("is_active").default(false),
+  status: specialOfferStatusEnum("status").default("draft"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  targetProducts: text("target_products").array(), // массив ID товаров
+  targetCategories: text("target_categories").array(), // массив ID категорий
+  targetUsers: varchar("target_users"), // all, logged_in, guests, specific_roles
+  maxUses: integer("max_uses"),
+  currentUses: integer("current_uses").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Currencies
 export const currencies = pgTable("currencies", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -372,6 +531,21 @@ export const reviewsRelations = relations(reviews, ({ one }) => ({
   }),
 }));
 
+export const bannersRelations = relations(banners, ({ many }) => ({
+  analytics: many(bannerAnalytics),
+}));
+
+export const bannerAnalyticsRelations = relations(bannerAnalytics, ({ one }) => ({
+  banner: one(banners, {
+    fields: [bannerAnalytics.bannerId],
+    references: [banners.id],
+  }),
+  user: one(users, {
+    fields: [bannerAnalytics.userId],
+    references: [users.id],
+  }),
+}));
+
 export const currenciesRelations = relations(currencies, ({ many }) => ({
   products: many(products),
   orders: many(orders),
@@ -424,6 +598,21 @@ export const insertProductSchema = createInsertSchema(products).omit({
   createdAt: true,
 }).extend({
   categoryId: z.string().min(1, "Выберите категорию"),
+  images: z.array(z.string()).optional(),
+  videoUrl: z.string().refine((val) => {
+    // Разрешаем пустые значения или null
+    if (!val || val === "") return true;
+    // Разрешаем относительные пути (например, /uploads/video.mp4)
+    if (val.startsWith("/")) return true;
+    // Разрешаем полные URL
+    try {
+      new URL(val);
+      return true;
+    } catch {
+      return false;
+    }
+  }, "Некорректный URL видео или путь к файлу").nullable().optional(),
+  videos: z.array(z.string()).optional(),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({
@@ -478,6 +667,34 @@ export const insertReviewSchema = createInsertSchema(reviews).omit({
   comment: z.string().min(10, "Отзыв должен содержать минимум 10 символов"),
 });
 
+export const insertBannerSchema = createInsertSchema(banners).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  currentImpressions: true,
+  currentClicks: true,
+});
+
+export const insertBannerAnalyticsSchema = createInsertSchema(bannerAnalytics).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPopupSchema = createInsertSchema(popups).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  currentImpressions: true,
+  currentClicks: true,
+});
+
+export const insertSpecialOfferSchema = createInsertSchema(specialOffers).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  currentUses: true,
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -507,6 +724,14 @@ export type UserTheme = typeof userThemes.$inferSelect;
 export type InsertUserTheme = z.infer<typeof insertUserThemeSchema>;
 export type Review = typeof reviews.$inferSelect;
 export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Banner = typeof banners.$inferSelect;
+export type InsertBanner = z.infer<typeof insertBannerSchema>;
+export type BannerAnalytics = typeof bannerAnalytics.$inferSelect;
+export type InsertBannerAnalytics = z.infer<typeof insertBannerAnalyticsSchema>;
+export type Popup = typeof popups.$inferSelect;
+export type InsertPopup = z.infer<typeof insertPopupSchema>;
+export type SpecialOffer = typeof specialOffers.$inferSelect;
+export type InsertSpecialOffer = z.infer<typeof insertSpecialOfferSchema>;
 
 // Photobook format types and constants
 export type PhotobookFormat = "album" | "book" | "square";
@@ -616,7 +841,7 @@ export const BUILT_IN_THEMES: Record<string, ColorTheme> = {
   default: {
     name: "default",
     label: "По умолчанию",
-    description: "Стандартная цветовая схема ФотоКрафт",
+    description: "Стандартная цветовая схема PhotoBooksGallery",
     colors: {
       primary: "hsl(222.2, 84%, 4.9%)",
       secondary: "hsl(210, 40%, 96%)",
@@ -626,6 +851,21 @@ export const BUILT_IN_THEMES: Record<string, ColorTheme> = {
       text: "hsl(222.2, 84%, 4.9%)",
       textMuted: "hsl(215.4, 16.3%, 46.9%)",
       border: "hsl(214.3, 31.8%, 91.4%)",
+    },
+  },
+  premium: {
+    name: "premium",
+    label: "Премиум",
+    description: "Editorial: ivory, graphite, gold",
+    colors: {
+      primary: "#1C1C1C",
+      secondary: "#153E35",
+      accent: "#C9A227",
+      background: "#F6F3EE",
+      surface: "#FFFFFF",
+      text: "#1C1C1C",
+      textMuted: "#8C8C8C",
+      border: "#E6E1D9",
     },
   },
   ocean: {
@@ -720,3 +960,197 @@ export const BUILT_IN_THEMES: Record<string, ColorTheme> = {
   },
 };
 
+// Constructor Pages
+export const pages = pgTable("pages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: jsonb("title").notNull(), // {ru: string, en: string, hy: string}
+  slug: varchar("slug").notNull().unique(),
+  description: jsonb("description"), // {ru: string, en: string, hy: string}
+  metaTitle: varchar("meta_title"),
+  metaDescription: text("meta_description"),
+  keywords: text("keywords"), // SEO keywords
+  canonicalUrl: varchar("canonical_url"), // Canonical URL
+  ogImage: varchar("og_image"), // Open Graph image
+  twitterCard: varchar("twitter_card").default("summary_large_image"), // Twitter card type
+  structuredData: jsonb("structured_data"), // JSON-LD structured data
+  noindex: boolean("noindex").default(false), // Noindex flag
+  language: varchar("language").default("ru"), // Page language
+  isPublished: boolean("is_published").default(false),
+  isHomepage: boolean("is_homepage").default(false),
+  showInHeaderNav: boolean("show_in_header_nav").default(false),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Constructor Blocks
+export const blocks = pgTable("blocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  pageId: varchar("page_id").references(() => pages.id, { onDelete: 'cascade' }).notNull(),
+  type: varchar("type").notNull(), // hero, text, image, gallery, contact, etc
+  title: varchar("title"),
+  content: jsonb("content"), // Block-specific content
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Site Pages (static sections like catalog/editor/blog/about/contacts)
+export const sitePages = pgTable("site_pages", {
+  key: varchar("key").primaryKey(),
+  title: jsonb("title").notNull().default(sql`'{}'::jsonb`),
+  description: jsonb("description").notNull().default(sql`'{}'::jsonb`),
+  seoTitle: jsonb("seo_title").notNull().default(sql`'{}'::jsonb`),
+  seoDescription: jsonb("seo_description").notNull().default(sql`'{}'::jsonb`),
+  heroImageUrl: varchar("hero_image_url"),
+  isPublished: boolean("is_published").notNull().default(true),
+  showInHeaderNav: boolean("show_in_header_nav").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Insert schemas for constructor
+export const insertPageSchema = createInsertSchema(pages).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertBlockSchema = createInsertSchema(blocks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Site pages types and helpers
+export const SITE_PAGE_KEYS = ["catalog", "editor", "blog", "about", "contacts"] as const;
+export type SitePageKey = typeof SITE_PAGE_KEYS[number];
+
+export type SitePage = typeof sitePages.$inferSelect;
+export const updateSitePageSchema = z.object({
+  title: z.record(z.string()).optional(),
+  description: z.record(z.string()).optional(),
+  seoTitle: z.record(z.string()).optional(),
+  seoDescription: z.record(z.string()).optional(),
+  heroImageUrl: z.string().url().nullable().optional(),
+  isPublished: z.boolean().optional(),
+  showInHeaderNav: z.boolean().optional(),
+  sortOrder: z.number().int().min(0).optional(),
+});
+
+// Types for constructor
+export type Page = typeof pages.$inferSelect;
+export type InsertPage = z.infer<typeof insertPageSchema>;
+export type Block = typeof blocks.$inferSelect;
+export type InsertBlock = z.infer<typeof insertBlockSchema>;
+
+// Block type definitions
+export const BLOCK_TYPES = [
+  { value: "hero", label: "Герой-секция", description: "Большая верхняя секция с заголовком и CTA" },
+  { value: "text", label: "Текстовый блок", description: "Простой текстовый контент" },
+  { value: "image", label: "Изображение", description: "Одиночное изображение" },
+  { value: "gallery", label: "Галерея", description: "Коллекция изображений" },
+  { value: "categories", label: "Категории товаров", description: "Блок с категориями товаров для навигации" },
+  { value: "contact", label: "Контактная форма", description: "Форма для связи" },
+  { value: "features", label: "Особенности", description: "Список преимуществ" },
+  { value: "testimonials", label: "Отзывы", description: "Блок с отзывами клиентов" },
+  { value: "pricing", label: "Цены", description: "Таблица цен" },
+  { value: "faq", label: "FAQ", description: "Часто задаваемые вопросы" },
+  { value: "cta", label: "Призыв к действию", description: "Блок с кнопкой CTA" },
+] as const;
+
+export type BlockType = typeof BLOCK_TYPES[number]['value'];
+
+// Default content templates for each block type
+export const BLOCK_DEFAULT_CONTENT: Record<BlockType, any> = {
+  hero: {
+    title: "Заголовок героя",
+    subtitle: "Подзаголовок героя",
+    buttonText: "Начать",
+    buttonLink: "/",
+    backgroundImage: null,
+  },
+  text: {
+    content: "Текст вашего контента...",
+    alignment: "left",
+  },
+  image: {
+    imageUrl: null,
+    altText: "",
+    caption: "",
+    alignment: "center",
+  },
+  gallery: {
+    images: [],
+    columns: 3,
+  },
+  categories: {
+    title: { ru: "Категории товаров", en: "Product Categories", hy: "Ապրանքների կատեգորիաներ" },
+    categories: [
+      {
+        id: "1",
+        name: { ru: "Фотокниги", en: "Photobooks", hy: "Ֆոտոգրքեր" },
+        imageUrl: null,
+        link: "/category/photobooks",
+        description: { ru: "Создайте уникальную фотокнигу", en: "Create unique photobook", hy: "Ստեղծեք եզակի ֆոտոգիրք" }
+      },
+      {
+        id: "2",
+        name: { ru: "Фотоальбомы", en: "Photo Albums", hy: "Ֆոտոէլբոմներ" },
+        imageUrl: null,
+        link: "/category/albums",
+        description: { ru: "Классические фотоальбомы", en: "Classic photo albums", hy: "Դասական ֆոտոէլբոմներ" }
+      },
+      {
+        id: "3",
+        name: { ru: "Квадратные альбомы", en: "Square Albums", hy: "Քառակուսի էլբոմներ" },
+        imageUrl: null,
+        link: "/category/square",
+        description: { ru: "Современные квадратные форматы", en: "Modern square formats", hy: "Ժամանակակից քառակուսի ձևաչափեր" }
+      }
+    ],
+    columns: 3,
+    showDescription: true,
+  },
+  contact: {
+    title: "Свяжитесь с нами",
+    email: "",
+    phone: "",
+    address: "",
+    formFields: ["name", "email", "message"],
+  },
+  features: {
+    title: "Наши преимущества",
+    items: [
+      { title: "Преимущество 1", description: "Описание преимущества", icon: "star" },
+      { title: "Преимущество 2", description: "Описание преимущества", icon: "star" },
+      { title: "Преимущество 3", description: "Описание преимущества", icon: "star" },
+    ],
+  },
+  testimonials: {
+    title: "Отзывы клиентов",
+    reviews: [],
+  },
+  pricing: {
+    title: "Наши цены",
+    plans: [
+      { name: "Базовый", price: "1000", features: ["Функция 1", "Функция 2"] },
+      { name: "Профессиональный", price: "2000", features: ["Все функции", "Поддержка"] },
+    ],
+  },
+  faq: {
+    title: "Часто задаваемые вопросы",
+    items: [
+      { question: "Вопрос 1?", answer: "Ответ на вопрос 1" },
+      { question: "Вопрос 2?", answer: "Ответ на вопрос 2" },
+    ],
+  },
+  cta: {
+    title: "Готовы начать?",
+    subtitle: "Присоединяйтесь к нам сегодня",
+    buttonText: "Начать сейчас",
+    buttonLink: "/contact",
+  },
+};

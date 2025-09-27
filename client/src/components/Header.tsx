@@ -15,6 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useQuery } from "@tanstack/react-query";
+import type { Page } from "@shared/schema";
 import { useState, useEffect } from "react";
 import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,18 @@ export function Header() {
   const [location] = useLocation();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  // Load constructor pages to show in header nav when flagged
+  const { data: constructorPages = [] } = useQuery<Page[]>({
+    queryKey: ["/api/constructor/pages"],
+    queryFn: async () => {
+      const r = await fetch("/api/constructor/pages");
+      if (!r.ok) throw new Error("Failed to load pages");
+      return r.json();
+    },
+  });
+  const headerNavPages = Array.isArray(constructorPages)
+    ? constructorPages.filter((p: any) => p.showInHeaderNav && p.isPublished !== false)
+    : [];
   
   // Calculate cart count from cartItems to ensure reactivity
   const cartCount = Array.isArray(cartItems) ? cartItems.reduce((sum, item) => sum + item.quantity, 0) : 0;
@@ -60,28 +73,33 @@ export function Header() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2" data-testid="link-home">
+            <Link href="/" className="logo-link flex items-center space-x-2" data-testid="link-home">
               <Camera className="text-primary text-2xl" />
-              <span className="font-serif font-bold text-xl text-foreground">ФотоКрафт</span>
+              <span className="font-serif font-bold text-xl text-foreground">PhotoBooksGallery</span>
             </Link>
 
             {/* Navigation */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="/catalog" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-catalog">
+              <Link href="/catalog" className="nav-link text-muted-foreground hover:text-primary transition-colors" data-testid="link-catalog">
                 {t('catalog')}
               </Link>
-              <Link href="/editor" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-editor">
+              <Link href="/editor" className="nav-link-editor text-primary hover:text-primary transition-colors" data-testid="link-editor">
                 {t('editor')}
               </Link>
-              <Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-blog">
+              <Link href="/blog" className="nav-link text-muted-foreground hover:text-primary transition-colors" data-testid="link-blog">
                 {t('blog')}
               </Link>
-              <a href="#about" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-about">
+              <Link href="/about" className="nav-link text-muted-foreground hover:text-primary transition-colors" data-testid="link-about">
                 {t('about')}
-              </a>
-              <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors" data-testid="link-contact">
+              </Link>
+              <Link href="/contacts" className="nav-link text-muted-foreground hover:text-primary transition-colors" data-testid="link-contact">
                 {t('contact')}
-              </a>
+              </Link>
+              {headerNavPages.map((p: any) => (
+                <Link key={p.id} href={`/page/${p.slug}`} className="nav-link text-muted-foreground hover:text-primary transition-colors">
+                  {(p.title as any)?.ru || p.slug}
+                </Link>
+              ))}
             </nav>
 
             {/* Right Side */}
@@ -99,6 +117,7 @@ export function Header() {
                     variant="ghost"
                     size="sm"
                     disabled={themeLoading}
+                    className="theme-button"
                     data-testid="button-theme"
                   >
                     <Palette className="h-5 w-5" />
@@ -149,13 +168,13 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="relative"
+                className="cart-button relative smooth-hover"
                 onClick={() => setIsCartOpen(true)}
                 data-testid="button-cart"
               >
                 <ShoppingCart className="h-5 w-5" />
                 {cartCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
+                  <Badge className="cart-badge absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs">
                     {cartCount}
                   </Badge>
                 )}
@@ -164,7 +183,7 @@ export function Header() {
               {/* Admin Panel (for admins only) */}
               {isAuthenticated && (user as any)?.role === 'admin' && (
                 <Link href="/admin">
-                  <Button variant="outline" size="sm" data-testid="button-admin">
+                  <Button variant="outline" size="sm" className="header-button" data-testid="button-admin">
                     CRM
                   </Button>
                 </Link>
@@ -175,6 +194,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="header-button"
                   onClick={() => window.location.href = '/api/logout'}
                   data-testid="button-logout"
                 >
@@ -184,6 +204,7 @@ export function Header() {
                 <Button
                   variant="ghost"
                   size="sm"
+                  className="header-button"
                   onClick={() => window.location.href = '/api/login'}
                   data-testid="button-login"
                 >
@@ -195,7 +216,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="sm"
-                className="md:hidden"
+                className="md:hidden smooth-hover"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 data-testid="button-mobile-menu"
               >
@@ -206,23 +227,28 @@ export function Header() {
 
           {/* Mobile Navigation */}
           {isMobileMenuOpen && (
-            <div className="md:hidden py-4 border-t border-border">
+            <div className="mobile-menu md:hidden py-4 border-t border-border">
               <nav className="flex flex-col space-y-2">
-                <Link href="/catalog" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-catalog">
+                <Link href="/catalog" className="nav-link text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-catalog">
                   {t('catalog')}
                 </Link>
-                <Link href="/editor" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-editor">
+                <Link href="/editor" className="nav-link-editor text-primary hover:text-primary transition-colors py-2" data-testid="link-mobile-editor">
                   {t('editor')}
                 </Link>
-                <Link href="/blog" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-blog">
+                <Link href="/blog" className="nav-link text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-blog">
                   {t('blog')}
                 </Link>
-                <a href="#about" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-about">
+                <Link href="/about" className="nav-link text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-about">
                   {t('about')}
-                </a>
-                <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-contact">
+                </Link>
+                <Link href="/contacts" className="nav-link text-muted-foreground hover:text-primary transition-colors py-2" data-testid="link-mobile-contact">
                   {t('contact')}
-                </a>
+                </Link>
+                {headerNavPages.map((p: any) => (
+                  <Link key={p.id} href={`/page/${p.slug}`} className="text-muted-foreground hover:text-primary transition-colors py-2">
+                    {(p.title as any)?.ru || p.slug}
+                  </Link>
+                ))}
                 
                 {/* Theme selector for mobile */}
                 <div className="border-t border-border pt-2 mt-2">

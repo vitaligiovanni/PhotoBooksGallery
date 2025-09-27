@@ -140,43 +140,72 @@ export function ProductsManager() {
   });
 
   const handleSubmit = (data: any) => {
-    // Ensure required fields are set
-    if (!data.categoryId || data.categoryId === "") {
+    console.log('Form submission started with data:', data);
+    
+    // Более детальная валидация обязательных полей
+    if (!data.categoryId || data.categoryId === "" || data.categoryId === "no-categories") {
       toast({
-        title: "Ошибка",
-        description: "Пожалуйста, выберите категорию для товара",
+        title: "Ошибка валидации",
+        description: "Пожалуйста, выберите категорию для товара. Если категории не загружаются, обновите страницу.",
         variant: "destructive",
       });
       return;
     }
 
-    if (!data.currencyId || data.currencyId === "") {
-      data.currencyId = defaultCurrencyId;
+    // Проверка наличия названия товара
+    if (!data.name?.ru && !data.name?.en && !data.name?.hy) {
+      toast({
+        title: "Ошибка валидации",
+        description: "Заполните название товара хотя бы на одном языке",
+        variant: "destructive",
+      });
+      return;
     }
 
-    // uploadedImages already contains correct object paths, no need for conversion
+    // Проверка цены
+    if (!data.price || parseFloat(data.price) <= 0) {
+      toast({
+        title: "Ошибка валидации", 
+        description: "Укажите корректную цену товара",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Установка валюты по умолчанию
+    if (!data.currencyId || data.currencyId === "") {
+      data.currencyId = defaultCurrencyId;
+      console.log('Using default currency:', defaultCurrencyId);
+    }
+
     console.log('Submitting images:', uploadedImages);
     console.log('Submitting videos:', uploadedVideos);
     
-    // Convert "none" to null for photobook fields
+    // Очистка данных фотокниги
     const cleanedData = {
       ...data,
       photobookFormat: data.photobookFormat === "none" ? null : data.photobookFormat,
       photobookSize: data.photobookSize === "none" ? null : data.photobookSize,
+      // Очистка пустых строк для числовых полей
+      originalPrice: data.originalPrice === "" ? null : data.originalPrice,
+      weight: data.weight === "" ? null : data.weight,
+      minCustomPrice: data.minCustomPrice === "" ? null : data.minCustomPrice,
     };
     
-    // Merge uploaded images and videos with form data
+    // Объединение загруженных файлов с данными формы
     const submitData = {
       ...cleanedData,
       images: uploadedImages.length > 0 ? uploadedImages : (cleanedData.images || []),
       videos: uploadedVideos.length > 0 ? uploadedVideos : (cleanedData.videos || [])
     };
     
-    console.log('Submit data:', submitData);
+    console.log('Final submit data:', JSON.stringify(submitData, null, 2));
     
     if (editingProduct) {
+      console.log('Updating product:', editingProduct.id);
       updateProductMutation.mutate({ id: editingProduct.id, data: submitData });
     } else {
+      console.log('Creating new product');
       createProductMutation.mutate(submitData);
     }
   };
@@ -431,11 +460,34 @@ export function ProductsManager() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {categories.map((category) => (
-                              <SelectItem key={category.id} value={category.id}>
-                                {(category.name as any)?.ru || category.id}
+                            {categories && categories.length > 0 ? (
+                              categories.map((category) => {
+                                // Более робастная обработка названий категорий
+                                let categoryName = 'Без названия';
+                                
+                                if (category.name) {
+                                  if (typeof category.name === 'object' && category.name !== null) {
+                                    categoryName = (category.name as any).ru || (category.name as any).en || (category.name as any).hy || category.slug || category.id;
+                                  } else if (typeof category.name === 'string') {
+                                    categoryName = category.name;
+                                  }
+                                } else if (category.slug) {
+                                  categoryName = category.slug;
+                                } else {
+                                  categoryName = category.id;
+                                }
+                                
+                                return (
+                                  <SelectItem key={category.id} value={category.id}>
+                                    {categoryName}
+                                  </SelectItem>
+                                );
+                              })
+                            ) : (
+                              <SelectItem value="no-categories" disabled>
+                                {categories?.length === 0 ? 'Нет доступных категорий' : 'Загрузка категорий...'}
                               </SelectItem>
-                            ))}
+                            )}
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -908,12 +960,24 @@ export function ProductsManager() {
                     name="videoUrl"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>URL основного видео</FormLabel>
+                        <FormLabel>URL основного видео (опционально)</FormLabel>
                         <FormControl>
-                          <Input {...field} placeholder="https://example.com/video.mp4" />
+                          <Input 
+                            {...field} 
+                            placeholder="https://example.com/video.mp4" 
+                            type="url"
+                            onBlur={(e) => {
+                              // Валидация URL только при потере фокуса, не при отправке формы
+                              const value = e.target.value;
+                              if (value && !value.match(/^https?:\/\/.+/)) {
+                                // Показать предупреждение, но не блокировать
+                                console.warn('Invalid video URL format');
+                              }
+                            }}
+                          />
                         </FormControl>
                         <FormDescription>
-                          Ссылка на основное видео товара (MP4, WebM, etc.)
+                          Введите ссылку на видео ИЛИ используйте загрузчик файлов ниже. Поле необязательное.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

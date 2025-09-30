@@ -27,6 +27,17 @@ jobs:
       - name: Build project
         run: npm run build
 
+      - name: Check secrets
+        run: |
+          if [ -z "$SERVER_HOST" ]; then echo "❌ SERVER_HOST is missing"; exit 1; fi
+          if [ -z "$SERVER_USER" ]; then echo "❌ SERVER_USER is missing"; exit 1; fi
+          if [ -z "$SERVER_SSH_KEY" ]; then echo "❌ SERVER_SSH_KEY is missing"; exit 1; fi
+          echo "✅ All secrets are present"
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.0
         with:

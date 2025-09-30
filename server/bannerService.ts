@@ -1,7 +1,7 @@
 import { db } from './db';
-import { banners, bannerAnalytics, insertBannerSchema, insertBannerAnalyticsSchema } from '@shared/schema';
+import { banners, bannerAnalytics, insertBannerSchema, insertBannerAnalyticsSchema } from '../shared/schema.js';
 import { eq, and, gte, lte, desc, sql } from 'drizzle-orm';
-import type { Banner, InsertBanner, BannerAnalytics, InsertBannerAnalytics } from '@shared/schema';
+import type { Banner, InsertBanner, BannerAnalytics, InsertBannerAnalytics } from '../shared/schema.js';
 
 export class BannerService {
   // Простое кэширование активных баннеров по странице (на 30 секунд)

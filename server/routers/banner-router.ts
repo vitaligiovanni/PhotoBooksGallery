@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { BannerService } from "../bannerService";
-import { insertBannerSchema } from "@shared/schema";
+import { insertBannerSchema } from "../../shared/schema.js";
 import { mockAuth, requireAdmin } from "./middleware";
 
 export function createBannerRouter() {

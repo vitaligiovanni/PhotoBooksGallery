@@ -34,8 +34,8 @@ import {
   type InsertCurrency,
   type ExchangeRate,
   type InsertExchangeRate,
-} from "@shared/schema";
-import { db } from "./db";
+} from "../shared/schema.js";
+import { db } from "./db.js";
 import { eq, desc, and, ilike, or, ne, sql } from "drizzle-orm";
 
 export interface IStorage {

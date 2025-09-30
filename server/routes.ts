@@ -3,26 +3,26 @@ import express from "express";
 import { createServer, type Server } from "http";
 import fs from "fs";
 import path from "path";
-import { storage } from "./storage";
-import { setupAuth } from "./replitAuth";
+import { storage } from "./storage.js";
+import { setupAuth } from "./replitAuth.js";
 import multer from "multer";
-import { createConstructorRouter } from "./constructor-feature";
-import { LocalStorageService } from "./localStorage";
-import { db } from "./db";
+import { createConstructorRouter } from "./constructor-feature.js";
+import { LocalStorageService } from "./localStorage.js";
+import { db } from "./db.js";
 import os from 'os';
 import { execSync } from 'child_process';
 
 // Импорт модульных роутеров
-import { createHealthRouter } from "./routers/health-router";
-import { createFileRouter } from "./routers/file-router";
-import { createEcommerceRouter } from "./routers/ecommerce-router";
-import { createContentRouter } from "./routers/content-router";
-import { createSettingsRouter } from "./routers/settings-router";
-import { createFinanceRouter } from "./routers/finance-router";
-import { createBannerRouter } from "./routers/banner-router";
-import { createDashboardRouter } from "./routers/dashboard-router";
-import { createSitePagesRouter } from "./routers/site-pages-router";
-import { mockAuth } from "./routers/middleware";
+import { createHealthRouter } from "./routers/health-router.js";
+import { createFileRouter } from "./routers/file-router.js";
+import { createEcommerceRouter } from "./routers/ecommerce-router.js";
+import { createContentRouter } from "./routers/content-router.js";
+import { createSettingsRouter } from "./routers/settings-router.js";
+import { createFinanceRouter } from "./routers/finance-router.js";
+import { createBannerRouter } from "./routers/banner-router.js";
+import { createDashboardRouter } from "./routers/dashboard-router.js";
+import { createSitePagesRouter } from "./routers/site-pages-router.js";
+import { mockAuth } from "./routers/middleware.js";
 
 // Для локальной разработки используем локальное хранилище
 const localStorageService = new LocalStorageService();

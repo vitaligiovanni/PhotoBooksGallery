@@ -7,7 +7,7 @@ import {
   products,
   reviews,
   analyticsEvents,
-} from "@shared/schema";
+} from "../../shared/schema.js";
 import { mockAuth, requireAdmin } from "./middleware";
 
 export function createDashboardRouter() {

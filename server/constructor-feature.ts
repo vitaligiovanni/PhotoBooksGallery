@@ -32,7 +32,7 @@
 import express from "express";
 import { z } from "zod";
 import { eq, asc, sql } from "drizzle-orm";
-import { pages, blocks } from "@shared/schema";
+import { pages, blocks } from "../shared/schema.js";
 
 /** Drizzle schema — используем существующие таблицы из shared/schema */
 

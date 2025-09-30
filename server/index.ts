@@ -3,8 +3,8 @@ import express, { type Request, Response, NextFunction } from "express";
 import { createServer } from "http";
 import fileUpload from "express-fileupload";
 import cors from "cors";
-import { registerRoutes } from "./routes";
-import { setupVite, serveStatic, log } from "./vite";
+import { registerRoutes } from "./routes.js";
+import { setupVite, serveStatic, log } from "./vite.js";
 
 const app = express();
 

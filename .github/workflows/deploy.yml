@@ -28,17 +28,6 @@ jobs:
       - name: Build project
         run: npm run build
 
-      - name: Create deployment package
-        run: |
-          mkdir -p deploy
-          cp -r dist deploy/
-          cp -r public deploy/
-          cp -r server deploy/
-          cp package*.json deploy/
-          cp docker-compose.prod.yml deploy/docker-compose.yml
-          cp .env.example deploy/.env
-          cp entrypoint.sh deploy/
-
       - name: Deploy to server
         uses: appleboy/ssh-action@v1.0.0
         with:
@@ -47,64 +36,37 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            # Backup current deployment
+            # Create backup
             if [ -d "/var/www/photobooksgallery" ]; then
               echo "Creating backup..."
               sudo cp -r /var/www/photobooksgallery /var/www/photobooksgallery.backup.$(date +%Y%m%d_%H%M%S)
             fi
 
-            # Clean old deployment
-            sudo rm -rf /var/www/photobooksgallery
-
-            # Create deployment directory
-            sudo mkdir -p /var/www/photobooksgallery
-            sudo chown -R $USER:$USER /var/www/photobooksgallery
-
-      - name: Upload files
-        uses: appleboy/scp-action@v0.1.4
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          source: "deploy/*"
-          target: "/var/www/photobooksgallery"
-          strip_components: 1
-
-      - name: Run deployment
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          port: ${{ secrets.SERVER_PORT || 22 }}
-          script: |
+            # Update code from Git
             cd /var/www/photobooksgallery
+            git fetch origin
+            git reset --hard origin/main
 
-            # Set proper permissions
-            chmod +x entrypoint.sh
+            # Install dependencies
+            npm ci
 
-            # Create .env file if it doesn't exist
-            if [ ! -f .env ]; then
-              cp .env.example .env
-              echo "⚠️  Please configure .env file with production settings"
-            fi
+            # Build server
+            rm -rf dist
+            npx tsc -p tsconfig.server.json --noEmitOnError false
 
-            # Stop existing containers
-            docker-compose down || true
+            # Restart application
+            pm2 restart photobooksgallery || pm2 start ecosystem.config.cjs
 
-            # Start new deployment
-            docker-compose up -d --build
-
-            # Wait for health check
+            # Wait for startup
             echo "Waiting for application to start..."
-            sleep 30
+            sleep 10
 
-            # Check if application is running
+            # Health check
             if curl -f http://localhost:3000/api/health; then
               echo "✅ Deployment successful!"
             else
-              echo "❌ Deployment failed - health check failed"
+              echo "❌ Health check failed"
+              pm2 logs photobooksgallery --lines 20
               exit 1
             fi
 
@@ -118,7 +80,5 @@ jobs:
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
             echo "Deployment completed at $(date)"
-            echo "Application status:"
-            docker-compose ps
-            echo "Application logs:"
-            docker-compose logs --tail=10 app
+            echo "PM2 status:"
+            pm2 jlist

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { storage } from "../storage";
-import { insertCurrencySchema, insertExchangeRateSchema } from "@shared/schema";
+import { insertCurrencySchema, insertExchangeRateSchema } from "../../shared/schema.js";
 import { mockAuth, requireAdmin } from "./middleware";
 
 export function createFinanceRouter() {

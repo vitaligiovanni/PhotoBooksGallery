@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
-import { insertUserThemeSchema, insertReviewSchema, BUILT_IN_THEMES } from "@shared/schema";
+import { insertUserThemeSchema, insertReviewSchema, BUILT_IN_THEMES } from "../../shared/schema.js";
 import { mockAuth, requireAdmin } from "./middleware";
 
 export function createSettingsRouter() {

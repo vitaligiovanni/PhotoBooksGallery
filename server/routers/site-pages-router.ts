@@ -1,6 +1,6 @@
 import express from "express";
 import { db } from "../db";
-import { sitePages, updateSitePageSchema, SITE_PAGE_KEYS } from "@shared/schema";
+import { sitePages, updateSitePageSchema, SITE_PAGE_KEYS } from "../../shared/schema.js";
 import { asc, eq } from "drizzle-orm";
 
 export function createSitePagesRouter() {

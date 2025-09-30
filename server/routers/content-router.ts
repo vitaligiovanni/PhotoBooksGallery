@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod";
 import { storage } from "../storage";
-import { insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema } from "@shared/schema";
+import { insertBlogCategorySchema, insertBlogPostSchema, insertCommentSchema } from "../../shared/schema.js";
 import { ObjectStorageService } from "../objectStorage";
 import { mockAuth, requireAdmin } from "./middleware";
 

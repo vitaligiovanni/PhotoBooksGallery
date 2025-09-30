@@ -29,6 +29,8 @@ export default defineConfig({
     extensions: ['.js', '.jsx', '.ts', '.tsx', '.json'],
   },
   root: path.resolve(__dirname, "client"),
+  // Serve project-level public (already exposed via express.static); explicit here for clarity if building directly with Vite
+  publicDir: path.resolve(__dirname, 'public'),
   build: {
     outDir: path.resolve(__dirname, "dist/public"),
     emptyOutDir: true,

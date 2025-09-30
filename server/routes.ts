@@ -9,6 +9,8 @@ import multer from "multer";
 import { createConstructorRouter } from "./constructor-feature";
 import { LocalStorageService } from "./localStorage";
 import { db } from "./db";
+import os from 'os';
+import { execSync } from 'child_process';
 
 // Импорт модульных роутеров
 import { createHealthRouter } from "./routers/health-router";
@@ -75,6 +77,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api/banners', bannerRouter);
   app.use('/api', dashboardRouter);
   app.use('/api', sitePagesRouter);
+
+  // Encoding / locale diagnostics
+  app.get('/api/debug/encoding', async (_req, res) => {
+    try {
+      let dbEncoding: any = null;
+      try {
+        // Attempt to read server_encoding and database encoding via raw query if pg client available
+        // Drizzle with pg: use a raw query through db.$client if exposed; fallback to environment.
+        // @ts-ignore
+        if (db?.session?.client) {
+          // @ts-ignore
+          const r = await db.session.client.query("SHOW SERVER_ENCODING");
+          dbEncoding = r?.rows?.[0] || null;
+        }
+      } catch (e) {
+        dbEncoding = { error: 'Could not query server encoding', details: String(e) };
+      }
+
+      let localeEnv: Record<string, string | undefined> = {};
+      ['LANG','LC_ALL','LC_CTYPE','LC_COLLATE','LC_TIME','LC_MESSAGES'].forEach(k => localeEnv[k] = process.env[k]);
+
+      let localeCmd: string | null = null;
+      try {
+        localeCmd = execSync(process.platform === 'win32' ? 'chcp' : 'locale', { encoding: 'utf8' });
+      } catch {
+        localeCmd = null;
+      }
+
+      res.json({
+        process: {
+          platform: process.platform,
+          nodeVersion: process.version,
+          defaultEncoding: Buffer.isEncoding('utf8') ? 'utf8' : 'unknown'
+        },
+        dbEncoding,
+        envLocale: localeEnv,
+        systemLocaleOutput: localeCmd,
+        suggestions: [
+          'Убедитесь что база создана с шаблоном UTF8: CREATE DATABASE yourdb WITH ENCODING "UTF8" TEMPLATE template0 LC_COLLATE="C" LC_CTYPE="C";',
+          'В Docker контейнере PostgreSQL убедитесь что переменные LANG/LC_* установлены например en_US.UTF-8 или hy_AM.UTF-8.',
+          'Перед миграцией: pg_dump использовать --encoding=UTF8, при восстановлении убедиться что клиентская кодировка \encoding UTF8.',
+          'Если увидели ????? вместо текста — это значит данные уже испорчены при вставке. Нужно пересоздать/повторно импортировать из корректного источника.'
+        ]
+      });
+    } catch (e) {
+      res.status(500).json({ error: 'encoding_diagnostic_failed', details: String(e) });
+    }
+  });
+
+  // Local development credential login (replaces disabled Replit auth)
+  app.post('/api/login', async (req: any, res) => {
+    try {
+      const { username, password } = req.body || {};
+      if (username === 'admin' && password === 'admin123') {
+        const user = await storage.upsertUser({
+          id: 'local-admin',
+          email: 'admin@local.test',
+          firstName: 'Админ',
+          lastName: 'Локальный',
+          profileImageUrl: null
+        });
+        // Simple unsigned token placeholder
+        const token = 'dev-local-token';
+        return res.json({ success: true, token, user: { id: user.id, username: 'admin', role: user.role || 'admin' } });
+      }
+      return res.status(401).json({ success: false, message: 'Invalid credentials' });
+    } catch (e) {
+      console.error('Login error', e);
+      res.status(500).json({ success: false, message: 'Login failed' });
+    }
+  });
+
+  app.post('/api/logout', async (_req, res) => {
+    res.json({ success: true });
+  });
 
   // User management routes (Admin only) - временно отключена аутентификация для локальной разработки
   app.get('/api/users', async (req: any, res) => {

@@ -96,6 +96,8 @@ export const products = pgTable("products", {
   expectedProfitMargin: decimal("expected_profit_margin", { precision: 5, scale: 2 }).default("30"), // Ожидаемая маржа %
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
+  // Special pages assignment
+  specialPages: text("special_pages").array().default(sql`'{}'::text[]`), // Pages where this product should appear: ['graduation-albums', 'premium-gifts']
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -593,12 +595,44 @@ export const insertCategorySchema = createInsertSchema(categories).omit({
   createdAt: true,
 });
 
-export const insertProductSchema = createInsertSchema(products).omit({
-  id: true,
-  createdAt: true,
-}).extend({
-  categoryId: z.string().min(1, "Выберите категорию"),
+export const insertProductSchema = z.object({
+  name: z.record(z.string()),
+  description: z.record(z.string()).optional(),
+  price: z.union([z.string(), z.number()]).transform((val) => String(val)),
+  currencyId: z.string().optional(),
+  originalPrice: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? null : String(val)).optional(),
+  discountPercentage: z.number().optional(),
+  inStock: z.boolean().optional(),
+  stockQuantity: z.number().optional(),
+  isOnSale: z.boolean().optional(),
+  imageUrl: z.string().optional(),
   images: z.array(z.string()).optional(),
+  categoryId: z.string().min(1, "Выберите категорию"),
+  options: z.record(z.any()).optional(),
+  photobookFormat: z.string().optional(),
+  photobookSize: z.string().optional(),
+  minSpreads: z.number().optional(),
+  additionalSpreadPrice: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? null : String(val)).optional(),
+  additionalSpreadCurrencyId: z.string().optional(),
+  paperType: z.string().optional(),
+  coverMaterial: z.string().optional(),
+  bindingType: z.string().optional(),
+  productionTime: z.number().optional(),
+  shippingTime: z.number().optional(),
+  weight: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? null : String(val)).optional(),
+  allowCustomization: z.boolean().optional(),
+  minCustomPrice: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? null : String(val)).optional(),
+  minCustomPriceCurrencyId: z.string().optional(),
+  costPrice: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "0" : String(val)).optional(),
+  costCurrencyId: z.string().optional(),
+  materialCosts: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "0" : String(val)).optional(),
+  laborCosts: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "0" : String(val)).optional(),
+  overheadCosts: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "0" : String(val)).optional(),
+  shippingCosts: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "0" : String(val)).optional(),
+  otherCosts: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "0" : String(val)).optional(),
+  expectedProfitMargin: z.union([z.string(), z.number(), z.null(), z.undefined()]).transform((val) => val == null ? "30" : String(val)).optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().optional(),
   videoUrl: z.string().refine((val) => {
     // Разрешаем пустые значения или null
     if (!val || val === "") return true;
@@ -613,6 +647,7 @@ export const insertProductSchema = createInsertSchema(products).omit({
     }
   }, "Некорректный URL видео или путь к файлу").nullable().optional(),
   videos: z.array(z.string()).optional(),
+  specialPages: z.array(z.enum(['graduation-albums', 'premium-gifts', 'one-day-books'])).optional(),
 });
 
 export const insertOrderSchema = createInsertSchema(orders).omit({

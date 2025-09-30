@@ -71,6 +71,16 @@ export function createEcommerceRouter() {
   router.get('/products', async (req, res) => {
     try {
       const categorySlug = req.query.category as string;
+      const specialPage = req.query.special as string;
+      
+      // Handle special page filtering
+      if (specialPage) {
+        console.log('Filtering products by special page:', specialPage);
+        const products = await storage.getProductsBySpecialPage(specialPage);
+        console.log('Found products for special page:', products.length);
+        return res.json(products);
+      }
+      
       let categoryId: string | undefined;
       
       if (categorySlug) {
@@ -90,6 +100,7 @@ export function createEcommerceRouter() {
 
   router.get('/products/search', async (req, res) => {
     try {
+      console.log('Products search API called with query:', req.query.q);
       const query = req.query.q as string;
       if (!query) {
         return res.status(400).json({ message: "Search query required" });
@@ -99,6 +110,25 @@ export function createEcommerceRouter() {
     } catch (error) {
       console.error("Error searching products:", error);
       res.status(500).json({ message: "Failed to search products" });
+    }
+  });
+
+  router.get('/products/special/:page', async (req, res) => {
+    try {
+      const specialPage = req.params.page;
+      console.log('Special page API called with page:', specialPage);
+      
+      if (!specialPage) {
+        return res.status(400).json({ message: "Special page parameter required" });
+      }
+      
+      const products = await storage.getProductsBySpecialPage(specialPage);
+      console.log('Found products for special page:', products.length);
+      
+      res.json(products);
+    } catch (error) {
+      console.error("Error fetching products for special page:", error);
+      res.status(500).json({ message: "Failed to fetch products for special page" });
     }
   });
 
@@ -117,10 +147,12 @@ export function createEcommerceRouter() {
 
   router.post('/products', mockAuth, requireAdmin, async (req: any, res) => {
     try {
+      console.log('Creating product with data:', JSON.stringify(req.body, null, 2));
       const productData = insertProductSchema.parse(req.body);
       
       // Ensure categoryId is not empty string - convert to null if empty
       if (productData.categoryId === "" || !productData.categoryId) {
+        console.log('Product creation failed: no category selected');
         return res.status(400).json({ message: "Выберите категорию для товара" });
       }
 
@@ -159,6 +191,10 @@ export function createEcommerceRouter() {
       res.status(201).json(product);
     } catch (error) {
       console.error("Error creating product:", error);
+      if (error instanceof Error && error.name === 'ZodError') {
+        console.log('Validation error details:', JSON.stringify(error, null, 2));
+        return res.status(400).json({ message: "Ошибка валидации данных: " + error.message });
+      }
       if (error instanceof Error && error.message?.includes('violates foreign key constraint')) {
         return res.status(400).json({ message: "Выбранная категория не существует" });
       }

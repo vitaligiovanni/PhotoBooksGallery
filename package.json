@@ -10,7 +10,19 @@
     "build": "npm run build:client && npm run build:server",
     "start": "cross-env NODE_ENV=production node dist/server/index.js",
     "check": "tsc",
-    "db:push": "drizzle-kit push"
+    "preflight": "tsc --noEmit && vite build --ssrManifest --outDir temp-build && rimraf temp-build",
+    "generate:icons": "node scripts/generate-icons.cjs",
+    "db:push": "drizzle-kit push",
+  "db:generate": "drizzle-kit generate",
+  "db:migrate": "drizzle-kit migrate",
+  "db:baseline": "tsx scripts/db-baseline.ts",
+  "env:check": "tsx scripts/validate-env.ts",
+    "predeploy:verify": "tsx scripts/predeploy-verify.ts",
+  "verify:catalog": "tsx scripts/verify-catalog.ts",
+  "crm:smoke": "tsx scripts/crm-smoke.ts",
+  "seed:demo": "tsx scripts/seed-demo.ts",
+  "docker:migrate": "powershell -ExecutionPolicy Bypass -File scripts/migrate-docker.ps1 -Rebuild -Clean",
+  "debug:blog": "tsx scripts/debug-blog-create.ts"
   },
   "dependencies": {
     "@google-cloud/storage": "^7.17.0",
@@ -130,7 +142,8 @@
     "tailwindcss": "^3.4.17",
     "tsx": "^4.19.1",
     "typescript": "5.6.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "pngjs": "^7.0.0"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.8"

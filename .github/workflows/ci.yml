@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Env check
+        run: npm run env:check
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgres://invalid/skip' }}
+          SESSION_SECRET: test_secret_placeholder
+
+      - name: Generate diff (should be empty)
+        run: npm run db:generate && git diff --exit-code || (echo "❌ Schema drift detected. Commit generated migrations." && exit 1)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgres://invalid/skip' }}
+
+      - name: Predeploy verify
+        run: STRICT_PREDEPLOY=1 npm run predeploy:verify || (echo "Predeploy failed" && exit 1)
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL || 'postgres://invalid/skip' }}
+
+      - name: Build project
+        run: npm run build
+
+      - name: Docker build
+        run: docker build -t photobooks:${{ github.sha }} .
+
+      - name: Summary
+        run: echo "✅ CI pipeline finished"

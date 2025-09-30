@@ -1,0 +1,31 @@
+# docker-compose.prod.yml - для продакшена на Beget
+version: '3.8'
+services:
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - uploads:/app/uploads  # Фотографии сохраняются
+    env_file:
+      - production.env  # Продакшен переменные
+    environment:
+      - NODE_ENV=production
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: photobooksgallery
+      POSTGRES_USER: photobooks_user
+      POSTGRES_PASSWORD: secure_password_123
+    volumes:
+      - db_data:/var/lib/postgresql/data  # Данные товаров сохраняются
+    restart: unless-stopped
+    # Не открываем порт наружу для безопасности
+
+volumes:
+  uploads:  # Постоянное хранение фотографий
+  db_data:  # Постоянное хранение БД

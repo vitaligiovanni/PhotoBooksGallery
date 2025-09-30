@@ -61,6 +61,7 @@ export function ProductsManager() {
       photobookSize: "",
       minSpreads: 10,
       additionalSpreadPrice: "0",
+      specialPages: [],
       additionalSpreadCurrencyId: defaultCurrencyId,
       paperType: "",
       coverMaterial: "",
@@ -232,6 +233,7 @@ export function ProductsManager() {
       photobookSize: product.photobookSize || "none",
       minSpreads: product.minSpreads || 10,
       additionalSpreadPrice: product.additionalSpreadPrice || "0",
+      specialPages: product.specialPages || [],
       isActive: product.isActive ?? true,
       sortOrder: product.sortOrder || 0
     } as any);
@@ -358,6 +360,7 @@ export function ProductsManager() {
                   photobookSize: "none",
                   minSpreads: 10,
                   additionalSpreadPrice: "0",
+                  specialPages: [],
                   isActive: true,
                   sortOrder: 0
                 } as any);
@@ -1072,6 +1075,89 @@ export function ProductsManager() {
                         <FormControl>
                           <Textarea {...field} />
                         </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Special Pages Assignment Section */}
+                <div className="space-y-4 border-t pt-4">
+                  <h3 className="font-semibold text-lg">Специальные страницы</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Выберите страницы, на которых должен отображаться этот товар (в дополнение к основной категории)
+                  </p>
+                  
+                  <FormField
+                    control={productForm.control}
+                    name="specialPages"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Страницы для отображения</FormLabel>
+                        <div className="grid grid-cols-3 gap-4 p-4 border rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="graduation-albums"
+                              checked={field.value?.includes('graduation-albums') || false}
+                              onChange={(e) => {
+                                const current = field.value || [];
+                                if (e.target.checked) {
+                                  field.onChange([...current.filter(p => p !== 'graduation-albums'), 'graduation-albums']);
+                                } else {
+                                  field.onChange(current.filter(p => p !== 'graduation-albums'));
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <label htmlFor="graduation-albums" className="text-sm font-medium">
+                              Выпускные альбомы
+                            </label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="premium-gifts"
+                              checked={field.value?.includes('premium-gifts') || false}
+                              onChange={(e) => {
+                                const current = field.value || [];
+                                if (e.target.checked) {
+                                  field.onChange([...current.filter(p => p !== 'premium-gifts'), 'premium-gifts']);
+                                } else {
+                                  field.onChange(current.filter(p => p !== 'premium-gifts'));
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <label htmlFor="premium-gifts" className="text-sm font-medium">
+                              Премиум подарки
+                            </label>
+                          </div>
+                          
+                          <div className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id="one-day-books"
+                              checked={field.value?.includes('one-day-books') || false}
+                              onChange={(e) => {
+                                const current = field.value || [];
+                                if (e.target.checked) {
+                                  field.onChange([...current.filter(p => p !== 'one-day-books'), 'one-day-books']);
+                                } else {
+                                  field.onChange(current.filter(p => p !== 'one-day-books'));
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <label htmlFor="one-day-books" className="text-sm font-medium">
+                              Фотокниги за день
+                            </label>
+                          </div>
+                        </div>
+                        <FormDescription>
+                          Товар будет отображаться в выбранных специальных разделах в дополнение к основной категории
+                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}

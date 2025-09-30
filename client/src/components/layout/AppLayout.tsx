@@ -36,7 +36,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen w-full overflow-x-hidden relative">
       {/* Баннеры: показываем, если уже есть что показать (не скрываем во время повторной загрузки) */}
       {!isAdmin && banners.length > 0 && (
         <Suspense fallback={null}>
@@ -50,7 +50,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       )}
 
       {/* Основной контент */}
-      <main>
+      <main className="w-full overflow-x-hidden">
         {children}
       </main>
     </div>

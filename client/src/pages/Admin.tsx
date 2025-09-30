@@ -228,3 +228,5 @@ export default function Admin() {
     </div>
   );
 }
+
+// (Single default export is the function declaration above; redundant export removed)

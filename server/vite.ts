@@ -35,13 +35,19 @@ export async function setupVite(app: Express, server: Server) {
     customLogger: {
       ...viteLogger,
       error: (msg, options) => {
+        // Log the error but do NOT kill the dev server; killing breaks HMR WS connection
         viteLogger.error(msg, options);
-        process.exit(1);
       },
     },
     server: serverOptions,
     appType: "custom",
   });
+
+  // Serve root-level public (project/public) for assets like manifest/icons (since Vite root is client/)
+  const rootPublic = path.resolve(__dirname, "..", "public");
+  if (fs.existsSync(rootPublic)) {
+    app.use(express.static(rootPublic));
+  }
 
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {

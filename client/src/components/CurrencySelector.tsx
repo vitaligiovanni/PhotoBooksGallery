@@ -1,12 +1,5 @@
 import { useCurrency } from '@/contexts/CurrencyContext';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Globe } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface CurrencySelectorProps {
   className?: string;
@@ -24,41 +17,24 @@ export function CurrencySelector({ className }: CurrencySelectorProps) {
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
-      <Globe className="w-4 h-4 text-muted-foreground" />
-      <Select
-        value={currentCurrency?.id || ''}
-        onValueChange={handleCurrencyChange}
-      >
-        <SelectTrigger className="w-auto min-w-[120px] border-none shadow-none h-auto p-2">
-          <SelectValue>
-            {currentCurrency && (
-              <span className="flex items-center gap-2">
-                <span className="font-medium">{currentCurrency.symbol}</span>
-                <span className="text-sm text-muted-foreground">
-                  {currentCurrency.code}
-                </span>
-              </span>
-            )}
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          {currencies.map((currency) => (
-            <SelectItem key={currency.id} value={currency.id}>
-              <div className="flex items-center gap-3">
-                <span className="font-medium">{currency.symbol}</span>
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium">{currency.code}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {/* Display currency name in current locale */}
-                    {currency.name.ru || currency.code}
-                  </span>
-                </div>
-              </div>
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Select value={currentCurrency?.id || ''} onValueChange={handleCurrencyChange}>
+      <SelectTrigger className={`w-12 h-9 px-2 justify-center border-border ${className || ''}`} data-testid="select-currency" aria-label="Change currency">
+        <SelectValue>
+          {currentCurrency && (
+            <span className="text-sm font-semibold tracking-tight">{currentCurrency.symbol}</span>
+          )}
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent className="min-w-[140px]">
+        {currencies.map(currency => (
+          <SelectItem key={currency.id} value={currency.id} data-testid={`option-currency-${currency.code}`}>
+            <div className="flex items-center gap-3">
+              <span className="text-base font-semibold w-6 text-center">{currency.symbol}</span>
+              <span className="text-xs text-muted-foreground">{currency.code}</span>
+            </div>
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
   );
 }

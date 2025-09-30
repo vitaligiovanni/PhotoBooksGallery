@@ -25,8 +25,10 @@ const About = lazy(() => import("@/pages/About"));
 const Contacts = lazy(() => import("@/pages/Contacts"));
 const CurrencySettings = lazy(() => import("@/pages/CurrencySettings").then(m => ({ default: m.CurrencySettings })));
 const Page = lazy(() => import("@/pages/Page").then(m => ({ default: m.Page })));
+const GraduationAlbums = lazy(() => import("@/pages/GraduationAlbums"));
 const NotFound = lazy(() => import("@/pages/not-found"));
-const AppPopups = lazy(() => import("@/components/AppPopups").then(m => ({ default: m.AppPopups })));
+// Explicit .tsx extension to avoid failed dynamic import in some dev edge cases
+const AppPopups = lazy(() => import("@/components/AppPopups.tsx").then(m => ({ default: m.AppPopups })));
 const PremiumPreview = lazy(() => import("@/pages/PremiumPreview"));
 import { AppLayout } from "@/components/layout/AppLayout";
 
@@ -50,6 +52,7 @@ function Router() {
   <Route path="/preview/premium" component={PremiumPreview} />
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
+        <Route path="/graduation-albums" component={GraduationAlbums} />
         <Route path="/about" component={About} />
         <Route path="/contacts" component={Contacts} />
         <Route path="/page/:slug" component={Page} />

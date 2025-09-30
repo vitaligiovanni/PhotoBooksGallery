@@ -60,6 +60,7 @@ export function createContentRouter() {
 
   router.post('/blog-posts', mockAuth, requireAdmin, async (req: any, res) => {
     try {
+      console.log('[blog-posts][create] raw body keys:', Object.keys(req.body || {}));
       let postData = {
         ...req.body,
         authorId: 'local-admin' // For local development
@@ -86,12 +87,23 @@ export function createContentRouter() {
           .replace(/^-|-$/g, '') + '-' + Date.now();
       }
 
-      postData = insertBlogPostSchema.parse(postData);
+      try {
+        postData = insertBlogPostSchema.parse(postData);
+      } catch (e:any) {
+        if (e instanceof z.ZodError) {
+          console.warn('[blog-posts][create] validation errors:', e.errors);
+          return res.status(400).json({ message: 'Validation failed', errors: e.errors });
+        }
+        console.error('[blog-posts][create] unexpected parse error:', e);
+        throw e;
+      }
+
       const post = await storage.createBlogPost(postData);
       res.status(201).json(post);
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error creating blog post:", error);
-      res.status(500).json({ message: "Failed to create blog post" });
+      // Always respond JSON
+      res.status(500).json({ message: "Failed to create blog post", detail: error?.message || String(error) });
     }
   });
 

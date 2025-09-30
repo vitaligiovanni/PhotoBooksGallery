@@ -5,9 +5,9 @@ const resources = {
   ru: {
     translation: {
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Создание фотокниг и фотосувениров в Армении",
-      landingPageDescription: "Создавайте уникальные фотокниги и фотосувениры в PhotoBooksGallery. Онлайн редактор, высокое качество печати, быстрая доставка по Армении. Сохраните ваши воспоминания навсегда!",
-      landingPageKeywords: "фотокниги, фотосувениры, печать фото, фоторамки, подарки, Армения, онлайн редактор, PhotoBooksGallery",
+      landingPageTitle: "PhotoBooksGallery - Фотокниги, выпускные альбомы, виньетки в Армении",
+      landingPageDescription: "Создавайте уникальные фотокниги, выпускные альбомы и виньетки в PhotoBooksGallery. Фотокнига за один день, современные выпускные альбомы с дополненной реальностью. Онлайн редактор, высокое качество печати, быстрая доставка по Армении.",
+      landingPageKeywords: "фотокниги, выпускные альбомы, виньетки, фотокнига за один день, фотосувениры, печать фото, фоторамки, подарки, дополненная реальность, Армения, онлайн редактор, PhotoBooksGallery",
       
       // Header
       catalog: "Каталог",
@@ -28,6 +28,8 @@ const resources = {
       categoriesTitle: "Наши категории",
       categoriesSubtitle: "Выберите идеальный способ сохранить ваши воспоминания",
       photobooks: "Фотокниги",
+      graduationAlbums: "Выпускные альбомы",
+      vignettes: "Виньетки",
       photoframes: "Фоторамки",
       giftBoxes: "Подарочные коробки",
       photoSouvenirs: "Фото-сувениры",
@@ -225,6 +227,22 @@ const resources = {
       contactCTASubtitle: "Выберите любой способ связи и мы поможем вам прямо сейчас!",
       contactCTAButton: "Написать в WhatsApp",
       
+      // Graduation Albums Page
+      graduationPageTitle: "Выпускные альбомы - современные виньетки с дополненной реальностью | PhotoBooksGallery",
+      graduationPageDescription: "Создаем современные выпускные альбомы и виньетки с неповторимым дизайном. Дополненная реальность, качественные материалы, быстрая печать. Сохраните воспоминания о выпуске навсегда!",
+      graduationPageKeywords: "выпускные альбомы, виньетки, современные выпускные альбомы, дополненная реальность, выпускной альбом, школьные альбомы, университетские альбомы, память о выпуске",
+      graduationHeroTitle: "Современные выпускные альбомы",
+      graduationHeroSubtitle: "Создаем выпускные альбомы с неповторимым дизайном и дополненной реальностью",
+      graduationQualityTitle: "Качество и неповторимость",
+      graduationQualityDesc: "Наши выпускные альбомы славятся высоким качеством печати и уникальным дизайном, который подчеркивает важность этого особенного дня.",
+      graduationARTitle: "Дополненная реальность",
+      graduationARDesc: "Уникальная возможность добавить AR-технологии: наведите камеру телефона на фотографию учителя и услышите его персональное пожелание выпускникам.",
+      graduationMemoryTitle: "Эффективная память для детей",
+      graduationMemoryDesc: "AR-пожелания создают яркую эмоциональную память, которая останется с ребенком на всю жизнь. Это не просто альбом - это интерактивное воспоминание.",
+      graduationARPricing: "AR-функции доступны за дополнительную оплату",
+      graduationModernTitle: "Современный подход",
+      graduationModernDesc: "Используем передовые технологии печати и дизайна для создания альбомов, которые соответствуют современным стандартам и вкусам.",
+      
       // About Page
       aboutPageTitle: "О нас - PhotoBooksGallery | Создаем незабываемые фотокниги",
       aboutPageDescription: "PhotoBooksGallery - создаем качественные фотокниги и фотосувениры с 2018 года. Онлайн редактор, быстрая печать фотографий.",
@@ -378,9 +396,9 @@ const resources = {
   hy: {
     translation: {
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Ֆոտոգրքերի և ֆոտոհուշարձանների ստեղծում Հայաստանում",
-      landingPageDescription: "Ստեղծեք եզակի ֆոտոգրքեր և ֆոտոհուշարձաններ PhotoBooksGallery-ում: Օնլայն խմբագիր, բարձր որակի տպագրություն, արագ առաքում Հայաստանով: Պահպանեք ձեր հիշողությունները ընդմիշտ:",
-      landingPageKeywords: "ֆոտոգրքեր, ֆոտոհուշարձաններ, ֆոտո տպագրություն, ֆոտոշրջանակներ, նվերներ, Հայաստան, օնլայն խմբագիր, PhotoBooksGallery",
+      landingPageTitle: "PhotoBooksGallery - Ֆոտոգրքեր, վինետկա, ավարտական ալբոմներ Հայաստանում",
+      landingPageDescription: "Ստեղծեք եզակի ֆոտոգրքեր, վինետկա և ավարտական ալբոմներ PhotoBooksGallery-ում: Ֆոտոգիրք մեկ օրում, ժամանակակից ավարտական ալբոմներ ընդլայնված իրականությամբ: Օնլայն խմբագիր, բարձր որակի տպագրություն, արագ առաքում:",
+      landingPageKeywords: "ֆոտոգրքեր, ֆոտոգիրք, վինետկա, ավարտական ալբոմներ, ֆոտոգիրք մեկ օրում, ընդլայնված իրականություն, ֆոտոհուշարձաններ, ֆոտո տպագրություն, ֆոտոշրջանակներ, նվերներ, Հայաստան, օնլայն խմբագիր, PhotoBooksGallery",
       
       // Header
       catalog: "Կատալոգ",
@@ -401,6 +419,8 @@ const resources = {
       categoriesTitle: "Մեր կատեգորիաները",
       categoriesSubtitle: "Ընտրեք կատարյալ եղանակը ձեր հիշողությունները պահպանելու համար",
       photobooks: "Ֆոտոգրքեր",
+      graduationAlbums: "Ավարտական ալբոմներ",
+      vignettes: "Վինետկա",
       photoframes: "Լուսանկարների շրջանակներ",
       giftBoxes: "Նվերային տուփեր",
       photoSouvenirs: "Լուսանկարային հուշարձաններ",
@@ -746,15 +766,31 @@ const resources = {
       editorStep3Desc: "Նայեք արդյունքը և կատարեք փոփոխություններ",
       editorStep4: "Գրանցվեք",
       editorStep4Desc: "Պահպանեք նախագիծը և շարունակեք խմբագրումը",
-      tryEditorButton: "Փորձել խմբագիրը"
+      tryEditorButton: "Փորձել խմբագիրը",
+      
+      // Graduation Albums Page
+      graduationPageTitle: "Ավարտական ալբոմներ - ժամանակակից վինետկա ընդլայնված իրականությամբ | PhotoBooksGallery",
+      graduationPageDescription: "Ստեղծում ենք ժամանակակից ավարտական ալբոմներ և վինետկա անկրկնելի դիզայնով: Ընդլայնված իրականություն, որակյալ նյութեր, արագ տպագրություն: Պահպանեք ավարտական հիշողությունները ընդմիշտ:",
+      graduationPageKeywords: "ավարտական ալբոմներ, վինետկա, ժամանակակից ավարտական ալբոմներ, ընդլայնված իրականություն, ավարտական ալբոմ, դպրոցական ալբոմներ, համալսարանական ալբոմներ, ավարտի հիշողություն",
+      graduationHeroTitle: "Ժամանակակից ավարտական ալբոմներ",
+      graduationHeroSubtitle: "Ստեղծում ենք ավարտական ալբոմներ անկրկնելի դիզայնով և ընդլայնված իրականությամբ",
+      graduationQualityTitle: "Որակ և անկրկնելիություն",
+      graduationQualityDesc: "Մեր ավարտական ալբոմները հայտնի են բարձր որակի տպագրությամբ և եզակի դիզայնով, որը ընդգծում է այս հատուկ օրվա կարևորությունը:",
+      graduationARTitle: "Ընդլայնված իրականություն",
+      graduationARDesc: "Եզակի հնարավորություն AR տեխնոլոգիաներ ավելացնելու համար. մոտեցրեք հեռախոսի տեսախցիկը ուսուցչի լուսանկարին և լսեք նրա անձնական մաղթանքները ավարտականներին:",
+      graduationMemoryTitle: "Արդյունավետ հիշողություն երեխաների համար",
+      graduationMemoryDesc: "AR մաղթանքները ստեղծում են վառ ազդակային հիշողություն, որը կմնա երեխայի հետ ողջ կյանքը: Սա պարզապես ալբոմ չէ - սա ինտերակտիվ հիշողություն է:",
+      graduationARPricing: "AR ֆունկցիաները հասանելի են լրացուցիչ վճարով",
+      graduationModernTitle: "Ժամանակակից մոտեցում",
+      graduationModernDesc: "Օգտագործում ենք առաջատար տպագրության և դիզայնի տեխնոլոգիաներ այնպիսի ալբոմներ ստեղծելու համար, որոնք համապատասխանում են ժամանակակից ստանդարտներին և ճաշակին:"
     }
   },
   en: {
     translation: {
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Custom Photobooks & Photo Gifts in Armenia",
-      landingPageDescription: "Create unique photobooks and photo gifts at PhotoBooksGallery. Online editor, high-quality printing, fast delivery in Armenia. Preserve your memories forever!",
-      landingPageKeywords: "photobooks, photo gifts, photo printing, photo frames, gifts, Armenia, online editor, PhotoBooksGallery",
+      landingPageTitle: "PhotoBooksGallery - Photobooks, Graduation Albums, Vignettes in Armenia",
+      landingPageDescription: "Create unique photobooks, graduation albums and vignettes at PhotoBooksGallery. Same-day photobooks, modern graduation albums with augmented reality. Online editor, high-quality printing, fast delivery in Armenia.",
+      landingPageKeywords: "photobooks, graduation albums, vignettes, same-day photobook, photo gifts, photo printing, photo frames, gifts, augmented reality, Armenia, online editor, PhotoBooksGallery",
       
       // Header
       catalog: "Catalog",
@@ -775,6 +811,8 @@ const resources = {
       categoriesTitle: "Our Categories",
       categoriesSubtitle: "Choose the perfect way to preserve your memories",
       photobooks: "Photobooks",
+      graduationAlbums: "Graduation Albums",
+      vignettes: "Vignettes",
       photoframes: "Photo Frames",
       giftBoxes: "Gift Boxes",
       photoSouvenirs: "Photo Souvenirs",
@@ -1118,21 +1156,54 @@ const resources = {
       editorStep3Desc: "View the result and make edits",
       editorStep4: "Register",
       editorStep4Desc: "Save the project and continue editing",
-      tryEditorButton: "Try Editor"
+      tryEditorButton: "Try Editor",
+      
+      // Graduation Albums Page
+      graduationPageTitle: "Graduation Albums - Modern Vignettes with Augmented Reality | PhotoBooksGallery",
+      graduationPageDescription: "Create modern graduation albums and vignettes with unique design. Augmented reality features, quality materials, fast printing. Preserve graduation memories forever!",
+      graduationPageKeywords: "graduation albums, vignettes, modern graduation albums, augmented reality, graduation album, school albums, university albums, graduation memory",
+      graduationHeroTitle: "Modern Graduation Albums",
+      graduationHeroSubtitle: "Creating graduation albums with unique design and augmented reality",
+      graduationQualityTitle: "Quality and Uniqueness",
+      graduationQualityDesc: "Our graduation albums are renowned for high-quality printing and unique design that emphasizes the importance of this special day.",
+      graduationARTitle: "Augmented Reality",
+      graduationARDesc: "Unique opportunity to add AR technologies: point your phone camera at the teacher's photo and hear their personal wishes to graduates.",
+      graduationMemoryTitle: "Effective Memory for Children",
+      graduationMemoryDesc: "AR wishes create vivid emotional memory that will stay with the child for life. This is not just an album - it's an interactive memory.",
+      graduationARPricing: "AR features available for additional fee",
+      graduationModernTitle: "Modern Approach",
+      graduationModernDesc: "We use cutting-edge printing and design technologies to create albums that meet modern standards and tastes."
     }
   }
 };
+
+// Detect stored language (persist between visits). Default now is Armenian 'hy'.
+let initialLang = 'hy';
+try {
+  const stored = typeof window !== 'undefined' ? localStorage.getItem('app_language') : null;
+  if (stored && (stored === 'ru' || stored === 'hy' || stored === 'en')) initialLang = stored;
+} catch (e) {
+  // ignore
+}
 
 i18n
   .use(initReactI18next)
   .init({
     resources,
-    lng: 'ru',
-    fallbackLng: 'ru',
-    
+    lng: initialLang,
+    fallbackLng: 'hy',
     interpolation: {
       escapeValue: false
     }
   });
+
+// Persist language changes
+i18n.on('languageChanged', (lng) => {
+  try {
+    localStorage.setItem('app_language', lng);
+  } catch (e) {
+    // ignore storage errors
+  }
+});
 
 export default i18n;

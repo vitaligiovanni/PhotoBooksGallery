@@ -106,8 +106,8 @@ CREATE TABLE "special_offers" (
 	"updated_at" timestamp DEFAULT now()
 );
 --> statement-breakpoint
-ALTER TABLE "pages" ALTER COLUMN "title" SET DATA TYPE jsonb;--> statement-breakpoint
-ALTER TABLE "pages" ALTER COLUMN "description" SET DATA TYPE jsonb;--> statement-breakpoint
+ALTER TABLE "pages" ALTER COLUMN "title" SET DATA TYPE jsonb USING title::jsonb;--> statement-breakpoint
+ALTER TABLE "pages" ALTER COLUMN "description" SET DATA TYPE jsonb USING description::jsonb;--> statement-breakpoint
 ALTER TABLE "pages" ADD COLUMN "keywords" text;--> statement-breakpoint
 ALTER TABLE "pages" ADD COLUMN "canonical_url" varchar;--> statement-breakpoint
 ALTER TABLE "pages" ADD COLUMN "og_image" varchar;--> statement-breakpoint

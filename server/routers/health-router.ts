@@ -23,15 +23,15 @@ export function createHealthRouter() {
 
   // Mock auth route для локальной разработки
   router.get('/auth/user', async (req: any, res) => {
+    // Shape unified as { user: {...} } to match useAuth expectation
     res.json({
-      id: 'local-admin',
-      email: 'admin@local.test',
-      firstName: 'Админ',
-      lastName: 'Локальный',
-      role: 'admin',
-      profileImageUrl: null,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
+      user: {
+        id: 'local-admin',
+        email: 'admin@local.test',
+        firstName: 'Админ',
+        lastName: 'Локальный',
+        role: 'admin'
+      }
     });
   });
 

@@ -72,8 +72,42 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = parseInt(process.env.PORT || '3000', 10);
-  server.listen(port, () => {
-    log(`serving on http://localhost:${port}`);
-  });
+  async function listenWithFallback(base: number, attempts = 3) {
+    for (let i = 0; i < attempts; i++) {
+      const p = base + i;
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const onError = (err: any) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`⚠️  Порт ${p} занят, пробую следующий...`);
+              reject(err);
+            } else {
+              reject(err);
+            }
+          };
+          server.once('error', onError);
+          server.listen(p, () => {
+            server.off('error', onError);
+            log(`✅ Сервер запущен: http://localhost:${p}`);
+            if (i > 0) {
+              log(`ℹ️  Ты можешь указать PORT=${p} в .env чтобы зафиксировать этот порт.`);
+            }
+            resolve();
+          });
+        });
+        return; // success
+      } catch (e: any) {
+        if (e.code !== 'EADDRINUSE') {
+          log('❌ Ошибка запуска сервера', e);
+          process.exit(1);
+        }
+        continue; // попытаться следующий порт
+      }
+    }
+    log(`❌ Все проверенные порты заняты (начиная с ${base}). Освободи процесс: PowerShell -> Get-Process -Id (Get-NetTCPConnection -LocalPort ${base}).OwningProcess | Stop-Process`);
+    process.exit(1);
+  }
+
+  const basePort = parseInt(process.env.PORT || '3000', 10);
+  await listenWithFallback(basePort);
 })();

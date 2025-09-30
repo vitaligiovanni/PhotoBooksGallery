@@ -61,6 +61,7 @@ export interface IStorage {
   updateProduct(id: string, product: Partial<InsertProduct>): Promise<Product>;
   deleteProduct(id: string): Promise<void>;
   searchProducts(query: string): Promise<Product[]>;
+  getProductsBySpecialPage(specialPage: string): Promise<Product[]>;
 
   // Order operations
   getOrders(userId?: string): Promise<Order[]>;
@@ -250,6 +251,19 @@ export class DatabaseStorage implements IStorage {
             ilike(products.name, `%${query}%`),
             ilike(products.description, `%${query}%`)
           )
+        )
+      )
+      .orderBy(products.sortOrder);
+  }
+
+  async getProductsBySpecialPage(specialPage: string): Promise<Product[]> {
+    return await db
+      .select()
+      .from(products)
+      .where(
+        and(
+          eq(products.isActive, true),
+          sql`${products.specialPages} @> ARRAY[${specialPage}]::text[]`
         )
       )
       .orderBy(products.sortOrder);

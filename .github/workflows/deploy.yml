@@ -36,8 +36,15 @@ jobs:
           key: ${{ secrets.SERVER_SSH_KEY }}
           port: ${{ secrets.SERVER_PORT || 22 }}
           script: |
-            # Create backup
-            if [ -d "/var/www/photobooksgallery" ]; then
+            # Ensure project directory exists
+            if [ ! -d "/var/www/photobooksgallery" ]; then
+              echo "Creating project directory..."
+              sudo mkdir -p /var/www/photobooksgallery
+              sudo chown $USER:$USER /var/www/photobooksgallery
+              cd /var/www/photobooksgallery
+              git clone https://github.com/vitaligiovanni/PhotoBooksGallery.git .
+            else
+              # Create backup
               echo "Creating backup..."
               sudo cp -r /var/www/photobooksgallery /var/www/photobooksgallery.backup.$(date +%Y%m%d_%H%M%S)
             fi
@@ -50,9 +57,11 @@ jobs:
             # Install dependencies
             npm ci
 
-            # Build server
-            rm -rf dist
-            npx tsc -p tsconfig.server.json --noEmitOnError false
+            # Build project
+            npm run build
+
+            # Ensure logs directory exists
+            mkdir -p logs
 
             # Restart application
             pm2 restart photobooksgallery || pm2 start ecosystem.config.cjs

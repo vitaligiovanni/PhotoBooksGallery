@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AR Viewer mind-only-1762584038536</title>
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  <style>
+    body { margin: 0; overflow: hidden; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+    #loading { position: fixed; inset: 0; display: grid; place-items: center; background: #111; color: #fff }
+    #loading.hidden { display: none }
+  </style>
+</head>
+<body>
+  <div id="loading">Загрузка AR...</div>
+  <a-scene
+    mindar-image="imageTargetSrc: ./marker.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-assets>
+      <video id="ar-video" src="./video.mp4" preload="auto" autoplay loop playsinline webkit-playsinline crossorigin="anonymous"></video>
+    </a-assets>
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video src="#ar-video" position="0 0 0" rotation="0 0 0" width="0.9820987654320988" height="1.3703703703703705"></a-video>
+    </a-entity>
+  </a-scene>
+  <script>
+    const sceneEl = document.querySelector('a-scene');
+    const loading = document.getElementById('loading');
+    sceneEl.addEventListener('loaded', () => loading.classList.add('hidden'));
+  </script>
+</body>
+</html>

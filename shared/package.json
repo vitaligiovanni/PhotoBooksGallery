@@ -1,0 +1,14 @@
+{
+  "name": "photobooks-shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PhotoBooks Gallery - Shared Types and Schemas",
+  "main": "schema.ts",
+  "type": "module",
+  "dependencies": {
+    "drizzle-orm": "^0.39.1",
+    "drizzle-zod": "^0.7.0",
+    "zod": "^3.24.2",
+    "@types/node": "^24.3.1"
+  }
+}

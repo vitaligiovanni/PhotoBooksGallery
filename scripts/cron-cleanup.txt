@@ -1,0 +1,16 @@
+# Cron task for automatic Docker cleanup
+# Runs every Sunday at 3:00 AM
+# 
+# To install on server:
+# 1. Copy cleanup-docker.sh to /opt/cleanup-docker.sh
+# 2. Make executable: chmod +x /opt/cleanup-docker.sh
+# 3. Add this line to crontab: crontab -e
+#
+# Cron schedule format: minute hour day month weekday command
+# 0 3 * * 0 = Every Sunday at 3:00 AM
+
+# Weekly cleanup (every Sunday at 3:00 AM)
+0 3 * * 0 /opt/cleanup-docker.sh >> /var/log/docker-cleanup.log 2>&1
+
+# Monthly full system cleanup (1st day of month at 2:00 AM)
+0 2 1 * * /opt/cleanup-docker.sh >> /var/log/docker-cleanup.log 2>&1

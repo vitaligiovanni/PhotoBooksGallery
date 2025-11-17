@@ -1,0 +1,86 @@
+{
+  "name": "photobooksgallery",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PhotoBooks Gallery - Разделенная архитектура Frontend + Backend",
+  "author": "PhotoBooks Team",
+  "license": "MIT",
+  "workspaces": [
+    "frontend",
+    "backend",
+    "shared"
+  ],
+  "scripts": {
+    "dev": "npm run dev:all",
+    "dev:front": "cd frontend && npm run dev",
+    "dev:back": "cd backend && npm run dev",
+    "dev:all": "concurrently \"npm run dev:back\" \"npm run dev:front\" --names \"🔴API,🔵WEB\" --prefix-colors \"blue,green\" --kill-others-on-fail",
+    "build:front": "cd frontend && npm run build",
+    "build:back": "cd backend && npm run build",
+    "build": "npm run build:back && npm run build:front",
+    "start:back": "cd backend && npm start",
+    "start:front": "cd frontend && npm run preview",
+    "start": "concurrently \"npm run start:back\" \"npm run start:front\" --names \"🔴API,🔵WEB\" --prefix-colors \"blue,green\"",
+    "install:all": "npm install && npm run install:workspaces",
+    "install:workspaces": "cd frontend && npm install && cd ../backend && npm install && cd ../shared && npm install",
+    "clean": "rimraf frontend/node_modules backend/node_modules shared/node_modules frontend/dist backend/dist",
+    "clean:all": "npm run clean && rimraf node_modules",
+    "db:migrate": "cd backend && npm run db:migrate",
+    "db:push": "cd backend && npm run db:push",
+    "db:generate": "cd backend && npm run db:generate",
+    "type-check": "npm run type-check:front && npm run type-check:back",
+    "type-check:front": "cd frontend && npm run type-check",
+    "type-check:back": "cd backend && npx tsc --noEmit",
+    "lint": "npm run lint:front && npm run lint:back",
+    "lint:front": "cd frontend && npm run lint",
+    "lint:back": "cd backend && npm run lint",
+    "test": "echo \"No tests specified yet\"",
+    "health": "curl -f http://localhost:5002/api/health",
+    "setup": "npm run install:all && npm run db:push",
+    "docker:build": "docker compose build",
+    "docker:up": "docker compose up -d",
+    "docker:down": "docker compose down",
+    "docker:logs": "docker compose logs -f --tail=100",
+    "docker:clean": "docker system prune -af --volumes",
+    "docker:rebuild": "docker compose down && docker compose build --no-cache && docker compose up -d",
+    "sync:pull": "powershell -ExecutionPolicy Bypass -File ./scripts/sync/pull-prod.ps1",
+    "sync:push": "powershell -ExecutionPolicy Bypass -File ./scripts/sync/push-prod.ps1",
+    "server:deploy": "scp deploy-production.sh server-monitor.sh deploy-cleanup.sh docker-compose.yml user@server:/opt/photobooksgallery/",
+    "server:monitor": "ssh user@server '/opt/photobooksgallery/server-monitor.sh'",
+    "server:cleanup": "ssh user@server '/opt/photobooksgallery/deploy-cleanup.sh'",
+    "postinstall": "echo \"📦 PhotoBooks Gallery ready! Run 'npm run dev' to start development\""
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "rimraf": "^5.0.5"
+  },
+  "overrides": {
+    "esbuild": "0.25.10",
+    "vite": "6.4.1",
+    "photobooks-frontend": {
+      "vite": "6.4.1"
+    }
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/photobooksgallery.git"
+  },
+  "keywords": [
+    "photobooks",
+    "gallery",
+    "react",
+    "express",
+    "typescript",
+    "vite",
+    "postgresql",
+    "drizzle"
+  ],
+  "dependencies": {
+    "form-data": "^4.0.4",
+    "node-fetch": "^3.3.2"
+  }
+}

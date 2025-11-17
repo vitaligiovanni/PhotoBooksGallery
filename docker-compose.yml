@@ -1,0 +1,179 @@
+x-env: &default-env
+  NODE_ENV: development
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: photobooks_db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-photobooks}
+      POSTGRES_USER: photobooks
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  migrator:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+      target: builder
+    container_name: photobooks_migrator
+    working_dir: /workspace/backend
+    environment:
+      <<: *default-env
+      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+    depends_on:
+      db:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-c"]
+    command: "npx drizzle-kit generate && npx drizzle-kit migrate"
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: ./backend/Dockerfile
+    container_name: photobooks_backend
+    environment:
+      <<: *default-env
+      # Local filesystem storage only
+      NODE_ENV: development
+      PORT: 5002
+      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+      DOMAIN: ${DOMAIN:-localhost}
+      FRONTEND_URL: ${FRONTEND_URL:-http://frontend}
+      # Public API URL used for generating presigned links; baseUrl derived by stripping /api
+      # For local Docker development, use localhost:8080
+      API_URL: "${API_URL:-http://localhost:8080}"
+      UPLOAD_DIR: ./uploads
+      UPLOAD_RETENTION_DAYS: 3
+      UPLOAD_PREDELETE_NOTICE_HOURS: 6
+      CLEAN_CATEGORIES_DRY_RUN: "1"
+      # CORS origins (production должен включать домен)
+      ALLOWED_ORIGINS: "${ALLOWED_ORIGINS:-http://frontend,http://localhost:8080,http://photobooksgallery.am}"
+    depends_on:
+      db:
+        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
+    ports:
+      - "5002:5002"
+    volumes:
+      - ./uploads:/app/uploads
+      - ./backend/objects:/app/objects
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5002/health || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    restart: unless-stopped
+
+  # ОТКЛЮЧЕНО: Cleaner удалял локальные файлы! Если нужно - запускать вручную.
+  # cleaner:
+  #   image: alpine:latest
+  #   container_name: photobooks_cleaner
+  #   volumes:
+  #     - ./uploads:/uploads
+  #     - ./scripts:/scripts:ro
+  #   environment:
+  #     CLEAN_OLDER_THAN_DAYS: ${CLEAN_OLDER_THAN_DAYS:-3}
+  #   entrypoint: ["/bin/sh", "/scripts/cleaner.sh"]
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
+  #   restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: ./frontend/Dockerfile
+      args:
+        - VITE_API_URL=http://localhost:8080
+    container_name: photobooks_frontend
+    depends_on:
+      backend:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 256M
+    restart: unless-stopped
+
+  # One-shot backup service (run manually or via host cron):
+  # Creates single /backups/backup-latest.tar.gz (overwrites previous)
+  backup:
+    image: postgres:15-alpine
+    container_name: photobooks_backup
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGUSER: photobooks
+      PGPASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      PGDATABASE: photobooks
+    volumes:
+      - ./uploads:/uploads:ro
+      - ./backups:/backups
+      - ./scripts:/scripts:ro
+    entrypoint: ["/bin/sh", "/scripts/backup.sh"]
+    restart: "no"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Weekly docker prune via container (optional). Requires docker socket.
+  # Alternatively, set up host cron (documented in DEPLOYMENT.md).
+  pruner:
+    image: docker:25-cli
+    container_name: photobooks_pruner
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./scripts:/scripts:ro
+    entrypoint: ["/bin/sh", "/scripts/pruner.sh"]
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  postgres_data:

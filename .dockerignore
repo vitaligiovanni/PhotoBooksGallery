@@ -1,0 +1,56 @@
+# Dependencies
+node_modules
+npm-debug.log
+yarn.lock
+package-lock.json
+
+# Build artifacts
+dist
+build
+.next
+
+# Development
+# Allow frontend/.env for Docker build
+.env.local
+.env.*.local
+backend/.env*
+!backend/.env.example
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+.github
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Tests
+*.test.js
+*.test.ts
+*.spec.js
+*.spec.ts
+coverage
+
+# Logs and temp files
+*.log
+tmp
+temp
+uploads
+objects/local-upload
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Documentation and configs not needed in runtime
+README.md
+*.md
+!shared/*.md
+tsconfig.json
+.eslintrc*
+.prettierrc*
+jest.config*

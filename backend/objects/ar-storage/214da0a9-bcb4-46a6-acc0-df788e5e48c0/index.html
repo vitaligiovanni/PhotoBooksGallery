@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhotoBooks Gallery AR - View 214da0a9-bcb4-46a6-acc0-df788e5e48c0</title>
+  <meta name="description" content="Наведите камеру на фотографию чтобы увидеть AR-эффект">
+  
+  <!-- AR.js and A-Frame -->
+  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+  
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+    
+    #loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      z-index: 1000;
+      transition: opacity 0.5s;
+    }
+    
+    #loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    #instructions {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      color: white;
+      padding: 15px 25px;
+      border-radius: 25px;
+      font-size: 14px;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+      text-align: center;
+      max-width: 80%;
+    }
+    
+    .marker-found {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(76, 175, 80, 0.9);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 20px;
+      font-size: 12px;
+      z-index: 100;
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div id="loading-screen">
+    <div class="spinner"></div>
+    <h2>Загрузка AR...</h2>
+    <p>Разрешите доступ к камере</p>
+  </div>
+  
+  <!-- Instructions -->
+  <div id="instructions">
+    📸 Наведите камеру на фотографию
+  </div>
+  
+  <!-- Marker Found Indicator -->
+  <div class="marker-found" id="marker-found">
+    ✓ Фото распознано!
+  </div>
+  
+  <!-- AR Scene -->
+  <a-scene
+    mindar-image="imageTargetSrc: ./marker.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
+    color-space="sRGB"
+    renderer="colorManagement: true, physicallyCorrectLights"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+  >
+    <a-assets>
+      <video
+        id="ar-video"
+        src="./video.mp4"
+        preload="auto"
+        autoplay
+        loop
+        playsinline
+        webkit-playsinline
+        crossorigin="anonymous"
+      ></video>
+      
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video
+        src="#ar-video"
+        position="0 0 0"
+        rotation="0 0 0"
+        width="0.9820987654320988"
+        height="1.3703703703703705"
+        class="clickable"
+      ></a-video>
+      
+    </a-entity>
+  </a-scene>
+
+  <script>
+    const sceneEl = document.querySelector('a-scene');
+    const loadingScreen = document.getElementById('loading-screen');
+    const markerFoundIndicator = document.getElementById('marker-found');
+    const videoEl = document.getElementById('ar-video');
+    
+    // Hide loading screen when AR is ready
+    sceneEl.addEventListener('loaded', () => {
+      setTimeout(() => {
+        loadingScreen.classList.add('hidden');
+      }, 1000);
+    });
+    
+    // Show/hide marker found indicator
+    const targetEl = document.querySelector('[mindar-image-target]');
+    
+    targetEl.addEventListener('targetFound', () => {
+      console.log('AR marker found!');
+      markerFoundIndicator.style.display = 'block';
+      
+      // Play video
+      if (videoEl) {
+        videoEl.play().catch(e => console.warn('Video autoplay failed:', e));
+      }
+    });
+    
+    targetEl.addEventListener('targetLost', () => {
+      console.log('AR marker lost');
+      markerFoundIndicator.style.display = 'none';
+    });
+    
+    // Request camera permission on iOS
+    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+      DeviceOrientationEvent.requestPermission()
+        .then(response => {
+          if (response === 'granted') {
+            console.log('Device orientation permission granted');
+          }
+        })
+        .catch(console.error);
+    }
+  </script>
+</body>
+</html>

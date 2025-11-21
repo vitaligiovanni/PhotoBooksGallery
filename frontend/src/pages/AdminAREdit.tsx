@@ -493,6 +493,7 @@ export default function AdminAREditPage() {
                       position={pos}
                       rotation={rot}
                       markerImageUrl={project.photoUrl || undefined}
+                      videoUrl={project.videoUrl || undefined}
                       onChange={(u) => {
                         if (u.videoScale) setScale(u.videoScale);
                         if (u.cropRegion) setCropRegion(u.cropRegion);

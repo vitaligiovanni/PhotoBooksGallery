@@ -13,6 +13,7 @@ export interface CalibrationSandboxProps {
   }) => void;
   markerImageUrl?: string | null;
   videoAspectRatio?: number; // width/height оригинального видео (для crop области)
+  videoUrl?: string | null; // URL видео для preview
 }
 
 /**
@@ -28,8 +29,10 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
   rotation, 
   onChange, 
   markerImageUrl,
-  videoAspectRatio = 16/9 
+  videoAspectRatio = 16/9,
+  videoUrl 
 }) => {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [dragging, setDragging] = useState(false);
   const [resizing, setResizing] = useState<null | string>(null); // 'br' etc
@@ -204,7 +207,26 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
           style={cropBoxStyle}
           onPointerDown={onPointerDown}
         >
-          {/* Crop box прозрачный, показываем основное фото через вырез в затемнении */}
+          {/* Video preview внутри crop box */}
+          {videoUrl && (
+            <video
+              ref={videoRef}
+              src={videoUrl}
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: 0.7,
+                pointerEvents: 'none'
+              }}
+            />
+          )}
           
           {/* Resize handle (bottom-right) */}
           <div

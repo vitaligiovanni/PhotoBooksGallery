@@ -774,8 +774,20 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
         console.warn('[AR Compiler] Failed to set progressPhase media-prepared:', (err as any)?.message);
       }
 
+      // AUTO-DETECT: Если фото квадратное, а видео прямоугольное → автоматически применяем cover
+      const photoAR = meta.photo.aspectRatio;
+      const videoAR = videoAspectRatio || (videoWidth / videoHeight);
+      const photoIsSquare = Math.abs(photoAR - 1.0) < 0.1; // AR близко к 1.0 (±10%)
+      const videoIsRectangular = Math.abs(videoAR - 1.0) > 0.2; // AR далеко от 1.0 (>20%)
+      
+      let effectiveFitMode = fitMode;
+      if (photoIsSquare && videoIsRectangular && fitMode === 'contain') {
+        effectiveFitMode = 'cover';
+        console.log(`[AR Compiler] 🔄 AUTO-SWITCH: Square photo (${photoAR.toFixed(2)}) + rectangular video (${videoAR.toFixed(2)}) → switching from 'contain' to 'cover' mode`);
+      }
+
       // Вычисляем масштаб для viewer (для cover пропорции совпадают, для contain — вписываем)
-      if (fitMode === 'cover') {
+      if (effectiveFitMode === 'cover') {
         // В cover режиме видео ОБРЕЗАНО под пропорции фото
         // Теперь videoAspectRatio === photoAspectRatio (после обработки)
         // Плоскость должна быть размером маркера
@@ -788,7 +800,7 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
         scaleHeight = planeHeight;
         
         console.log(`[AR Compiler] Cover scale: ${scaleWidth}x${scaleHeight} (matches photo ${meta.photo.width}x${meta.photo.height})`);
-      } else if (fitMode === 'fill') {
+      } else if (effectiveFitMode === 'fill') {
         // НОВЫЙ режим: заполнить весь маркер, игнорируя пропорции видео
         // Видео может быть растянуто/сжато
         const planeWidth = 1;
@@ -805,7 +817,7 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
         scaleHeight = planeHeight;
         console.log(`[AR Compiler] Exact video proportions: ${scaleWidth}x${scaleHeight} (video AR: ${videoAspectRatio?.toFixed(3)})`);
       } else {
-        // Contain режим (вписываем видео в маркер)
+        // Contain режим (вписываем видео в маркер) - используется когда пропорции близки или явно задан contain
         const scale = computeVideoScaleForPhoto(meta.photo, { 
           width: videoWidth, 
           height: videoHeight, 
@@ -814,6 +826,7 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
         });
         scaleWidth = scale.videoScaleWidth;
         scaleHeight = scale.videoScaleHeight;
+        console.log(`[AR Compiler] Contain mode: ${scaleWidth}x${scaleHeight} (video fitted inside marker)`);
       }
     } catch (e: any) {
       console.warn('[AR Compiler] Failed to extract media metadata, will fallback to defaults:', e?.message);

@@ -397,9 +397,10 @@ export async function generateARViewer(
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 <style>
 body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
-.arjs-loader{position:absolute;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
+.arjs-loader{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
 .arjs-loader.hidden{opacity:0;pointer-events:none}
-#lottie-container{width:280px;height:280px;max-width:80vw;max-height:80vw;margin-bottom:20px}
+#lottie-container{width:200px;height:200px;margin-bottom:20px;display:flex;align-items:center;justify-content:center}
+@media (min-width:768px){#lottie-container{width:280px;height:280px}}
 .loading-text{font-size:20px;font-weight:600;color:#667eea;text-align:center;padding:0 20px;animation:pulse-text 2s ease-in-out infinite}
 @keyframes pulse-text{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.05)}}
 .loading-dots{display:flex;gap:8px;margin-top:16px}

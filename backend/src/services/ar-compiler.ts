@@ -1,3 +1,4 @@
+import * as fsExtra from 'fs-extra';
 import fs from 'fs/promises';
 import path from 'path';
 import QRCode from 'qrcode';
@@ -434,7 +435,12 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 </a-scene>
 <script>
 console.log('[AR] Page loaded');
-document.getElementById('lottie-container').innerHTML='<img src="./logo.webp" alt="PhotoBooks Gallery" style="width:100%;height:100%;object-fit:contain;animation:pulse 2s ease-in-out infinite" onerror="this.style.display=\\'none\\';this.parentElement.innerHTML=\\'<div style=\\'font-size:64px\\'>📸</div>\\'">';
+const logoImg=document.createElement('img');
+logoImg.src='./logo_animate1.webp';
+logoImg.alt='PhotoBooks Gallery';
+logoImg.style.cssText='width:100%;height:100%;object-fit:contain;animation:pulse 2s ease-in-out infinite';
+logoImg.onload=()=>{console.log('[AR] ✓ Logo loaded successfully');document.getElementById('lottie-container').appendChild(logoImg);};
+logoImg.onerror=()=>{console.error('[AR] ❌ Logo failed to load');document.getElementById('lottie-container').innerHTML='<div style="font-size:64px">📸</div>';};
 setTimeout(()=>{console.log('[AR] Failsafe: hiding loader after 5s');document.getElementById('loading').classList.add('hidden')},5000);
 const video=document.getElementById('vid');
 const plane=document.getElementById('plane');
@@ -967,17 +973,17 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
     }
 
     // Копировать логотип в папку AR проекта
-    const logoSourcePath = path.join(process.cwd(), 'test_JPG_MP4', 'logo_animate.webp');
-    const logoDestPath = path.join(storageDir, 'logo.webp');
+    const logoSourcePath = path.join(process.cwd(), 'test_JPG_MP4', 'logo_animate1.webp');
+    const logoDestPath = path.join(storageDir, 'logo_animate1.webp');
     try {
-      if (await fs.pathExists(logoSourcePath)) {
-        await fs.copy(logoSourcePath, logoDestPath);
-        console.log('[AR Compiler] ✓ Logo copied to AR storage');
+      if (await fsExtra.pathExists(logoSourcePath)) {
+        await fsExtra.copy(logoSourcePath, logoDestPath);
+        console.log('[AR Compiler] ✓ Logo copied to AR storage from:', logoSourcePath);
       } else {
-        console.warn('[AR Compiler] Logo file not found at:', logoSourcePath);
+        console.error('[AR Compiler] ❌ Logo file NOT FOUND at:', logoSourcePath);
       }
     } catch (err) {
-      console.warn('[AR Compiler] Failed to copy logo:', (err as any)?.message);
+      console.error('[AR Compiler] ❌ Failed to copy logo:', (err as any)?.message);
     }
 
     // Генерировать HTML viewer

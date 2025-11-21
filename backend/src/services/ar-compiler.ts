@@ -422,13 +422,18 @@ console.log('[AR] Elements found:',{video:!!video,plane:!!plane,loading:!!loadin
 let r={v:false,t:false,m:false};
 let markerActive=false;
 let videoReady=false;
+video.load();console.log('[AR] Video load() called');
+video.addEventListener('loadedmetadata',()=>{console.log('[AR] ✓ Video metadata loaded, duration:',video.duration)});
+video.addEventListener('error',(e)=>{console.error('[AR] ❌ Video error:',e,video.error);loading.innerHTML='<h2>Ошибка видео</h2><p>Код: '+(video.error?video.error.code:'unknown')+'</p>'});
 video.addEventListener('canplay',()=>{if(videoReady)return;videoReady=true;console.log('[AR] ✓ Video canplay, marking ready');r.v=true;if(/Android/i.test(navigator.userAgent)){setTimeout(()=>{console.log('[AR] ✓ Texture warmed (Android)');r.t=true;check()},450)}else{r.t=true;check()}});
 target.addEventListener('targetFound',()=>{if(markerActive){console.log('[AR] Marker re-found (ignored)');return}console.log('[AR] ✓✓✓ MARKER FOUND! ✓✓✓');r.m=true;check()});
 const scene=document.querySelector('a-scene');
 scene.addEventListener('arReady',()=>{console.log('[AR] ✓ MindAR ready, camera started');setTimeout(()=>loading.classList.add('hidden'),300)});
 scene.addEventListener('arError',(e)=>{console.error('[AR] ❌ MindAR Error:',e);loading.innerHTML='<h2>Ошибка доступа</h2><p>Проверьте камеру</p>'});
 console.log('[AR] Listeners attached, waiting for events...');
-function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.muted=false;video.currentTime=0;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible')},200)}).catch(e=>{console.warn('[AR] Play failed, trying muted:',e);video.muted=true;video.play().then(()=>{setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid')},200)})})}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
+const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
+console.log('[AR] iOS detected:',isIOS);
+function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.currentTime=0;video.muted=true;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing (muted)');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible');if(!isIOS){setTimeout(()=>{video.muted=false;console.log('[AR] ✓ Unmuted (non-iOS)')},1000)}},200)}).catch(e=>{console.error('[AR] ❌ Play failed even muted:',e);loading.innerHTML='<h2>Ошибка видео</h2><p>'+e.message+'</p>'})}else{console.log('[AR] Play promise undefined')}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
 target.addEventListener('targetLost',()=>{console.log('[AR] Marker lost');markerActive=false;plane.setAttribute('visible','false');plane.setAttribute('material','opacity',0);video.pause();video.currentTime=0});
 const FIT_MODE='${fitMode}';const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};const ZOOM=${zoom};const OFFSET_X=${offsetX};const OFFSET_Y=${offsetY};const ASPECT_LOCKED=${aspectLocked};console.log('[AR] FitMode:',FIT_MODE,'VideoAR:',VIDEO_AR,'PlaneAR:',PLANE_AR,'Zoom:',ZOOM,'Offset:',OFFSET_X,OFFSET_Y,'AspectLocked:',ASPECT_LOCKED);
 let coverScaleX=1,coverScaleY=1;

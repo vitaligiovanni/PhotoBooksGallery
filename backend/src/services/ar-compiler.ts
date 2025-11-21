@@ -147,7 +147,7 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
   <div class="marker-found" id="marker-found">✓ Фото распознано!</div>
   
   <a-scene
-    mindar-image="imageTargetSrc: ${markerFiles}; physicalWidth: 100; filterMinCF:0.00001; filterBeta: 0.01; warmupTolerance: 3; missTolerance: 10"
+    mindar-image="imageTargetSrc: ${markerFiles}; physicalWidth: 100; filterMinCF:0.0001; filterBeta: 0.003; warmupTolerance: 5; missTolerance: 10"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights"
     vr-mode-ui="enabled: false"
@@ -392,7 +392,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 <body>
 <div class="arjs-loader" id="loading"><div class="spinner"></div><h2>Загрузка AR…</h2><p>Разрешите доступ к камере</p></div>
 <div id="instructions">Наведите камеру на фотографию</div>
-<a-scene embedded mindar-image="imageTargetSrc:./${markerBaseName}.mind?t=${Date.now()};maxTrack:1;filterMinCF:0.0001;filterBeta:0.001;warmupTolerance:5;missTolerance:5" color-space="sRGB" renderer="colorManagement:true;antialias:true;alpha:true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
+<a-scene embedded mindar-image="imageTargetSrc:./${markerBaseName}.mind?t=${Date.now()};maxTrack:1;filterMinCF:0.0001;filterBeta:0.003;warmupTolerance:5;missTolerance:10" color-space="sRGB" renderer="colorManagement:true;antialias:true;alpha:true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
 <a-assets timeout="30000"><video id="vid" src="./${videoFileName}?t=${Date.now()}" preload="auto" ${loop ? 'loop' : ''} muted playsinline crossorigin="anonymous"></video></a-assets>
 <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
 <a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>

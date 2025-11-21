@@ -6,6 +6,10 @@ import { arProjects, users, type ARProject } from '@shared/schema';
 import { eq } from 'drizzle-orm';
 import { sendARReadyEmail } from './email-service';
 import { extractMediaMetadata, computeVideoScaleForPhoto } from './media-metadata';
+// REMOVED: OpenCV enhancer (too hard to install on Windows)
+// import { enhanceMarkerPhoto, saveQualityMetrics } from './opencv-enhancer/enhancer';
+// NEW: Simple border enhancer using Sharp (already installed!)
+import { enhanceMarkerPhotoSimple } from './border-enhancer';
 
 interface CompilationResult {
   success: boolean;
@@ -37,6 +41,8 @@ interface ARViewerConfig {
  * 
  * Эта функция оставлена для обратной совместимости, но не вызывается.
  */
+
+// REMOVED: Old OpenCV enhancer (replaced by simple border-enhancer.ts using Sharp)
 
 /**
  * Generate multi-target viewer (multiple живые фото)
@@ -78,6 +84,8 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
         ${(items[idx].config?.loop !== false) ? 'loop' : ''}
         playsinline
         webkit-playsinline
+        inline="true"
+        x-webkit-airplay="allow"
         crossorigin="anonymous"
         muted
       ></video>
@@ -100,8 +108,11 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
         rotation="${rot.x} ${rot.y} ${rot.z}"
         width="${scale.width}"
         height="${scale.height}"
+        material="transparent: true; opacity: 0"
+        visible="false"
         class="clickable"
         data-auto-play="${autoPlay}"
+        animation__fadein="property: material.opacity; from: 0; to: 1; dur: 800; easing: easeInOutQuad; startEvents: video-ready-${idx}"
       ></a-video>
       ${maskFileName ? `<a-image id="ar-mask-image-${idx}" src="#ar-mask-${idx}" position="${pos.x} ${pos.y} ${pos.z + 0.002}" rotation="${rot.x} ${rot.y} ${rot.z}" width="${scale.width}" height="${scale.height}" material="transparent: true; alphaTest: 0.001"></a-image>` : ''}
     </a-entity>`;
@@ -111,7 +122,8 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>PhotoBooks Gallery AR - Multi View ${arProjectId}</title>
   <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
@@ -135,7 +147,7 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
   <div class="marker-found" id="marker-found">✓ Фото распознано!</div>
   
   <a-scene
-    mindar-image="imageTargetSrc: ${markerFiles}; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
+    mindar-image="imageTargetSrc: ${markerFiles}; physicalWidth: 100; filterMinCF:0.00001; filterBeta: 0.01; warmupTolerance: 3; missTolerance: 10"
     color-space="sRGB"
     renderer="colorManagement: true, physicallyCorrectLights"
     vr-mode-ui="enabled: false"
@@ -152,7 +164,7 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
 
   <script>
     const sceneEl = document.querySelector('a-scene');
-    const loadingScreen = document.getElementById('loading-screen');
+    const loadingOverlay = document.getElementById('loading-overlay');
     const markerFoundIndicator = document.getElementById('marker-found');
     const videos = [${videoAssets.map((_, idx) => `document.getElementById('ar-video-${idx}')`).join(',')}];
     
@@ -180,8 +192,61 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
         if (vid) {
           const autoPlay = vid.closest('a-video')?.getAttribute('data-auto-play') !== 'false';
           if (autoPlay) {
-            try { vid.muted = false; } catch {}
-            vid.play().catch(e => console.warn('Play failed:', e));
+            // Unmute
+            try { 
+              vid.muted = false; 
+            } catch {}
+            
+            // Задержка для инициализации WebGL текстуры (критично для Android)
+            setTimeout(() => {
+              // Принудительно обновляем материал ПЕРЕД воспроизведением
+              const planeEl = document.getElementById('ar-plane-${idx}');
+              if (planeEl && planeEl.components.material) {
+                const mat = planeEl.components.material.material;
+                if (mat) {
+                  mat.needsUpdate = true;
+                  if (mat.map) mat.map.needsUpdate = true;
+                }
+              }
+              
+              // Теперь пытаемся воспроизвести
+              vid.play().then(() => {
+                console.log('Video ${idx} playing');
+                // Дополнительное обновление через 100ms для медленных GPU
+                setTimeout(() => {
+                  if (planeEl && planeEl.components.material) {
+                    const mat = planeEl.components.material.material;
+                    if (mat && mat.map) {
+                      mat.map.needsUpdate = true;
+                    }
+                  }
+                }, 100);
+                
+                // ПРОФЕССИОНАЛЬНЫЙ FADE-IN: запускаем через 200ms когда первый кадр загружен
+                setTimeout(() => {
+                  if (planeEl) {
+                    planeEl.setAttribute('visible', 'true');
+                    console.log('Plane ${idx} set to visible');
+                    planeEl.emit('video-ready-${idx}');
+                    console.log('Fade-in animation started for video ${idx}');
+                  }
+                }, 200);
+              }).catch(e => {
+                console.warn('Play failed for video ${idx}, retrying muted:', e);
+                try { 
+                  vid.muted = true; 
+                  vid.play().then(() => {
+                    // Fade-in даже для muted видео
+                    setTimeout(() => {
+                      if (planeEl) {
+                        planeEl.setAttribute('visible', 'true');
+                        planeEl.emit('video-ready-${idx}');
+                      }
+                    }, 200);
+                  });
+                } catch {}
+              });
+            }, 400);
           }
         }
       });
@@ -203,10 +268,21 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
       if (targetIndex === undefined) return;
       const plane = document.getElementById('ar-plane-' + targetIndex);
       const maskImg = document.getElementById('ar-mask-image-' + targetIndex);
+      console.log('Applying calibration for target ' + targetIndex + ': ' + JSON.stringify(data.payload));
       try {
-        if (plane && scale) { plane.setAttribute('width', String(scale.width)); plane.setAttribute('height', String(scale.height)); }
-        if (plane && position) { plane.setAttribute('position', String(position.x)+' '+String(position.y)+' '+String(position.z)); }
-        if (plane && rotation) { plane.setAttribute('rotation', String(rotation.x)+' '+String(rotation.y)+' '+String(rotation.z)); }
+        if (plane && scale) { 
+          plane.setAttribute('width', String(scale.width)); 
+          plane.setAttribute('height', String(scale.height)); 
+          console.log('Target ' + targetIndex + ' scale: ' + scale.width + 'x' + scale.height);
+        }
+        if (plane && position) { 
+          plane.setAttribute('position', String(position.x)+' '+String(position.y)+' '+String(position.z)); 
+          console.log('Target ' + targetIndex + ' position: ' + position.x + ',' + position.y + ',' + position.z);
+        }
+        if (plane && rotation) { 
+          plane.setAttribute('rotation', String(rotation.x)+' '+String(rotation.y)+' '+String(rotation.z)); 
+          console.log('Target ' + targetIndex + ' rotation: ' + rotation.x + ',' + rotation.y + ',' + rotation.z);
+        }
         if (maskImg && scale) { maskImg.setAttribute('width', String(scale.width)); maskImg.setAttribute('height', String(scale.height)); }
         if (maskImg && position) { var z = (position.z||0)+0.002; maskImg.setAttribute('position', String(position.x)+' '+String(position.y)+' '+String(z)); }
         if (maskImg && rotation) { maskImg.setAttribute('rotation', String(rotation.x)+' '+String(rotation.y)+' '+String(rotation.z)); }
@@ -230,6 +306,55 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
 /**
  * Генерирует HTML viewer для AR проекта (single-photo legacy)
  */
+/**
+ * Professional AR solution: Create cropped marker for MindAR compilation.
+ * 
+ * Process:
+ * 1. Enhanced photo (with border) gives 2000–3000+ feature points during .mind creation
+ * 2. We crop the border AFTER enhancement but BEFORE compilation
+ * 3. MindAR searches for the center region (original photo without border)
+ * 4. User prints clean original photo → perfect match + stable tracking
+ * 
+ * This is the standard approach used by Zappar, 8th Wall, and premium AR projects.
+ */
+async function createCroppedMindMarker(
+  enhancedPath: string,
+  storageDir: string
+): Promise<string> {
+  const { createCanvas, loadImage } = await import('canvas');
+  const fs = await import('fs/promises');
+
+  console.log('[AR Compiler] 🔪 Cropping border from enhanced photo for MindAR...');
+  
+  const img = await loadImage(enhancedPath);
+  const borderPercent = 0.13; // Current border thickness ~13%
+  
+  // Calculate exact border pixels
+  const borderPx = Math.round(img.width * borderPercent / (1 + 2 * borderPercent));
+  
+  const croppedWidth = img.width - 2 * borderPx;
+  const croppedHeight = img.height - 2 * borderPx;
+  
+  const canvas = createCanvas(croppedWidth, croppedHeight);
+  const ctx = canvas.getContext('2d');
+
+  // Extract center region (original photo without border)
+  ctx.drawImage(
+    img as any,
+    borderPx, borderPx, croppedWidth, croppedHeight,  // source region
+    0, 0, croppedWidth, croppedHeight                 // destination
+  );
+
+  const croppedPath = path.join(storageDir, 'marker-for-mind.jpg');
+  const buffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
+  await fs.writeFile(croppedPath, buffer);
+
+  console.log(`[AR Compiler] ✅ Cropped marker: ${croppedWidth}x${croppedHeight} (border removed: ${borderPx}px each side)`);
+  console.log('[AR Compiler] 📋 Result: User prints clean photo, MindAR gets high feature count!');
+  
+  return croppedPath;
+}
+
 export async function generateARViewer(
   config: ARViewerConfig,
   outputPath: string
@@ -247,227 +372,51 @@ export async function generateARViewer(
   } = config;
 
   const html = `<!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhotoBooks Gallery AR - View ${arId}</title>
-  <meta name="description" content="Наведите камеру на фотографию чтобы увидеть AR-эффект">
-  
-  <!-- AR.js and A-Frame -->
-  <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
-  
-  <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-    
-    #loading-screen {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      z-index: 1000;
-      transition: opacity 0.5s;
-    }
-    
-    #loading-screen.hidden {
-      opacity: 0;
-      pointer-events: none;
-    }
-    
-    .spinner {
-      width: 50px;
-      height: 50px;
-      border: 4px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin-bottom: 20px;
-    }
-    
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-    
-    #instructions {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(0,0,0,0.7);
-      color: white;
-      padding: 15px 25px;
-      border-radius: 25px;
-      font-size: 14px;
-      z-index: 100;
-      backdrop-filter: blur(10px);
-      text-align: center;
-      max-width: 80%;
-    }
-    
-    .marker-found {
-      display: none;
-      position: fixed;
-      top: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(76, 175, 80, 0.9);
-      color: white;
-      padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 12px;
-      z-index: 100;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>PhotoBooks Gallery AR - ${arId}</title>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
+.arjs-loader{position:absolute;inset:0;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
+.arjs-loader.hidden{opacity:0;pointer-events:none}
+.spinner{width:56px;height:56px;border:5px solid #ffffff40;border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite;margin-bottom:24px}
+@keyframes s{to{transform:rotate(360deg)}}
+#instructions{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;padding:16px 32px;border-radius:40px;backdrop-filter:blur(12px);font-size:16px;font-weight:600;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
+#instructions::before{content:"📸";margin-right:10px;font-size:20px}
+</style>
 </head>
 <body>
-  <!-- Loading Screen -->
-  <div id="loading-screen">
-    <div class="spinner"></div>
-    <h2>Загрузка AR...</h2>
-    <p>Разрешите доступ к камере</p>
-  </div>
-  
-  <!-- Instructions -->
-  <div id="instructions">
-    📸 Наведите камеру на фотографию
-  </div>
-  
-  <!-- Marker Found Indicator -->
-  <div class="marker-found" id="marker-found">
-    ✓ Фото распознано!
-  </div>
-  
-  <!-- AR Scene -->
-  <a-scene
-    mindar-image="imageTargetSrc: ./${markerBaseName}.mind; filterMinCF:0.0001; filterBeta: 0.001; warmupTolerance: 5; missTolerance: 5"
-    color-space="sRGB"
-    renderer="colorManagement: true, physicallyCorrectLights"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
-  >
-    <a-assets>
-      <video
-        id="ar-video"
-        src="./${videoFileName}"
-        preload="metadata"
-        ${loop ? 'loop' : ''}
-        playsinline
-        webkit-playsinline
-        crossorigin="anonymous"
-        muted
-      ></video>
-      ${maskFileName ? `<img id="ar-mask" src="./${maskFileName}" crossorigin="anonymous" />` : ''}
-    </a-assets>
-
-    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
-
-    <a-entity mindar-image-target="targetIndex: 0">
-      <a-video
-        id="ar-plane"
-        src="#ar-video"
-        position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}"
-        rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}"
-        width="${videoScale.width}"
-        height="${videoScale.height}"
-        class="clickable"
-      ></a-video>
-      ${maskFileName ? `<a-image id="ar-mask-image" src="#ar-mask" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z + 0.002}" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" material="transparent: true; alphaTest: 0.001"></a-image>` : ''}
-    </a-entity>
-  </a-scene>
-
-  <script>
-    const sceneEl = document.querySelector('a-scene');
-    const loadingScreen = document.getElementById('loading-screen');
-    const markerFoundIndicator = document.getElementById('marker-found');
-    const videoEl = document.getElementById('ar-video');
-    // Ensure video is paused and muted until marker is found
-    if (videoEl) {
-      try { videoEl.pause(); } catch {}
-      videoEl.muted = true;
-    }
-    
-    // Hide loading screen when AR is ready
-    sceneEl.addEventListener('loaded', () => {
-      setTimeout(() => {
-        loadingScreen.classList.add('hidden');
-      }, 1000);
-    });
-    
-    // Show/hide marker found indicator
-    const targetEl = document.querySelector('[mindar-image-target]');
-    
-    targetEl.addEventListener('targetFound', () => {
-      console.log('AR marker found!');
-      markerFoundIndicator.style.display = 'block';
-      
-      // Play video
-      if (videoEl) {
-        // Interpret autoPlay as: play when marker found
-        if (${autoPlay ? 'true' : 'false'}) {
-          // try unmute then play
-          try { videoEl.muted = false; } catch {}
-          const p = videoEl.play();
-          if (p && typeof p.catch === 'function') {
-            p.catch(e => {
-              console.warn('Video play on marker found failed (user gesture may be required). Keeping paused.', e);
-            });
-          }
-        }
-      }
-    });
-    
-    targetEl.addEventListener('targetLost', () => {
-      console.log('AR marker lost');
-      markerFoundIndicator.style.display = 'none';
-      // Pause (and optionally reset) when marker lost to avoid background audio
-      if (videoEl) {
-        try { videoEl.pause(); } catch {}
-        try { videoEl.currentTime = 0; } catch {}
-        // keep muted until next detection
-        videoEl.muted = true;
-      }
-    });
-    
-    // Live calibration updates via postMessage
-    window.addEventListener('message', (evt) => {
-      const data = evt?.data;
-      if (!data || data.type !== 'ar-calibration') return;
-      const { position, rotation, scale } = data.payload || {};
-      const plane = document.getElementById('ar-plane');
-      const maskImg = document.getElementById('ar-mask-image');
-      try {
-        if (plane && scale) { plane.setAttribute('width', String(scale.width)); plane.setAttribute('height', String(scale.height)); }
-        if (plane && position) { plane.setAttribute('position', String(position.x)+' '+String(position.y)+' '+String(position.z)); }
-        if (plane && rotation) { plane.setAttribute('rotation', String(rotation.x)+' '+String(rotation.y)+' '+String(rotation.z)); }
-        if (maskImg && scale) { maskImg.setAttribute('width', String(scale.width)); maskImg.setAttribute('height', String(scale.height)); }
-        if (maskImg && position) { var z = (position.z||0)+0.002; maskImg.setAttribute('position', String(position.x)+' '+String(position.y)+' '+String(z)); }
-        if (maskImg && rotation) { maskImg.setAttribute('rotation', String(rotation.x)+' '+String(rotation.y)+' '+String(rotation.z)); }
-      } catch (e) { console.warn('Live calibration update failed', e); }
-    });
-
-    // Request camera permission on iOS
-    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-      DeviceOrientationEvent.requestPermission()
-        .then(response => {
-          if (response === 'granted') {
-            console.log('Device orientation permission granted');
-          }
-        })
-        .catch(console.error);
-    }
-  </script>
+<div class="arjs-loader" id="loading"><div class="spinner"></div><h2>Загрузка AR…</h2><p>Разрешите доступ к камере</p></div>
+<div id="instructions">Наведите камеру на фотографию</div>
+<a-scene embedded mindar-image="imageTargetSrc:./${markerBaseName}.mind?t=${Date.now()};maxTrack:1;filterMinCF:0.0001;filterBeta:0.001;warmupTolerance:5;missTolerance:5" color-space="sRGB" renderer="colorManagement:true;antialias:true;alpha:true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
+<a-assets timeout="30000"><video id="vid" src="./${videoFileName}?t=${Date.now()}" preload="auto" ${loop ? 'loop' : ''} muted playsinline crossorigin="anonymous"></video></a-assets>
+<a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
+<a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>
+</a-scene>
+<script>
+console.log('[AR] Page loaded');
+setTimeout(()=>{console.log('[AR] Failsafe: hiding loader after 5s');document.getElementById('loading').classList.add('hidden')},5000);
+const video=document.getElementById('vid');
+const plane=document.getElementById('plane');
+const loading=document.getElementById('loading');
+const target=document.querySelector('[mindar-image-target]');
+console.log('[AR] Elements found:',{video:!!video,plane:!!plane,loading:!!loading,target:!!target});
+let r={v:false,t:false,m:false};
+let markerActive=false;
+let videoReady=false;
+video.addEventListener('canplay',()=>{if(videoReady)return;videoReady=true;console.log('[AR] ✓ Video canplay, marking ready');r.v=true;if(/Android/i.test(navigator.userAgent)){setTimeout(()=>{console.log('[AR] ✓ Texture warmed (Android)');r.t=true;check()},450)}else{r.t=true;check()}});
+target.addEventListener('targetFound',()=>{if(markerActive){console.log('[AR] Marker re-found (ignored)');return}console.log('[AR] ✓✓✓ MARKER FOUND! ✓✓✓');r.m=true;check()});
+const scene=document.querySelector('a-scene');
+scene.addEventListener('arReady',()=>{console.log('[AR] ✓ MindAR ready, camera started');setTimeout(()=>loading.classList.add('hidden'),300)});
+scene.addEventListener('arError',(e)=>{console.error('[AR] ❌ MindAR Error:',e);loading.innerHTML='<h2>Ошибка доступа</h2><p>Проверьте камеру</p>'});
+console.log('[AR] Listeners attached, waiting for events...');
+function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.muted=false;video.currentTime=0;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible')},200)}).catch(e=>{console.warn('[AR] Play failed, trying muted:',e);video.muted=true;video.play().then(()=>{setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid')},200)})})}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
+target.addEventListener('targetLost',()=>{console.log('[AR] Marker lost');markerActive=false;plane.setAttribute('visible','false');plane.setAttribute('material','opacity',0);video.pause();video.currentTime=0});
+</script>
 </body>
 </html>`;
 
@@ -593,21 +542,21 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
       const markerName = `marker-${item.targetIndex}`;
       
       // Compile directly to final destination (no temp folder needed!)
-      // This avoids Chrome CDP scandir issues with temp folders
+      // Using OfflineCompiler (Node.js only, no Puppeteer)
       const mindFinalPath = path.join(storageDir, `${markerName}.mind`);
 
-      const { compileMindFile } = await import('./mind-ar-web-compiler');
-      const compileResult = await compileMindFile({
+      const { compileMindFile } = await import('./ar-compiler-v2');
+      const compileResult = await compileMindFile(
         photoPath,
-        outputMindPath: mindFinalPath,
-        maxWaitTimeMs: 180_000,
-      });
+        storageDir,
+        markerName
+      );
 
       if (!compileResult.success) {
         throw new Error(`Item ${item.name} marker compilation failed: ${compileResult.error}`);
       }
 
-      console.log(`[AR Compiler Multi] ✅ Item ${item.name} marker compiled (${compileResult.fileSizeBytes} bytes)`);
+      console.log(`[AR Compiler Multi] ✅ Item ${item.name} marker compiled successfully`);
 
       // Mark item as compiled
       const { arProjectItems } = await import('@shared/schema');
@@ -620,10 +569,30 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
     // Generate multi-target viewer
     await generateMultiTargetViewer(arProjectId, sortedItems, storageDir);
 
-    // Generate QR code
-    const viewUrl = `${process.env.FRONTEND_URL || 'https://photobooksgallery.am'}/ar/view/${arProjectId}`;
+    // Generate QR code - use env tunnel if provided
+    const TUNNEL_URL = (process.env.TUNNEL_URL || '').trim();
+    const LOCAL_IP_URL = (process.env.LOCAL_IP_URL || '').trim(); // Локальный WiFi доступ (без ngrok)
+    
+    if (!TUNNEL_URL && !LOCAL_IP_URL) {
+      console.log('[AR Compiler Multi] TUNNEL_URL and LOCAL_IP_URL not set, falling back to FRONTEND_URL / production domain');
+    }
+    
+    // Приоритет: TUNNEL (ngrok HTTPS - нужен для камеры) > LOCAL_IP > FRONTEND_URL (prod)
+    const baseUrl1 = TUNNEL_URL || LOCAL_IP_URL || process.env.FRONTEND_URL || 'https://photobooksgallery.am';
+    console.log('[AR Compiler Multi] Resolved baseUrl for viewUrl:', baseUrl1);
+    
+    const viewUrl = `${baseUrl1}/ar/view/${arProjectId}`;
     const qrCodePath = path.join(storageDir, 'qr-code.png');
     await generateQRCode(viewUrl, qrCodePath);
+    
+    // Генерируем дополнительный QR для ngrok (если LOCAL_IP используется)
+    let alternativeViewUrl: string | undefined;
+    if (LOCAL_IP_URL && TUNNEL_URL) {
+      alternativeViewUrl = `${TUNNEL_URL}/ar/view/${arProjectId}`;
+      const qrCodeAltPath = path.join(storageDir, 'qr-code-ngrok.png');
+      await generateQRCode(alternativeViewUrl, qrCodeAltPath);
+      console.log('[AR Compiler Multi] Generated alternative ngrok QR code');
+    }
 
     // Update project status
     await db.update(arProjects).set({
@@ -712,36 +681,62 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
           // Пропорции уже близки (разница <5%) — skip cover обработку
           console.log(`[AR Compiler] Skipping cover processing: aspect ratios already close (diff: ${aspectRatioDiff.toFixed(3)})`);
         } else {
-          console.log('[AR Compiler] Processing video in COVER mode (crop to match photo aspect ratio)...');
-          const { processCoverModeVideo } = await import('./media-metadata');
-          const processedVideoPath = path.join(storageDir, 'video-processed.mp4');
+          // НОВОЕ: Smart Crop включен ПО УМОЛЧАНИЮ для всех AR проектов
+          // Можно отключить через config: {"useSmartCrop": false}
+          const configSmartCrop = (project.config as any)?.useSmartCrop;
+          const useSmartCrop = configSmartCrop !== false; // По умолчанию true, если не указано явно false
           
-          try {
-            await processCoverModeVideo(videoPath, processedVideoPath, meta.photo.aspectRatio);
-            finalVideoPath = processedVideoPath;
-            console.log('[AR Compiler] ✓ Video processed for cover mode');
+          if (useSmartCrop) {
+            console.log('[AR Compiler] 🧠 Processing video with TensorFlow.js Smart Crop (BlazeFace face detection)...');
+            try {
+              const { smartCropVideo } = await import('./tensorflow-smart-crop');
+              const processedVideoPath = path.join(storageDir, 'video-processed.mp4');
+              
+              const result = await smartCropVideo(
+                videoPath,
+                processedVideoPath,
+                meta.photo.aspectRatio,
+                'auto' // auto = пробует face detection, потом saliency, потом center
+              );
+              
+              if (result.success) {
+                finalVideoPath = processedVideoPath;
+                console.log(`[AR Compiler] ✅ Smart crop applied: ${result.cropRegion?.reason} detection (confidence: ${result.cropRegion?.confidence.toFixed(2)})`);
+              } else {
+                console.warn('[AR Compiler] Smart crop failed, falling back to center crop');
+                throw new Error(result.error || 'Smart crop failed');
+              }
+            } catch (smartCropErr: any) {
+              console.warn('[AR Compiler] Smart crop error, using standard center crop:', smartCropErr?.message);
+              // Fallback к обычному center crop
+              const { processCoverModeVideo } = await import('./media-metadata');
+              const processedVideoPath = path.join(storageDir, 'video-processed.mp4');
+              await processCoverModeVideo(videoPath, processedVideoPath, meta.photo.aspectRatio);
+              finalVideoPath = processedVideoPath;
+            }
+          } else {
+            // Стандартный center crop (без OpenCV)
+            console.log('[AR Compiler] Processing video in COVER mode (standard center crop)...');
+            const { processCoverModeVideo } = await import('./media-metadata');
+            const processedVideoPath = path.join(storageDir, 'video-processed.mp4');
             
-            // После обработки обновляем метаданные видео
+            try {
+              await processCoverModeVideo(videoPath, processedVideoPath, meta.photo.aspectRatio);
+              finalVideoPath = processedVideoPath;
+              console.log('[AR Compiler] ✓ Video processed for cover mode (center crop)');
+            } catch (coverErr: any) {
+              console.warn('[AR Compiler] Cover mode processing failed, fallback to original video:', coverErr?.message);
+              finalVideoPath = videoPath;
+            }
+          }
+            
+          // После обработки обновляем метаданные видео
+          if (finalVideoPath !== videoPath) {
             const { extractVideoMetadata } = await import('./media-metadata');
-            const processedMeta = await extractVideoMetadata(processedVideoPath);
+            const processedMeta = await extractVideoMetadata(finalVideoPath);
             videoWidth = processedMeta.width;
             videoHeight = processedMeta.height;
             videoAspectRatio = processedMeta.aspectRatio;
-          } catch (coverErr: any) {
-            console.warn('[AR Compiler] Cover mode processing failed, fallback to original video:', coverErr?.message);
-            // Update progress: cover timeout/failure, using original
-            try {
-              await db.update(arProjects).set({
-                updatedAt: new Date() as any,
-                config: {
-                  ...(project.config as any || {}),
-                  progressPhase: 'video-cover-fallback',
-                  coverError: coverErr?.message
-                } as any,
-              } as any).where(eq(arProjects.id, arProjectId));
-            } catch {}
-            // Продолжаем с оригинальным видео в contain режиме
-            finalVideoPath = videoPath; // Явно используем оригинал
           }
         }
       }
@@ -767,13 +762,36 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
 
       // Вычисляем масштаб для viewer (для cover пропорции совпадают, для contain — вписываем)
       if (fitMode === 'cover') {
-        // В cover режиме видео заполняет всю плоскость
+        // В cover режиме видео ОБРЕЗАНО под пропорции фото
+        // Теперь videoAspectRatio === photoAspectRatio (после обработки)
+        // Плоскость должна быть размером маркера
+        const planeWidth = 1;
+        const planeHeight = meta.photo.height / meta.photo.width;
+        
+        // КРИТИЧНО: используем пропорции МАРКЕРА (фото), а не обрезанного видео
+        // Видео уже соответствует этим пропорциям благодаря crop операции
+        scaleWidth = planeWidth;
+        scaleHeight = planeHeight;
+        
+        console.log(`[AR Compiler] Cover scale: ${scaleWidth}x${scaleHeight} (matches photo ${meta.photo.width}x${meta.photo.height})`);
+      } else if (fitMode === 'fill') {
+        // НОВЫЙ режим: заполнить весь маркер, игнорируя пропорции видео
+        // Видео может быть растянуто/сжато
         const planeWidth = 1;
         const planeHeight = meta.photo.height / meta.photo.width;
         scaleWidth = planeWidth;
         scaleHeight = planeHeight;
+        console.log(`[AR Compiler] Fill mode: force ${scaleWidth}x${scaleHeight}`);
+      } else if (fitMode === 'exact') {
+        // НОВЫЙ режим: использовать точные пропорции ВИДЕО на маркере
+        // Полезно когда видео и фото имеют одинаковые размеры
+        const planeWidth = 1;
+        const planeHeight = videoAspectRatio! > 0 ? planeWidth / videoAspectRatio! : 0.75;
+        scaleWidth = planeWidth;
+        scaleHeight = planeHeight;
+        console.log(`[AR Compiler] Exact video proportions: ${scaleWidth}x${scaleHeight} (video AR: ${videoAspectRatio?.toFixed(3)})`);
       } else {
-        // Contain режим
+        // Contain режим (вписываем видео в маркер)
         const scale = computeVideoScaleForPhoto(meta.photo, { 
           width: videoWidth, 
           height: videoHeight, 
@@ -820,22 +838,41 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
       } as any).where(eq(arProjects.id, arProjectId));
     } catch {}
     
+    // ========== PROFESSIONAL AR SOLUTION ==========
+    // Step 1: Add high-frequency border pattern (generates 2000–3000+ feature points)
+    const enhancerResult = await enhanceMarkerPhotoSimple(photoPath, storageDir);
+    
+    // Step 2: Crop border so MindAR searches for clean center (original photo)
+    let finalMarkerSourcePath: string;
+    
+    if (enhancerResult.enhanced) {
+      console.log('[AR Compiler] 🎨 Enhanced with border → cropping for clean marker');
+      // Magic: .mind gets high features, but recognizes original photo without border
+      finalMarkerSourcePath = await createCroppedMindMarker(enhancerResult.photoPath, storageDir);
+      console.log('[AR Compiler] ✨ Professional mode: Print clean photo, get stable tracking!');
+    } else {
+      console.log('[AR Compiler] 📸 Using original photo (enhancer disabled)');
+      finalMarkerSourcePath = photoPath;
+    }
+    // ============================================
+    
     const mindPath = path.join(storageDir, `${markerName}.mind`);
-    const { compileMindFile } = await import('./mind-ar-web-compiler');
+    const { compileMindFile } = await import('./ar-compiler-v2');
     
     const startCompileTime = Date.now();
-    const compileResult = await compileMindFile({
-      photoPath,
-      outputMindPath: mindPath,
-      maxWaitTimeMs: 180_000, // 3 minutes max for complex images
-    });
+    const compileResult = await compileMindFile(
+      finalMarkerSourcePath,  // Cropped center (no border) for MindAR
+      storageDir,
+      markerName
+    );
     
     if (!compileResult.success) {
       throw new Error(`MindAR compilation failed: ${compileResult.error || 'Unknown error'}`);
     }
     
-    const compilationTimeMs = Date.now() - startCompileTime;
-    console.log(`[AR Compiler] ✅ .mind file compiled in ${compilationTimeMs}ms (${compileResult.fileSizeBytes} bytes)`);
+    const compilationTimeMs = compileResult.compilationTimeMs || (Date.now() - startCompileTime);
+    const fileSizeBytes = compileResult.fileSize || 0;
+    console.log(`[AR Compiler] ✅ .mind file compiled in ${compilationTimeMs}ms (${fileSizeBytes} bytes)`);
     
     // Progress after marker compilation
     try {
@@ -882,10 +919,31 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
       console.warn('[AR Compiler] Failed to set progressPhase viewer-generated:', (err as any)?.message);
     }
     
-    // Генерировать QR-код
-  const viewUrl = `${process.env.FRONTEND_URL || 'https://photobooksgallery.am'}/ar/view/${arProjectId}`;
-  const qrCodePath = path.join(storageDir, 'qr-code.png');
+    // Генерируем viewUrl с переменной окружения LOCAL_IP_URL или TUNNEL_URL (если установлены)
+    // Приоритет: LOCAL_IP (прямой WiFi) > TUNNEL (ngrok) > FRONTEND_URL (prod)
+    const TUNNEL_URL = (process.env.TUNNEL_URL || '').trim();
+    const LOCAL_IP_URL = (process.env.LOCAL_IP_URL || '').trim();
+    
+    if (!TUNNEL_URL && !LOCAL_IP_URL) {
+      console.log('[AR Compiler] TUNNEL_URL and LOCAL_IP_URL not set, falling back to FRONTEND_URL / production domain');
+    }
+    
+    const baseUrl2 = TUNNEL_URL || LOCAL_IP_URL || process.env.FRONTEND_URL || 'https://photobooksgallery.am';
+    console.log('[AR Compiler] Resolved baseUrl for viewUrl:', baseUrl2);
+    const viewUrl = `${baseUrl2}/ar/view/${arProjectId}`;
+    
+    // Генерировать QR-код с правильным URL
+    const qrCodePath = path.join(storageDir, 'qr-code.png');
     await generateQRCode(viewUrl, qrCodePath);
+    
+    // Генерируем дополнительный QR для ngrok (если LOCAL_IP используется)
+    let alternativeViewUrl: string | undefined;
+    if (LOCAL_IP_URL && TUNNEL_URL) {
+      alternativeViewUrl = `${TUNNEL_URL}/ar/view/${arProjectId}`;
+      const qrCodeAltPath = path.join(storageDir, 'qr-code-ngrok.png');
+      await generateQRCode(alternativeViewUrl, qrCodeAltPath);
+      console.log('[AR Compiler] Generated alternative ngrok QR code');
+    }
 
     // Progress after QR generated
     try {

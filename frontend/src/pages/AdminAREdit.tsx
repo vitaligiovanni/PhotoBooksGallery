@@ -128,6 +128,8 @@ export default function AdminAREditPage() {
     }
   }, [project]);
 
+  const [cropRegion, setCropRegion] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+
   const patchMutation = useMutation({
     mutationFn: async () => {
       if (!arId) throw new Error('No id');
@@ -135,6 +137,7 @@ export default function AdminAREditPage() {
         videoPosition: pos,
         videoRotation: rot,
         videoScale: scale || undefined,
+        cropRegion: cropRegion || undefined,
         fitMode,
         autoPlay,
         loop
@@ -150,7 +153,7 @@ export default function AdminAREditPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ar/status', arId] });
-      setTimeout(() => setIframeKey(k => k + 1), 500); // reload viewer iframe
+      setTimeout(() => setIframeKey(k => k + 1), 1000); // reload viewer iframe (увеличено до 1s для crop обработки)
     }
   });
 
@@ -485,12 +488,14 @@ export default function AdminAREditPage() {
                     <h4 className="font-medium mb-2">Калибровочный sandbox</h4>
                     <CalibrationSandbox
                       photoAspectRatio={(project.photoWidth && project.photoHeight) ? (project.photoHeight / project.photoWidth) : 0.75}
+                      videoAspectRatio={(project.videoWidth && project.videoHeight) ? (project.videoWidth / project.videoHeight) : 16/9}
                       videoScale={scale}
                       position={pos}
                       rotation={rot}
                       markerImageUrl={project.photoUrl || undefined}
                       onChange={(u) => {
                         if (u.videoScale) setScale(u.videoScale);
+                        if (u.cropRegion) setCropRegion(u.cropRegion);
                         if (u.position) setPos(u.position);
                         if (typeof u.rotationZ === 'number') setRot(r => ({ ...r, z: u.rotationZ! }));
                       }}

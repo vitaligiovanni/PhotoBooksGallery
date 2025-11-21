@@ -131,6 +131,70 @@ export function computeVideoScaleForPhoto(photo: PhotoMetadata, video: VideoMeta
 }
 
 /**
+ * НОВАЯ ФУНКЦИЯ: Правильное вычисление размеров плоскости для разных режимов fit
+ * @param photo - Метаданные маркера (фото)
+ * @param video - Метаданные видео (уже обработанного в cover/contain)
+ * @param mode - Режим: 'contain' (вписать), 'cover' (заполнить), 'fill' (растянуть), 'exact' (точные пропорции видео)
+ */
+export function computeOptimalPlaneScale(
+  photo: PhotoMetadata,
+  video: VideoMetadata,
+  mode: 'contain' | 'cover' | 'fill' | 'exact' = 'contain'
+) {
+  const planeWidth = 1; // Стандартная ширина AR плоскости
+  const photoAR = photo.aspectRatio;
+  const videoAR = video.aspectRatio;
+
+  switch (mode) {
+    case 'cover':
+      // Видео УЖЕ обрезано под пропорции фото
+      // Плоскость = размер маркера
+      return {
+        width: planeWidth,
+        height: planeWidth / photoAR, // Высота по пропорциям фото
+        description: 'Cover: video cropped to match photo, plane sized to marker',
+      };
+
+    case 'fill':
+      // Растянуть видео на весь маркер (игнорируя пропорции)
+      return {
+        width: planeWidth,
+        height: planeWidth / photoAR,
+        description: 'Fill: video stretched to fill entire marker (may distort)',
+      };
+
+    case 'exact':
+      // Использовать точные пропорции ВИДЕО на маркере
+      return {
+        width: planeWidth,
+        height: planeWidth / videoAR, // Высота по пропорциям ВИДЕО
+        description: 'Exact: plane sized to video aspect ratio (may not match photo)',
+      };
+
+    case 'contain':
+    default:
+      // Вписать видео в маркер с сохранением пропорций
+      const planeHeight = planeWidth / photoAR;
+      
+      if (videoAR >= photoAR) {
+        // Видео шире: ограничиваем по ширине
+        return {
+          width: planeWidth,
+          height: planeWidth / videoAR,
+          description: 'Contain: video fits width, height adjusted',
+        };
+      } else {
+        // Видео выше: ограничиваем по высоте
+        return {
+          width: planeHeight * videoAR,
+          height: planeHeight,
+          description: 'Contain: video fits height, width adjusted',
+        };
+      }
+  }
+}
+
+/**
  * Обработать видео в режиме cover: обрезать/масштабировать чтобы соответствовать пропорциям фото
  * (без полос, заполнение всей области).
  * @param inputVideoPath - Исходное видео
@@ -230,6 +294,85 @@ export function processCoverModeVideo(
         .on('error', (error) => {
           clearTimeout(killTimer);
           console.error('[Cover Mode] ffmpeg error:', error);
+          reject(error);
+        })
+        .run();
+    });
+  });
+}
+
+/**
+ * Обрезать видео по cropRegion (нормализованные координаты 0-1)
+ * cropRegion.x, cropRegion.y - левый верхний угол (0-1 относительно ширины/высоты)
+ * cropRegion.width, cropRegion.height - размер области (0-1)
+ * @param inputVideoPath - Исходное видео
+ * @param outputVideoPath - Путь для сохранения обрезанного видео
+ * @param cropRegion - Область обрезки { x, y, width, height } в нормализованных единицах (0-1)
+ * @returns Promise<void>
+ */
+export function cropVideoByRegion(
+  inputVideoPath: string,
+  outputVideoPath: string,
+  cropRegion: { x: number; y: number; width: number; height: number }
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    try {
+      if (ffprobeStatic?.path) {
+        ffmpeg.setFfprobePath(ffprobeStatic.path);
+      }
+    } catch {}
+
+    // Получаем размеры видео
+    ffmpeg.ffprobe(inputVideoPath, (err, data) => {
+      if (err) return reject(err);
+      
+      const stream = data.streams.find(s => s.width && s.height) as any;
+      const videoWidth = stream?.width;
+      const videoHeight = stream?.height;
+      
+      if (!videoWidth || !videoHeight) {
+        return reject(new Error('Unable to read video dimensions for crop'));
+      }
+
+      // Конвертируем нормализованные координаты в пиксели
+      const cropX = Math.round(cropRegion.x * videoWidth);
+      const cropY = Math.round(cropRegion.y * videoHeight);
+      const cropWidth = Math.round(cropRegion.width * videoWidth);
+      const cropHeight = Math.round(cropRegion.height * videoHeight);
+
+      // Проверка границ
+      if (cropWidth <= 0 || cropHeight <= 0 || cropX < 0 || cropY < 0 || 
+          cropX + cropWidth > videoWidth || cropY + cropHeight > videoHeight) {
+        return reject(new Error(`Invalid crop region: x=${cropX}, y=${cropY}, w=${cropWidth}, h=${cropHeight} (video: ${videoWidth}x${videoHeight})`));
+      }
+
+      console.log(`[Crop Region] Cropping video: ${cropWidth}x${cropHeight} at (${cropX},${cropY}) from ${videoWidth}x${videoHeight}`);
+
+      const cropFilter = `crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}`;
+
+      const cmd = ffmpeg(inputVideoPath)
+        .outputOptions('-c:a copy') // Копируем аудио
+        .outputOptions('-preset ultrafast')
+        .outputOptions('-crf 23')
+        .videoFilters(cropFilter);
+
+      const killTimer = setTimeout(() => {
+        try {
+          (cmd as any)?._ffmpegProc?.kill('SIGKILL');
+        } catch {}
+        reject(new Error('Crop processing timeout (60s exceeded)'));
+      }, 60_000);
+
+      cmd
+        .output(outputVideoPath)
+        .on('end', () => {
+          clearTimeout(killTimer);
+          console.log(`[Crop Region] Video cropped successfully: ${outputVideoPath}`);
+          resolve();
+        })
+        .on('error', (error) => {
+          clearTimeout(killTimer);
+          console.error('[Crop Region] ffmpeg error:', error);
           reject(error);
         })
         .run();

@@ -11,6 +11,7 @@ interface ARProject {
   status: 'pending' | 'processing' | 'ready' | 'error';
   progressPhase?: string; // NEW: current compilation phase
   viewUrl?: string;
+  externalViewUrl?: string; // absolute URL from backend (tunnel / production)
   qrCodeUrl?: string;
   markerQuality?: number;
   keyPointsCount?: number;
@@ -26,8 +27,6 @@ export default function CreateARPage() {
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [arProjectId, setArProjectId] = useState<string | null>(null);
   const queryClient = useQueryClient();
-  const [tunnelUrl, setTunnelUrl] = useState<string | null>(null);
-  const [tunneling, setTunneling] = useState(false);
 
   // Polling для статуса AR проекта
   const { data: arStatus } = useQuery<ARProject>({
@@ -126,14 +125,13 @@ export default function CreateARPage() {
   // Map progressPhase to percentage and message
   const getProgressInfo = (phase?: string) => {
     const phases: Record<string, { percent: number; message: string }> = {
-      'media-prepared': { percent: 20, message: 'Видео обработано' },
-      'marker-compiling-web': { percent: 40, message: 'Компилируем маркер (web)...' },
-      'marker-compiled': { percent: 60, message: 'Маркер скомпилирован' },
-      'mind-only-compiled': { percent: 60, message: 'Маркер готов (.mind)' },
-      'viewer-generated': { percent: 80, message: 'Viewer сгенерирован' },
-      'qr-generated': { percent: 95, message: 'QR-код создан' },
+      'media-prepared': { percent: 15, message: '✅ Видео обработано' },
+      'marker-compiling': { percent: 20, message: '🔄 Компилируем AR маркер...' },
+      'marker-compiled': { percent: 70, message: '✅ Маркер скомпилирован (55 сек)' },
+      'viewer-generated': { percent: 85, message: '✅ AR Viewer создан' },
+      'qr-generated': { percent: 95, message: '✅ QR-код сгенерирован' },
     };
-    return phases[phase || ''] || { percent: 10, message: 'Подготовка...' };
+    return phases[phase || ''] || { percent: 5, message: '🔄 Загрузка файлов...' };
   };
 
   const renderStatus = () => {
@@ -144,31 +142,58 @@ export default function CreateARPage() {
       case 'processing':
         const progressInfo = getProgressInfo(arStatus.progressPhase);
         return (
-          <Card className="mt-6">
+          <Card className="mt-6 border-blue-500">
             <CardContent className="pt-6">
               <div className="flex flex-col items-center space-y-4">
                 <Loader2 className="h-12 w-12 animate-spin text-primary" />
                 <div className="text-center space-y-2">
-                  <h3 className="font-semibold text-lg">Создаём AR-эффект...</h3>
-                  <p className="text-sm text-muted-foreground">
+                  <h3 className="font-semibold text-xl">Создаём AR-эффект...</h3>
+                  <p className="text-base text-muted-foreground font-medium">
                     {progressInfo.message}
                   </p>
-                  {arStatus.progressPhase && (
-                    <p className="text-xs text-muted-foreground/70">
-                      Фаза: {arStatus.progressPhase}
-                    </p>
-                  )}
                 </div>
-                <Progress value={progressInfo.percent} className="w-full max-w-md" />
-                <p className="text-xs text-muted-foreground">
-                  Обычно занимает 30-60 секунд
-                </p>
+                <div className="w-full max-w-md space-y-2">
+                  <Progress value={progressInfo.percent} className="h-3" />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>{progressInfo.percent}%</span>
+                    <span>
+                      {arStatus.progressPhase === 'marker-compiling' 
+                        ? '⏱️ ~50-60 секунд' 
+                        : 'Обычно занимает 50-60 секунд'}
+                    </span>
+                  </div>
+                </div>
+                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg max-w-md">
+                  <p className="text-xs text-center text-muted-foreground">
+                    💡 <strong>Совет:</strong> Компиляция AR маркера требует времени для анализа ключевых точек на фотографии. Пожалуйста, подождите...
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
         );
 
       case 'ready':
+        // Определяем корректную внешнюю ссылку (от бэкенда или адаптация)
+        const currentOrigin = window.location.origin;
+        const rawViewUrl = arStatus.viewUrl || '';
+        const absoluteBackendUrl = arStatus.externalViewUrl || (rawViewUrl.startsWith('http') ? rawViewUrl : null);
+        let externalViewUrl: string | null = null;
+        if (absoluteBackendUrl) {
+          // Если бэкенд уже дал абсолютный URL (например tunnel), используем его напрямую
+          externalViewUrl = absoluteBackendUrl;
+        } else if (rawViewUrl) {
+          // Собираем из текущего origin + относительного пути
+          let pathPart = rawViewUrl;
+          if (pathPart.includes('/ar/view/')) {
+            pathPart = '/ar/view/' + pathPart.split('/ar/view/')[1];
+          }
+          externalViewUrl = `${currentOrigin}${pathPart}`;
+        }
+        // Если абсолютный URL содержит tunnel (loca.lt) и origin локальный, показываем обе ссылки
+        const isTunnel = (externalViewUrl || '').includes('loca.lt') || (externalViewUrl || '').includes('trycloudflare.com');
+        const localDebugUrl = rawViewUrl.startsWith('http') && !isTunnel ? rawViewUrl : `${currentOrigin}/ar/view/${arStatus.id}`;
+        
         return (
           <Card className="mt-6 border-green-500">
             <CardContent className="pt-6">
@@ -208,56 +233,70 @@ export default function CreateARPage() {
                     <p className="text-sm text-center text-muted-foreground">
                       Отсканируйте QR-код на телефоне чтобы открыть AR viewer
                     </p>
-                    {/* Dev-only: сгенерировать внешний URL через туннель */}
-                    <div className="mt-2 flex flex-col items-center gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        disabled={tunneling}
-                        onClick={async () => {
-                          try {
-                            setTunneling(true);
-                            const resp = await fetch(`/api/dev/tunnel/ar-view/${arStatus.id}`, { credentials: 'include' });
-                            if (!resp.ok) throw new Error('Tunnel creation failed');
-                            const data = await resp.json();
-                            setTunnelUrl(data.url);
-                          } catch (e) {
-                            alert('Не удалось создать внешний URL. Проверьте backend логи.');
-                          } finally {
-                            setTunneling(false);
-                          }
-                        }}
-                      >
-                        {tunneling ? 'Создаём внешний URL…' : 'Сгенерировать внешний URL (dev)'}
-                      </Button>
-                      {tunnelUrl && (
-                        <div className="text-xs text-center break-all max-w-md">
-                          Внешняя ссылка: <a className="text-blue-600 underline" href={tunnelUrl} target="_blank" rel="noreferrer">{tunnelUrl}</a>
+                    
+                    {/* Внешняя ссылка для тестирования с телефона - ГЛАВНАЯ */}
+                    {externalViewUrl && (
+                      <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950 dark:to-indigo-950 rounded-xl w-full max-w-2xl border-2 border-blue-200 dark:border-blue-800 shadow-lg">
+                        <div className="text-center space-y-4">
+                          <div className="flex items-center justify-center gap-2">
+                            <span className="text-3xl">📱</span>
+                            <p className="text-lg font-bold text-blue-900 dark:text-blue-100">
+                              Ссылка для тестирования с телефона
+                            </p>
+                          </div>
+                          <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border-2 border-blue-300 dark:border-blue-700 break-all">
+                            <a 
+                              href={externalViewUrl} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="text-base font-mono text-blue-600 dark:text-blue-400 underline hover:text-blue-800 font-semibold"
+                            >
+                              {externalViewUrl}
+                            </a>
+                          </div>
+                          {isTunnel && (
+                            <div className="mt-2 text-xs text-left space-y-1 text-gray-600 dark:text-gray-300">
+                              <p>🔁 Tunnel активен. Если видите 503, перезапустите tunnel.</p>
+                              <p>💻 Локальная отладочная ссылка: <span className="font-mono break-all">{localDebugUrl}</span></p>
+                            </div>
+                          )}
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              ✅ Откройте эту ссылку на телефоне
+                            </p>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              ✅ Разрешите доступ к камере
+                            </p>
+                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              ✅ Наведите камеру на фотографию → видео появится!
+                            </p>
+                          </div>
+                          <Button
+                            onClick={() => {
+                              navigator.clipboard.writeText(externalViewUrl);
+                              alert('Ссылка скопирована в буфер обмена!');
+                            }}
+                            variant="default"
+                            size="lg"
+                            className="w-full"
+                          >
+                            📋 Скопировать ссылку
+                          </Button>
                         </div>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
                 <div className="flex gap-3">
-                  {arStatus.viewUrl && (
+                  {externalViewUrl && (
                     <Button
-                      onClick={() => window.open(arStatus.viewUrl, '_blank')}
+                      onClick={() => window.open(externalViewUrl, '_blank')}
                       variant="default"
                       size="lg"
                     >
                       <Eye className="mr-2 h-4 w-4" />
-                      Тестировать на телефоне
-                    </Button>
-                  )}
-                  {tunnelUrl && (
-                    <Button
-                      onClick={() => window.open(tunnelUrl!, '_blank')}
-                      variant="default"
-                      size="lg"
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      Открыть внешний URL
+                      Открыть AR viewer
                     </Button>
                   )}
                   <Button onClick={handleReset} variant="outline" size="lg">

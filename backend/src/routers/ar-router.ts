@@ -190,7 +190,7 @@ export function createARRouter(): Router {
   router.get('/status/:id', requireAuth, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;
   const userRole = (req as any).user?.role || (req as any).user?.userData?.role;
 
       let arProject: any | undefined;
@@ -251,6 +251,25 @@ export function createARRouter(): Router {
       // Extract progressPhase from config if available
       const progressPhase = (arProject.config as any)?.progressPhase || null;
 
+      // Tunnel availability probing (only if external absolute URL uses known tunnel domains)
+      let tunnelStatus: 'reachable' | 'unreachable' | 'unknown' = 'unknown';
+      const externalCandidate = arProject.viewUrl && String(arProject.viewUrl).startsWith('http') ? String(arProject.viewUrl) : null;
+      if (externalCandidate && /(loca\.lt|trycloudflare\.com|ngrok\.io)/i.test(externalCandidate)) {
+        try {
+          const controller = new AbortController();
+          const timeout = setTimeout(() => controller.abort(), 4000);
+          const resp = await fetch(externalCandidate, { method: 'HEAD', signal: controller.signal });
+          clearTimeout(timeout);
+          if (resp.ok) {
+            tunnelStatus = 'reachable';
+          } else {
+            tunnelStatus = 'unreachable';
+          }
+        } catch {
+          tunnelStatus = 'unreachable';
+        }
+      }
+
       res.json({
         message: 'AR project status',
         data: {
@@ -264,7 +283,10 @@ export function createARRouter(): Router {
           maskUrl,
           viewerHtmlUrl,
           viewUrl: arProject.viewUrl,
+          // externalViewUrl: always return original absolute URL if present (for tunnels)
+          externalViewUrl: (arProject.viewUrl && String(arProject.viewUrl).startsWith('http')) ? arProject.viewUrl : null,
           qrCodeUrl,
+          tunnelStatus,
 
           // Dimensions & aspect ratios
           photoWidth: arProject.photoWidth,
@@ -630,7 +652,7 @@ export function createARRouter(): Router {
   /**
    * PATCH /api/ar/:id/config (admin only)
    * Обновить конфигурацию AR проекта и регенерировать viewer
-   * Body: { videoPosition?, videoRotation?, videoScale?, fitMode?, autoPlay?, loop? }
+   * Body: { videoPosition?, videoRotation?, videoScale?, cropRegion?, fitMode?, autoPlay?, loop? }
    */
   router.patch('/:id/config', requireAuth, async (req: Request, res: Response) => {
     try {
@@ -639,7 +661,7 @@ export function createARRouter(): Router {
         return res.status(403).json({ error: 'Admin access required' });
       }
       const { id } = req.params;
-      const { videoPosition, videoRotation, videoScale, fitMode, autoPlay, loop } = req.body;
+      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop } = req.body;
 
       const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
       if (!project) return res.status(404).json({ error: 'AR project not found' });
@@ -665,6 +687,7 @@ export function createARRouter(): Router {
         ...(videoPosition && { videoPosition }),
         ...(videoRotation && { videoRotation }),
         ...(videoScale && { videoScale }),
+        ...(cropRegion && { cropRegion }),
         ...(fitMode && { fitMode }),
         ...(autoPlay !== undefined && { autoPlay }),
         ...(loop !== undefined && { loop }),
@@ -682,8 +705,29 @@ export function createARRouter(): Router {
         updatedAt: new Date() as any,
       } as any).where(eq(arProjects.id, id));
 
-      // Regenerate viewer
       const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+      
+      // If cropRegion is provided, crop the video
+      let videoFileName = 'video.mp4';
+      if (cropRegion && cropRegion.x !== undefined && cropRegion.y !== undefined && 
+          cropRegion.width && cropRegion.height) {
+        console.log(`[AR Config] Cropping video with region:`, cropRegion);
+        const originalVideoPath = path.join(storageDir, 'video.mp4');
+        const croppedVideoPath = path.join(storageDir, 'video-cropped.mp4');
+        
+        try {
+          const { cropVideoByRegion } = await import('../services/media-metadata');
+          await cropVideoByRegion(originalVideoPath, croppedVideoPath, cropRegion);
+          videoFileName = 'video-cropped.mp4';
+          console.log(`[AR Config] Video cropped successfully: ${croppedVideoPath}`);
+        } catch (cropError: any) {
+          console.error('[AR Config] Failed to crop video:', cropError);
+          // Continue with original video if crop fails
+          videoFileName = 'video.mp4';
+        }
+      }
+
+      // Regenerate viewer with cropped video
       const viewerHtmlPath = path.join(storageDir, 'index.html');
       const markerName = 'marker';
       
@@ -696,16 +740,41 @@ export function createARRouter(): Router {
         } catch {}
       }
 
-      const finalVideoScale = videoScale || (project.scaleWidth && project.scaleHeight ? { width: Number(project.scaleWidth), height: Number(project.scaleHeight) } : undefined);
+      // Plane scale: use cropRegion proportions if available, otherwise photo dimensions
+      let planeScale;
+      
+      if (cropRegion && cropRegion.width && cropRegion.height) {
+        // Плоскость принимает пропорции cropRegion (видео будет этой формы)
+        const cropAspectRatio = cropRegion.width / cropRegion.height;
+        planeScale = { 
+          width: 1.0, 
+          height: 1.0 / cropAspectRatio 
+        };
+        console.log(`[AR Config] Using cropRegion proportions for plane: ${cropRegion.width}/${cropRegion.height} = AR ${cropAspectRatio.toFixed(3)}`);
+      } else if (project.photoAspectRatio) {
+        // Fallback: используем пропорции фото
+        planeScale = { 
+          width: 1.0, 
+          height: 1.0 / Number(project.photoAspectRatio) 
+        };
+        console.log(`[AR Config] Using photo proportions for plane: AR ${project.photoAspectRatio}`);
+      } else {
+        // Fallback: используем videoScale или дефолтные значения
+        planeScale = videoScale || { 
+          width: Number(project.scaleWidth) || 1.0, 
+          height: Number(project.scaleHeight) || 0.75 
+        };
+        console.log(`[AR Config] Using fallback proportions for plane`);
+      }
       
       await generateARViewer({
         arId: id,
         markerBaseName: markerName,
-        videoFileName: 'video.mp4',
+        videoFileName,
         maskFileName,
         videoPosition: updatedConfig.videoPosition,
         videoRotation: updatedConfig.videoRotation,
-        videoScale: finalVideoScale,
+        videoScale: planeScale,
         autoPlay: updatedConfig.autoPlay ?? true,
         loop: updatedConfig.loop ?? true,
       }, viewerHtmlPath);
@@ -715,6 +784,8 @@ export function createARRouter(): Router {
         data: {
           id,
           config: updatedConfig,
+          videoFileName,
+          planeScale,
           viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
         }
       });
@@ -1078,6 +1149,7 @@ export function createARRouter(): Router {
   /**
    * Static file serving for AR storage
    * This should be mounted as /api/ar-storage in main server
+   * Cache-busting headers added to force mobile reload on config changes
    */
   router.use(
     '/storage',
@@ -1087,6 +1159,14 @@ export function createARRouter(): Router {
       if (!match) {
         return res.status(404).json({ error: 'Invalid AR storage path' });
       }
+      
+      // Force no-cache for HTML viewers to ensure mobile gets latest config
+      if (req.path.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+      }
+      
       next();
     },
     (req: Request, res: Response) => {
@@ -1094,6 +1174,15 @@ export function createARRouter(): Router {
       res.sendFile(filePath);
     }
   );
+
+  /**
+   * GET /ar/view/:id
+   * Редирект на AR viewer HTML
+   */
+  router.get('/view/:id', (req: Request, res: Response) => {
+    const { id } = req.params;
+    res.redirect(`/api/ar/storage/${id}/index.html`);
+  });
 
   return router;
 }

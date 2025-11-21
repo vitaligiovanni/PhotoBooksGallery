@@ -973,14 +973,15 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
     }
 
     // Копировать логотип в папку AR проекта
-    const logoSourcePath = path.join(process.cwd(), 'test_JPG_MP4', 'logo_animate1.webp');
+    const logoSourcePath = path.join(process.cwd(), '..', 'test_JPG_MP4', 'logo_animate1.webp');
     const logoDestPath = path.join(storageDir, 'logo_animate1.webp');
     try {
       if (await fsExtra.pathExists(logoSourcePath)) {
         await fsExtra.copy(logoSourcePath, logoDestPath);
-        console.log('[AR Compiler] ✓ Logo copied to AR storage from:', logoSourcePath);
+        console.log('[AR Compiler] ✅ Logo copied successfully from:', logoSourcePath);
       } else {
         console.error('[AR Compiler] ❌ Logo file NOT FOUND at:', logoSourcePath);
+        console.error('[AR Compiler] 🔍 Current working directory:', process.cwd());
       }
     } catch (err) {
       console.error('[AR Compiler] ❌ Failed to copy logo:', (err as any)?.message);

@@ -393,12 +393,19 @@ export async function generateARViewer(
 <title>PhotoBooks Gallery AR - ${arId}</title>
 <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bodymovin/5.12.2/lottie.min.js"></script>
 <style>
 body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
-.arjs-loader{position:absolute;inset:0;background:linear-gradient(135deg,#667eea,#764ba2);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
+.arjs-loader{position:absolute;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
 .arjs-loader.hidden{opacity:0;pointer-events:none}
-.spinner{width:56px;height:56px;border:5px solid #ffffff40;border-top-color:#fff;border-radius:50%;animation:s 1s linear infinite;margin-bottom:24px}
-@keyframes s{to{transform:rotate(360deg)}}
+#lottie-container{width:280px;height:280px;max-width:80vw;max-height:80vw;margin-bottom:20px}
+.loading-text{font-size:20px;font-weight:600;color:#667eea;text-align:center;padding:0 20px;animation:pulse-text 2s ease-in-out infinite}
+@keyframes pulse-text{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.05)}}
+.loading-dots{display:flex;gap:8px;margin-top:16px}
+.loading-dots span{width:10px;height:10px;background:#764ba2;border-radius:50%;animation:dot-pulse 1.4s ease-in-out infinite}
+.loading-dots span:nth-child(2){animation-delay:0.2s}
+.loading-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes dot-pulse{0%,100%{transform:scale(0.8);opacity:0.5}50%{transform:scale(1.2);opacity:1}}
 #instructions{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.65);color:#fff;padding:16px 32px;border-radius:40px;backdrop-filter:blur(12px);font-size:16px;font-weight:600;z-index:100;box-shadow:0 4px 20px rgba(0,0,0,0.4)}
 #instructions::before{content:"📸";margin-right:10px;font-size:20px}
 #unmute-hint{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:14px 28px;border-radius:30px;backdrop-filter:blur(12px);font-size:15px;font-weight:600;z-index:101;box-shadow:0 6px 24px rgba(0,0,0,0.5);animation:pulse 2s ease-in-out infinite;display:none}
@@ -414,7 +421,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 </style>
 </head>
 <body>
-<div class="arjs-loader" id="loading"><div class="spinner"></div><h2>Загрузка AR…</h2><p>Разрешите доступ к камере</p></div>
+<div class="arjs-loader" id="loading"><div id="lottie-container"></div><div class="loading-text">Приготовьтесь к волшебству</div><div class="loading-dots"><span></span><span></span><span></span></div></div>
 <img id="logo" src="https://photobooksgallery.am/logo.png" alt="PhotoBooks Gallery" onerror="this.style.display='none'">
 <div id="instructions">Наведите камеру на фотографию</div>
 <div id="unmute-hint">Нажмите для звука</div>
@@ -427,6 +434,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 </a-scene>
 <script>
 console.log('[AR] Page loaded');
+if(typeof lottie!=='undefined'){lottie.loadAnimation({container:document.getElementById('lottie-container'),renderer:'svg',loop:true,autoplay:true,path:'https://photobooksgallery.am/logo-animation.json'});console.log('[AR] Lottie animation loaded')}else{console.warn('[AR] Lottie not loaded, using fallback')}
 setTimeout(()=>{console.log('[AR] Failsafe: hiding loader after 5s');document.getElementById('loading').classList.add('hidden')},5000);
 const video=document.getElementById('vid');
 const plane=document.getElementById('plane');

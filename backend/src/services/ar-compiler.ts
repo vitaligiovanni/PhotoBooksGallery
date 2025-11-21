@@ -542,13 +542,26 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
       const photoPath = path.join(process.cwd(), item.photoUrl);
       const markerName = `marker-${item.targetIndex}`;
       
-      // Compile directly to final destination (no temp folder needed!)
-      // Using OfflineCompiler (Node.js only, no Puppeteer)
+      // Apply unique border enhancement for this item
+      const itemStorageDir = path.join(storageDir, `item-${item.targetIndex}`);
+      await fs.mkdir(itemStorageDir, { recursive: true });
+      
+      const enhancerResult = await enhanceMarkerPhotoSimple(photoPath, itemStorageDir, `${arProjectId}-${item.targetIndex}`);
+      
+      let finalMarkerSourcePath: string;
+      if (enhancerResult.enhanced) {
+        console.log(`[AR Compiler Multi] Item ${item.targetIndex} enhanced with unique border`);
+        finalMarkerSourcePath = await createCroppedMindMarker(enhancerResult.photoPath, itemStorageDir);
+      } else {
+        finalMarkerSourcePath = photoPath;
+      }
+      
+      // Compile to final destination
       const mindFinalPath = path.join(storageDir, `${markerName}.mind`);
 
       const { compileMindFile } = await import('./ar-compiler-v2');
       const compileResult = await compileMindFile(
-        photoPath,
+        finalMarkerSourcePath,
         storageDir,
         markerName
       );
@@ -839,9 +852,9 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
       } as any).where(eq(arProjects.id, arProjectId));
     } catch {}
     
-    // ========== PROFESSIONAL AR SOLUTION ==========
-    // Step 1: Add high-frequency border pattern (generates 2000–3000+ feature points)
-    const enhancerResult = await enhanceMarkerPhotoSimple(photoPath, storageDir);
+    // ========== PROFESSIONAL AR SOLUTION V2 (UNIQUE BORDERS) ==========
+    // Step 1: Add unique variative border pattern (generates 2000–3000+ feature points, hash-based uniqueness)
+    const enhancerResult = await enhanceMarkerPhotoSimple(photoPath, storageDir, arProjectId);
     
     // Step 2: Crop border so MindAR searches for clean center (original photo)
     let finalMarkerSourcePath: string;

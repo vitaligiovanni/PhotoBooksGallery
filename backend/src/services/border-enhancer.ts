@@ -1,23 +1,26 @@
 /**
- * High-Frequency Pattern Border Enhancer (MindAR 2025 Best Practice)
+ * Unique Variative Border Enhancer (MindAR 2025 Best Practice v2)
  * ---------------------------------------------------------------
- * Задача: Максимально увеличить число feature points (2000–3000+) даже на однотонных портретах.
+ * Задача: Создать УНИКАЛЬНУЮ рамку для каждого AR проекта → максимум feature points + нет коллизий между маркерами.
  * Реализация:
- *  - Добавляет вокруг изображения контрастную шахматную (checker) рамку.
- *  - Толщина рамки: случайно в диапазоне 12%–15% от максимальной стороны исходного фото с каждой стороны.
- *  - Размер клетки узора: случайно 24–32 px (высокочастотный паттерн).
- *  - Случайный фазовый сдвиг (offsetX/offsetY), чтобы одинаковые изображения не конфликтовали между собой.
- *  - Тонкая белая внутренняя обводка (2–3 px) для визуального отделения контента от тёмной части рамки.
+ *  - Хеш фото → детерминированный seed → псевдослучайная генерация (одна фото = одна уникальная рамка).
+ *  - Асимметричные углы (4 разных символа: ●, ▲, ■, ★, ✦, ◆).
+ *  - Вариативная сетка (не строгие квадраты, а прямоугольники разных размеров).
+ *  - Псевдослучайные смещения элементов (±2-5px).
+ *  - Комбинация паттернов (шахматы + круги + линии + точки).
+ *  - Текстовый watermark (ID проекта, размер ~8px, по краю).
+ *  - Толщина рамки: 12%–15% от максимальной стороны исходного фото.
  *  - Только библиотека `canvas` (никаких sharp / OpenCV / Python).
  *  - Сохранение: JPEG 95% качества (`enhanced-photo.jpg`).
- *  - Feature flag: AR_ENABLE_BORDER_ENHANCER (по умолчанию ВКЛ, если явно не установлено false/0).
+ *  - Feature flag: AR_ENABLE_BORDER_ENHANCER (по умолчанию ВКЛ).
  * Надёжность:
  *  - Проверка существования файла, поддержка PNG/JPEG.
- *  - Логирование площади рамки и процента от итогового изображения.
+ *  - Логирование параметров уникальной рамки.
  */
 
 import path from 'path';
 import fs from 'fs/promises';
+import crypto from 'crypto';
 import { createCanvas, loadImage, Image, CanvasRenderingContext2D } from 'canvas';
 
 export interface PatternEnhancementResult {
@@ -29,16 +32,50 @@ export interface PatternEnhancementResult {
   error?: string;
   parameters?: {
     borderThicknessPx: number;
-    cellSizePx: number;
-    phaseOffsetX: number;
-    phaseOffsetY: number;
+    seed: string;
+    cornerSymbols: string[];
+    patternMix: string[];
   };
 }
 
 /**
- * Core pattern drawing: fills the border region with a checker pattern.
+ * Seeded pseudo-random generator (LCG algorithm)
  */
-function drawCheckerBorder(
+class SeededRandom {
+  private seed: number;
+  constructor(seed: number) {
+    this.seed = seed % 2147483647;
+    if (this.seed <= 0) this.seed += 2147483646;
+  }
+  next(): number {
+    this.seed = (this.seed * 16807) % 2147483647;
+    return (this.seed - 1) / 2147483646;
+  }
+  nextInt(min: number, max: number): number {
+    return Math.floor(this.next() * (max - min + 1)) + min;
+  }
+}
+
+/**
+ * Generate deterministic hash-based seed from photo file
+ */
+async function generatePhotoSeed(photoPath: string): Promise<number> {
+  try {
+    const buffer = await fs.readFile(photoPath);
+    const hash = crypto.createHash('sha256').update(buffer).digest('hex');
+    // Convert first 8 hex chars to integer seed
+    return parseInt(hash.substring(0, 8), 16);
+  } catch {
+    // Fallback to path-based hash if file read fails
+    const hash = crypto.createHash('sha256').update(photoPath).digest('hex');
+    return parseInt(hash.substring(0, 8), 16);
+  }
+}
+
+/**
+ * Draw unique variative border with multiple patterns and asymmetric corners
+ */
+function drawUniqueBorder(
   ctx: CanvasRenderingContext2D,
   canvasWidth: number,
   canvasHeight: number,
@@ -46,30 +83,142 @@ function drawCheckerBorder(
   innerY: number,
   innerWidth: number,
   innerHeight: number,
-  cellSize: number,
-  phaseOffsetX: number,
-  phaseOffsetY: number
+  rng: SeededRandom
 ) {
-  // We draw pattern over entire canvas, then original image covers interior.
-  for (let y = 0; y < canvasHeight; y += cellSize) {
-    for (let x = 0; x < canvasWidth; x += cellSize) {
-      const colIndex = Math.floor((x + phaseOffsetX) / cellSize);
-      const rowIndex = Math.floor((y + phaseOffsetY) / cellSize);
-      const isDark = (colIndex + rowIndex) % 2 === 0;
-
-      // Skip interior area (leave it for original image)
-      const outsideInterior =
-        x + cellSize <= innerX ||
-        y + cellSize <= innerY ||
-        x >= innerX + innerWidth ||
-        y >= innerY + innerHeight;
-
-      if (!outsideInterior) continue;
-
-      ctx.fillStyle = isDark ? '#000000' : '#FFFFFF';
-      ctx.fillRect(x, y, cellSize, cellSize);
+  const borderThickness = innerX; // assuming equal borders
+  
+  // Corner symbols pool
+  const symbols = ['●', '▲', '■', '★', '✦', '◆', '◇', '▼', '►'];
+  const cornerSymbols = [
+    symbols[rng.nextInt(0, symbols.length - 1)],
+    symbols[rng.nextInt(0, symbols.length - 1)],
+    symbols[rng.nextInt(0, symbols.length - 1)],
+    symbols[rng.nextInt(0, symbols.length - 1)]
+  ];
+  
+  // Pattern mix (combine 2-3 patterns)
+  const patterns = ['checker', 'circles', 'lines', 'dots'];
+  const patternMix: string[] = [];
+  for (let i = 0; i < 2 + rng.nextInt(0, 1); i++) {
+    patternMix.push(patterns[rng.nextInt(0, patterns.length - 1)]);
+  }
+  
+  // Base cell size varies
+  const baseCellSize = rng.nextInt(20, 32);
+  
+  // Fill border region with mixed patterns
+  for (let y = 0; y < canvasHeight; y += baseCellSize) {
+    for (let x = 0; x < canvasWidth; x += baseCellSize) {
+      // Skip interior
+      const insideInterior = 
+        x >= innerX && 
+        x < innerX + innerWidth && 
+        y >= innerY && 
+        y < innerY + innerHeight;
+      if (insideInterior) continue;
+      
+      // Pseudo-random cell size variation (±20%)
+      const cellW = baseCellSize + rng.nextInt(-4, 4);
+      const cellH = baseCellSize + rng.nextInt(-4, 4);
+      
+      // Pseudo-random offset
+      const offsetX = rng.nextInt(-3, 3);
+      const offsetY = rng.nextInt(-3, 3);
+      
+      // Choose pattern based on position hash
+      const patternIdx = ((x / baseCellSize) + (y / baseCellSize)) % patternMix.length;
+      const pattern = patternMix[Math.floor(patternIdx)];
+      
+      const isDark = ((Math.floor(x / baseCellSize) + Math.floor(y / baseCellSize)) % 2) === 0;
+      
+      ctx.save();
+      ctx.translate(x + offsetX, y + offsetY);
+      
+      if (pattern === 'checker') {
+        ctx.fillStyle = isDark ? '#000' : '#FFF';
+        ctx.fillRect(0, 0, cellW, cellH);
+      } else if (pattern === 'circles') {
+        ctx.fillStyle = isDark ? '#000' : '#FFF';
+        ctx.fillRect(0, 0, cellW, cellH);
+        ctx.fillStyle = isDark ? '#FFF' : '#000';
+        ctx.beginPath();
+        ctx.arc(cellW / 2, cellH / 2, Math.min(cellW, cellH) / 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else if (pattern === 'lines') {
+        ctx.fillStyle = isDark ? '#000' : '#FFF';
+        ctx.fillRect(0, 0, cellW, cellH);
+        ctx.strokeStyle = isDark ? '#FFF' : '#000';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        if (rng.next() > 0.5) {
+          ctx.moveTo(0, 0);
+          ctx.lineTo(cellW, cellH);
+        } else {
+          ctx.moveTo(cellW, 0);
+          ctx.lineTo(0, cellH);
+        }
+        ctx.stroke();
+      } else if (pattern === 'dots') {
+        ctx.fillStyle = isDark ? '#000' : '#FFF';
+        ctx.fillRect(0, 0, cellW, cellH);
+        ctx.fillStyle = isDark ? '#FFF' : '#000';
+        const dotRadius = Math.min(cellW, cellH) / 6;
+        ctx.beginPath();
+        ctx.arc(cellW / 4, cellH / 4, dotRadius, 0, Math.PI * 2);
+        ctx.arc(3 * cellW / 4, 3 * cellH / 4, dotRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      
+      ctx.restore();
     }
   }
+  
+  // Draw asymmetric corner symbols
+  ctx.save();
+  ctx.fillStyle = '#000';
+  ctx.font = `bold ${borderThickness / 2}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  
+  // Top-left
+  ctx.fillText(cornerSymbols[0], borderThickness / 2, borderThickness / 2);
+  // Top-right
+  ctx.fillText(cornerSymbols[1], canvasWidth - borderThickness / 2, borderThickness / 2);
+  // Bottom-left
+  ctx.fillText(cornerSymbols[2], borderThickness / 2, canvasHeight - borderThickness / 2);
+  // Bottom-right
+  ctx.fillText(cornerSymbols[3], canvasWidth - borderThickness / 2, canvasHeight - borderThickness / 2);
+  
+  ctx.restore();
+  
+  return { cornerSymbols, patternMix };
+}
+
+/**
+ * Draw text watermark along border edges
+ */
+function drawTextWatermark(
+  ctx: CanvasRenderingContext2D,
+  canvasWidth: number,
+  canvasHeight: number,
+  borderThickness: number,
+  text: string
+) {
+  ctx.save();
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+  ctx.font = '8px monospace';
+  
+  // Top edge
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillText(text, borderThickness + 5, 5);
+  
+  // Bottom edge
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'bottom';
+  ctx.fillText(text, canvasWidth - borderThickness - 5, canvasHeight - 5);
+  
+  ctx.restore();
 }
 
 /**
@@ -84,24 +233,25 @@ function drawInnerStroke(
 ) {
   ctx.save();
   ctx.strokeStyle = '#FFFFFF';
-  ctx.lineWidth = 3; // can be tuned (2–3 px requested)
-  ctx.strokeRect(innerX + 1.5, innerY + 1.5, innerWidth - 3, innerHeight - 3); // slight inset to avoid alias
+  ctx.lineWidth = 3;
+  ctx.strokeRect(innerX + 1.5, innerY + 1.5, innerWidth - 3, innerHeight - 3);
   ctx.restore();
 }
 
 /**
- * Performs pattern enhancement.
+ * Performs unique variative pattern enhancement with hash-based seeding.
  */
 export async function enhanceMarkerPhotoSimple(
   photoPath: string,
-  outputDir: string
+  outputDir: string,
+  projectId?: string
 ): Promise<{ photoPath: string; enhanced: boolean }> {
   const startTime = Date.now();
   const flagRaw = (process.env.AR_ENABLE_BORDER_ENHANCER || '').trim().toLowerCase();
   const ENABLE = flagRaw === '' || flagRaw === 'true' || flagRaw === '1' || flagRaw === 'yes'; // default ON
 
   if (!ENABLE) {
-    console.log('[Pattern Border] Feature disabled via AR_ENABLE_BORDER_ENHANCER');
+    console.log('[Unique Border] Feature disabled via AR_ENABLE_BORDER_ENHANCER');
     return { photoPath, enhanced: false };
   }
 
@@ -111,23 +261,22 @@ export async function enhanceMarkerPhotoSimple(
     .then(() => true)
     .catch(() => false);
   if (!exists) {
-    console.warn('[Pattern Border] Original photo missing, skipping enhancement:', photoPath);
+    console.warn('[Unique Border] Original photo missing, skipping enhancement:', photoPath);
     return { photoPath, enhanced: false };
   }
 
   try {
+    // Generate deterministic seed from photo hash
+    const seedNumber = await generatePhotoSeed(photoPath);
+    const rng = new SeededRandom(seedNumber);
+    
     const img = (await loadImage(photoPath)) as Image;
     const origW = img.width;
     const origH = img.height;
     const maxSide = Math.max(origW, origH);
 
-    // Random thickness between 12% and 15% of max side
-    const borderThickness = Math.round(maxSide * (0.12 + Math.random() * 0.03));
-    // Pattern cell size random 24–32 px
-    const cellSize = 24 + Math.floor(Math.random() * 9); // 24..32
-    // Random phase offsets
-    const phaseOffsetX = Math.floor(Math.random() * cellSize);
-    const phaseOffsetY = Math.floor(Math.random() * cellSize);
+    // Deterministic thickness (12-15% based on seed)
+    const borderThickness = Math.round(maxSide * (0.12 + (rng.next() * 0.03)));
 
     const canvasW = origW + borderThickness * 2;
     const canvasH = origH + borderThickness * 2;
@@ -135,12 +284,12 @@ export async function enhanceMarkerPhotoSimple(
     const canvas = createCanvas(canvasW, canvasH);
     const ctx = canvas.getContext('2d');
 
-    // Fill background neutral first (white) – ensures PNG transparency handled
+    // Fill background white
     ctx.fillStyle = '#FFFFFF';
     ctx.fillRect(0, 0, canvasW, canvasH);
 
-    // Draw checker pattern only in border region
-    drawCheckerBorder(
+    // Draw unique variative border with multiple patterns and asymmetric corners
+    const borderInfo = drawUniqueBorder(
       ctx,
       canvasW,
       canvasH,
@@ -148,9 +297,7 @@ export async function enhanceMarkerPhotoSimple(
       borderThickness,
       origW,
       origH,
-      cellSize,
-      phaseOffsetX,
-      phaseOffsetY
+      rng
     );
 
     // Draw original image centered
@@ -158,6 +305,11 @@ export async function enhanceMarkerPhotoSimple(
 
     // Draw inner stroke
     drawInnerStroke(ctx, borderThickness, borderThickness, origW, origH);
+    
+    // Draw text watermark with project ID
+    if (projectId) {
+      drawTextWatermark(ctx, canvasW, canvasH, borderThickness, `AR-${projectId.substring(0, 8)}`);
+    }
 
     const enhancedPhotoPath = path.join(outputDir, 'enhanced-photo.jpg');
     const jpegBuffer = canvas.toBuffer('image/jpeg', { quality: 0.95 });
@@ -168,19 +320,19 @@ export async function enhanceMarkerPhotoSimple(
     const borderPixels = totalArea - origArea;
     const borderPercent = (borderPixels / totalArea) * 100;
 
-    console.log('[Pattern Border] ✅ Enhanced photo saved:', enhancedPhotoPath);
+    console.log('[Unique Border] ✅ Enhanced photo saved:', enhancedPhotoPath);
+    console.log(`[Unique Border] Seed: ${seedNumber.toString(16)}, Border: ${borderThickness}px (each side)`);
+    console.log(`[Unique Border] Corners: [${borderInfo.cornerSymbols.join(', ')}]`);
+    console.log(`[Unique Border] Pattern mix: [${borderInfo.patternMix.join(', ')}]`);
     console.log(
-      `[Pattern Border] Border thickness: ${borderThickness}px (each side), cell: ${cellSize}px, phase: (${phaseOffsetX}, ${phaseOffsetY})`
+      `[Unique Border] Border pixels: ${borderPixels} (${borderPercent.toFixed(2)}% of final image area)`
     );
-    console.log(
-      `[Pattern Border] Border pixels: ${borderPixels} (${borderPercent.toFixed(2)}% of final image area)`
-    );
-    console.log('[Pattern Border] Original size:', `${origW}x${origH}`, 'Final size:', `${canvasW}x${canvasH}`);
-    console.log('[Pattern Border] Processing time:', Date.now() - startTime, 'ms');
+    console.log('[Unique Border] Original size:', `${origW}x${origH}`, 'Final size:', `${canvasW}x${canvasH}`);
+    console.log('[Unique Border] Processing time:', Date.now() - startTime, 'ms');
 
     return { photoPath: enhancedPhotoPath, enhanced: true };
   } catch (err: any) {
-    console.error('[Pattern Border] ❌ Enhancement error:', err.message);
+    console.error('[Unique Border] ❌ Enhancement error:', err.message);
     return { photoPath, enhanced: false };
   }
 }

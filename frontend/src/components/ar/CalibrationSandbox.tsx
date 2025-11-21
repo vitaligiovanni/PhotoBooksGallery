@@ -45,6 +45,12 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
   // Инициализируем с пропорциями фото по центру
   const [cropRegion, setCropRegion] = useState({ x: 0.1, y: 0.1, width: 0.8, height: 0.8 });
   
+  // NEW: Zoom and Offset state
+  const [zoom, setZoom] = useState<number>(1.0);
+  const [offsetX, setOffsetX] = useState<number>(0);
+  const [offsetY, setOffsetY] = useState<number>(0);
+  const [aspectLocked, setAspectLocked] = useState<boolean>(true);
+  
   // При изменении пропорций фото - пересчитываем crop region
   React.useEffect(() => {
     const photoAR = 1 / photoAspectRatio; // width/height фото
@@ -166,6 +172,31 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
     boxShadow: dragging || resizing ? '0 0 0 2px #1d4ed8, 0 0 0 6px rgba(29,78,216,0.3)' : '0 0 0 1px rgba(0,0,0,0.15)'
   };
 
+  // NEW: Handlers for zoom/offset
+  const handleZoomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newZoom = parseFloat(e.target.value);
+    setZoom(newZoom);
+    onChange({ zoom: newZoom } as any);
+  };
+
+  const handleOffsetXChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newOffsetX = parseFloat(e.target.value);
+    setOffsetX(newOffsetX);
+    onChange({ offsetX: newOffsetX } as any);
+  };
+
+  const handleOffsetYChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newOffsetY = parseFloat(e.target.value);
+    setOffsetY(newOffsetY);
+    onChange({ offsetY: newOffsetY } as any);
+  };
+
+  const handleAspectLockChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newAspectLocked = e.target.checked;
+    setAspectLocked(newAspectLocked);
+    onChange({ aspectLocked: newAspectLocked } as any);
+  };
+
   return (
     <div className="space-y-2">
       <div className="text-xs text-muted-foreground flex justify-between items-center">
@@ -271,6 +302,71 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
         <input type="range" min={-180} max={180} step={1} value={rotation.z} onChange={rotateChange} className="flex-1" />
         <input type="number" className="w-16 text-xs border rounded px-1 py-0.5" value={rotation.z} onChange={e=>rotateChange({ target: { value: e.target.value } } as any)} />
       </div>
+      
+      {/* NEW: Zoom and Offset Controls */}
+      <div className="space-y-3 pt-2 border-t">
+        <div className="text-xs font-medium text-foreground">Тонкая настройка (поверх автообрезки)</div>
+        
+        {/* Zoom Slider */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs min-w-[60px]">Зум</label>
+          <input 
+            type="range" 
+            min={0.5} 
+            max={2.0} 
+            step={0.05} 
+            value={zoom} 
+            onChange={handleZoomChange} 
+            className="flex-1" 
+          />
+          <span className="text-xs w-12 text-right">{zoom.toFixed(2)}×</span>
+        </div>
+        
+        {/* X Offset Slider */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs min-w-[60px]">Сдвиг X</label>
+          <input 
+            type="range" 
+            min={-0.5} 
+            max={0.5} 
+            step={0.01} 
+            value={offsetX} 
+            onChange={handleOffsetXChange} 
+            className="flex-1" 
+          />
+          <span className="text-xs w-12 text-right">{offsetX.toFixed(2)}</span>
+        </div>
+        
+        {/* Y Offset Slider */}
+        <div className="flex items-center gap-2">
+          <label className="text-xs min-w-[60px]">Сдвиг Y</label>
+          <input 
+            type="range" 
+            min={-0.5} 
+            max={0.5} 
+            step={0.01} 
+            value={offsetY} 
+            onChange={handleOffsetYChange} 
+            className="flex-1" 
+          />
+          <span className="text-xs w-12 text-right">{offsetY.toFixed(2)}</span>
+        </div>
+        
+        {/* Aspect Lock Checkbox */}
+        <div className="flex items-center gap-2">
+          <input 
+            type="checkbox" 
+            id="aspectLocked" 
+            checked={aspectLocked} 
+            onChange={handleAspectLockChange} 
+            className="h-4 w-4 rounded border-gray-300" 
+          />
+          <label htmlFor="aspectLocked" className="text-xs cursor-pointer">
+            Сохранять пропорции видео (рекомендуется)
+          </label>
+        </div>
+      </div>
+      
       <div className="text-[10px] text-muted-foreground space-y-1">
         <div><strong>Синяя рамка</strong> = область видео, которая будет показана в AR</div>
         <div>• <strong>Перетаскивайте рамку</strong> для выбора нужной части видео (например, лицо по центру)</div>

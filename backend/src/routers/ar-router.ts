@@ -674,7 +674,7 @@ export function createARRouter(): Router {
         return res.status(403).json({ error: 'Admin access required' });
       }
       const { id } = req.params;
-      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop } = req.body;
+      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked } = req.body;
 
       const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
       if (!project) return res.status(404).json({ error: 'AR project not found' });
@@ -704,6 +704,10 @@ export function createARRouter(): Router {
         ...(fitMode && { fitMode }),
         ...(autoPlay !== undefined && { autoPlay }),
         ...(loop !== undefined && { loop }),
+        ...(zoom !== undefined && { zoom }), // Ручной зум (0.5-2.0)
+        ...(offsetX !== undefined && { offsetX }), // Смещение по X (−0.5 до +0.5)
+        ...(offsetY !== undefined && { offsetY }), // Смещение по Y (−0.5 до +0.5)
+        ...(aspectLocked !== undefined && { aspectLocked }), // Блокировка пропорций
       };
 
       // Update DB

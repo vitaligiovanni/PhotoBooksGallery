@@ -112,6 +112,10 @@ export default function AdminAREditPage() {
   const [autoPlay, setAutoPlay] = useState(true);
   const [loop, setLoop] = useState(true);
   const [maskFile, setMaskFile] = useState<File | null>(null);
+  const [zoom, setZoom] = useState<number>(1.0);
+  const [offsetX, setOffsetX] = useState<number>(0);
+  const [offsetY, setOffsetY] = useState<number>(0);
+  const [aspectLocked, setAspectLocked] = useState<boolean>(true);
   const [iframeKey, setIframeKey] = useState(0);
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [loc, navigate] = useLocation();
@@ -119,12 +123,17 @@ export default function AdminAREditPage() {
 
   useEffect(() => {
     if (project?.config) {
-      if (project.config.videoPosition) setPos(project.config.videoPosition);
-      if (project.config.videoRotation) setRot(project.config.videoRotation);
-      if (project.config.videoScale) setScale(project.config.videoScale);
-      if (project.config.fitMode) setFitMode(project.config.fitMode);
-      if (project.config.autoPlay !== undefined) setAutoPlay(project.config.autoPlay);
-      if (project.config.loop !== undefined) setLoop(project.config.loop);
+      const cfg = project.config as any;
+      if (cfg.videoPosition) setPos(cfg.videoPosition);
+      if (cfg.videoRotation) setRot(cfg.videoRotation);
+      if (cfg.videoScale) setScale(cfg.videoScale);
+      if (cfg.fitMode) setFitMode(cfg.fitMode);
+      if (cfg.autoPlay !== undefined) setAutoPlay(cfg.autoPlay);
+      if (cfg.loop !== undefined) setLoop(cfg.loop);
+      if (cfg.zoom !== undefined) setZoom(cfg.zoom);
+      if (cfg.offsetX !== undefined) setOffsetX(cfg.offsetX);
+      if (cfg.offsetY !== undefined) setOffsetY(cfg.offsetY);
+      if (cfg.aspectLocked !== undefined) setAspectLocked(cfg.aspectLocked);
     }
   }, [project]);
 
@@ -140,7 +149,11 @@ export default function AdminAREditPage() {
         cropRegion: cropRegion || undefined,
         fitMode,
         autoPlay,
-        loop
+        loop,
+        zoom,
+        offsetX,
+        offsetY,
+        aspectLocked
       };
       const res = await fetch(`/api/ar/${arId}/config`, {
         method: 'PATCH',
@@ -494,11 +507,15 @@ export default function AdminAREditPage() {
                       rotation={rot}
                       markerImageUrl={project.photoUrl || undefined}
                       videoUrl={project.videoUrl || undefined}
-                      onChange={(u) => {
+                      onChange={(u: any) => {
                         if (u.videoScale) setScale(u.videoScale);
                         if (u.cropRegion) setCropRegion(u.cropRegion);
                         if (u.position) setPos(u.position);
                         if (typeof u.rotationZ === 'number') setRot(r => ({ ...r, z: u.rotationZ! }));
+                        if (typeof u.zoom === 'number') setZoom(u.zoom);
+                        if (typeof u.offsetX === 'number') setOffsetX(u.offsetX);
+                        if (typeof u.offsetY === 'number') setOffsetY(u.offsetY);
+                        if (typeof u.aspectLocked === 'boolean') setAspectLocked(u.aspectLocked);
                       }}
                     />
                   </div>

@@ -35,6 +35,10 @@ interface ARViewerConfig {
   fitMode?: string; // 'contain' | 'cover' | 'fill' | 'exact'
   videoAspectRatio?: number;
   planeAspectRatio?: number;
+  zoom?: number; // Ручной зум поверх автоматической обрезки (0.5-2.0)
+  offsetX?: number; // Смещение по X (–0.5 до +0.5)
+  offsetY?: number; // Смещение по Y (–0.5 до +0.5)
+  aspectLocked?: boolean; // Блокировка пропорций (по умолчанию true)
 }
 
 /**
@@ -375,6 +379,10 @@ export async function generateARViewer(
     fitMode = 'contain',
     videoAspectRatio,
     planeAspectRatio,
+    zoom = 1.0,
+    offsetX = 0,
+    offsetY = 0,
+    aspectLocked = true,
   } = config;
 
   const html = `<!DOCTYPE html>
@@ -422,10 +430,10 @@ scene.addEventListener('arError',(e)=>{console.error('[AR] ❌ MindAR Error:',e)
 console.log('[AR] Listeners attached, waiting for events...');
 function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.muted=false;video.currentTime=0;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible')},200)}).catch(e=>{console.warn('[AR] Play failed, trying muted:',e);video.muted=true;video.play().then(()=>{setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid')},200)})})}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
 target.addEventListener('targetLost',()=>{console.log('[AR] Marker lost');markerActive=false;plane.setAttribute('visible','false');plane.setAttribute('material','opacity',0);video.pause();video.currentTime=0});
-const FIT_MODE='${fitMode}';const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};console.log('[AR] FitMode:',FIT_MODE,'VideoAR:',VIDEO_AR,'PlaneAR:',PLANE_AR);
+const FIT_MODE='${fitMode}';const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};const ZOOM=${zoom};const OFFSET_X=${offsetX};const OFFSET_Y=${offsetY};const ASPECT_LOCKED=${aspectLocked};console.log('[AR] FitMode:',FIT_MODE,'VideoAR:',VIDEO_AR,'PlaneAR:',PLANE_AR,'Zoom:',ZOOM,'Offset:',OFFSET_X,OFFSET_Y,'AspectLocked:',ASPECT_LOCKED);
 let coverScaleX=1,coverScaleY=1;
 if(FIT_MODE==='cover'&&VIDEO_AR&&PLANE_AR){const vRatio=VIDEO_AR;const pRatio=PLANE_AR;if(vRatio>pRatio){coverScaleY=vRatio/pRatio;console.log('[AR] Cover: video wider, scaleY=',coverScaleY)}else{coverScaleX=pRatio/vRatio;console.log('[AR] Cover: video taller, scaleX=',coverScaleX)}console.log('[AR] ✓ Calculated cover scale:',coverScaleX,'x',coverScaleY)}
-let smoothInit=false;let sp=[0,0,0];let sq=null;const SMOOTH_ALPHA_POS=0.25;const SMOOTH_ALPHA_ROT=0.25;function smoothTick(){if(!markerActive||!plane||!plane.object3D){requestAnimationFrame(smoothTick);return;}const o=plane.object3D;if(!smoothInit){sp=[o.position.x,o.position.y,o.position.z];sq=o.quaternion.clone();smoothInit=true;}else{sp[0]+=(o.position.x-sp[0])*SMOOTH_ALPHA_POS;sp[1]+=(o.position.y-sp[1])*SMOOTH_ALPHA_POS;sp[2]+=(o.position.z-sp[2])*SMOOTH_ALPHA_POS;sq.slerp(o.quaternion,SMOOTH_ALPHA_ROT);o.position.set(sp[0],sp[1],sp[2]);o.quaternion.copy(sq);}if(FIT_MODE==='cover'){o.scale.set(coverScaleX,coverScaleY,1);}requestAnimationFrame(smoothTick);}requestAnimationFrame(smoothTick);
+let smoothInit=false;let sp=[0,0,0];let sq=null;const SMOOTH_ALPHA_POS=0.25;const SMOOTH_ALPHA_ROT=0.25;function smoothTick(){if(!markerActive||!plane||!plane.object3D){requestAnimationFrame(smoothTick);return;}const o=plane.object3D;if(!smoothInit){sp=[o.position.x,o.position.y,o.position.z];sq=o.quaternion.clone();smoothInit=true;}else{sp[0]+=(o.position.x-sp[0])*SMOOTH_ALPHA_POS;sp[1]+=(o.position.y-sp[1])*SMOOTH_ALPHA_POS;sp[2]+=(o.position.z-sp[2])*SMOOTH_ALPHA_POS;sq.slerp(o.quaternion,SMOOTH_ALPHA_ROT);o.position.set(sp[0],sp[1],sp[2]);o.quaternion.copy(sq);}if(FIT_MODE==='cover'){if(ASPECT_LOCKED){o.scale.set(coverScaleX*ZOOM,coverScaleY*ZOOM,1);}else{o.scale.set(coverScaleX,coverScaleY,1);}}if(OFFSET_X!==0||OFFSET_Y!==0){const basePos=[${videoPosition.x},${videoPosition.y},${videoPosition.z}];o.position.set(basePos[0]+OFFSET_X,basePos[1]+OFFSET_Y,basePos[2]);}requestAnimationFrame(smoothTick);}requestAnimationFrame(smoothTick);
 </script>
 </body>
 </html>`;
@@ -943,6 +951,10 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
         fitMode: effectiveFitMode, // Передаём fitMode (contain/cover/fill)
         videoAspectRatio: videoAspectRatio, // Для cover scale вычислений
         planeAspectRatio: photoAspectRatio, // Соотношение сторон маркера
+        zoom: (project.config as any)?.zoom ?? 1.0, // Ручной зум (по умолчанию 1.0)
+        offsetX: (project.config as any)?.offsetX ?? 0, // Смещение X (по умолчанию 0)
+        offsetY: (project.config as any)?.offsetY ?? 0, // Смещение Y (по умолчанию 0)
+        aspectLocked: (project.config as any)?.aspectLocked ?? true, // Блокировка пропорций (по умолчанию true)
       },
       viewerHtmlPath
     );

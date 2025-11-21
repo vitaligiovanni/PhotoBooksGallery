@@ -89,7 +89,7 @@ export function createARRouter(): Router {
             userId = 'local-admin';
           }
         }
-        const { orderId, config } = req.body;
+        const { orderId, config, fitMode, forceSquare } = req.body;
 
         // Validate files
         if (!files.photo || !files.video) {
@@ -139,6 +139,19 @@ export function createARRouter(): Router {
             parsedConfig = typeof config === 'string' ? JSON.parse(config) : config;
           } catch (e) {
             console.warn('[AR Router] Failed to parse config:', e);
+          }
+        }
+
+        // Apply fitMode and forceSquare if provided
+        if (fitMode || forceSquare === 'true') {
+          parsedConfig = parsedConfig || {};
+          if (fitMode) {
+            parsedConfig.fitMode = fitMode;
+          }
+          if (forceSquare === 'true') {
+            parsedConfig.fitMode = 'cover'; // Force cover mode for square markers
+            parsedConfig.forceSquare = true;
+            console.log('[AR Router] Square marker mode enabled - forcing cover fitMode');
           }
         }
 

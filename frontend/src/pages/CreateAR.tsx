@@ -26,6 +26,7 @@ export default function CreateARPage() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
   const [arProjectId, setArProjectId] = useState<string | null>(null);
+  const [squareMarkerMode, setSquareMarkerMode] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
   // Polling для статуса AR проекта
@@ -109,6 +110,12 @@ export default function CreateARPage() {
     const formData = new FormData();
     formData.append('photo', photo);
     formData.append('video', video);
+    
+    // Если включен режим квадратной печати → принудительно cover + auto-crop
+    if (squareMarkerMode) {
+      formData.append('fitMode', 'cover');
+      formData.append('forceSquare', 'true');
+    }
 
     createARMutation.mutate(formData);
   };
@@ -360,6 +367,23 @@ export default function CreateARPage() {
         <CardContent className="space-y-6">
           {!arProjectId && (
             <>
+              {/* Square Marker Mode Checkbox */}
+              <div className="flex items-start gap-3 p-4 bg-muted/50 rounded-lg border">
+                <input
+                  type="checkbox"
+                  id="squareMarkerMode"
+                  checked={squareMarkerMode}
+                  onChange={(e) => setSquareMarkerMode(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="squareMarkerMode" className="flex-1 cursor-pointer">
+                  <div className="text-sm font-medium">Квадратная печать (для выпускных альбомов)</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Автоматически обрежет видео в квадрат при наложении на квадратное фото. Используйте для печатных фотографий, обрезанных в квадрат.
+                  </div>
+                </label>
+              </div>
+
               {/* Upload Photo */}
               <div className="space-y-3">
                 <label className="block text-sm font-medium">

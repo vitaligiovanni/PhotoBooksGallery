@@ -434,11 +434,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 </a-scene>
 <script>
 console.log('[AR] Page loaded');
-const logoImg=new Image();
-logoImg.src='./animate_photobooksgallery.webp';
-logoImg.style.cssText='width:100%;height:100%;object-fit:contain;animation:pulse 2s ease-in-out infinite';
-logoImg.onload=()=>{console.log('[AR] ✓ Logo image loaded');document.getElementById('lottie-container').appendChild(logoImg)};
-logoImg.onerror=()=>{console.warn('[AR] Logo load failed, showing fallback');document.getElementById('lottie-container').innerHTML='<div style="font-size:64px">📸</div>'};
+document.getElementById('lottie-container').innerHTML='<img src="./logo.webp" alt="PhotoBooks Gallery" style="width:100%;height:100%;object-fit:contain;animation:pulse 2s ease-in-out infinite" onerror="this.style.display=\\'none\\';this.parentElement.innerHTML=\\'<div style=\\'font-size:64px\\'>📸</div>\\'">';
 setTimeout(()=>{console.log('[AR] Failsafe: hiding loader after 5s');document.getElementById('loading').classList.add('hidden')},5000);
 const video=document.getElementById('vid');
 const plane=document.getElementById('plane');
@@ -971,8 +967,8 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
     }
 
     // Копировать логотип в папку AR проекта
-    const logoSourcePath = path.join(process.cwd(), 'backend', 'objects', 'local-upload', 'animate_photobooksgallery.webp');
-    const logoDestPath = path.join(storageDir, 'animate_photobooksgallery.webp');
+    const logoSourcePath = path.join(process.cwd(), 'test_JPG_MP4', 'logo_animate.webp');
+    const logoDestPath = path.join(storageDir, 'logo.webp');
     try {
       if (await fs.pathExists(logoSourcePath)) {
         await fs.copy(logoSourcePath, logoDestPath);

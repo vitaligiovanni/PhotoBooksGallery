@@ -404,12 +404,22 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 #unmute-hint{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.85);color:#fff;padding:14px 28px;border-radius:30px;backdrop-filter:blur(12px);font-size:15px;font-weight:600;z-index:101;box-shadow:0 6px 24px rgba(0,0,0,0.5);animation:pulse 2s ease-in-out infinite;display:none}
 #unmute-hint::before{content:"👆";margin-right:8px;font-size:18px}
 @keyframes pulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.05)}}
+#logo{position:fixed;top:20px;left:20px;height:48px;opacity:0.95;z-index:99;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3))}
+#share-btn{position:fixed;bottom:100px;right:20px;width:56px;height:56px;background:linear-gradient(135deg,#667eea,#764ba2);border-radius:50%;color:#fff;font-size:24px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(102,126,234,0.4);cursor:pointer;border:none;transition:transform 0.2s;z-index:102}
+#share-btn:active{transform:scale(0.95)}
+#order-btn{position:fixed;bottom:30px;right:20px;background:linear-gradient(135deg,#00c853,#00e676);color:#fff;padding:14px 28px;border-radius:30px;font-weight:600;font-size:15px;box-shadow:0 4px 16px rgba(0,200,83,0.4);cursor:pointer;text-decoration:none;border:none;display:none;z-index:102;transition:transform 0.2s}
+#order-btn:active{transform:scale(0.95)}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+.fade-in-up{animation:fadeInUp 0.5s ease-out}
 </style>
 </head>
 <body>
 <div class="arjs-loader" id="loading"><div class="spinner"></div><h2>Загрузка AR…</h2><p>Разрешите доступ к камере</p></div>
+<img id="logo" src="https://photobooksgallery.am/logo.png" alt="PhotoBooks Gallery" onerror="this.style.display='none'">
 <div id="instructions">Наведите камеру на фотографию</div>
 <div id="unmute-hint">Нажмите для звука</div>
+<button id="share-btn" title="Поделиться">📤</button>
+<a id="order-btn" href="https://photobooksgallery.am" target="_blank">🛒 Заказать альбом</a>
 <a-scene embedded mindar-image="imageTargetSrc:./${markerBaseName}.mind?t=${Date.now()};maxTrack:1;filterMinCF:0.0001;filterBeta:0.003;warmupTolerance:5;missTolerance:10" color-space="sRGB" renderer="colorManagement:true;antialias:true;alpha:true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
 <a-assets timeout="30000"><video id="vid" src="./${videoFileName}?t=${Date.now()}" preload="auto" ${loop ? 'loop' : ''} muted playsinline crossorigin="anonymous"></video></a-assets>
 <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
@@ -423,7 +433,9 @@ const plane=document.getElementById('plane');
 const loading=document.getElementById('loading');
 const target=document.querySelector('[mindar-image-target]');
 const unmuteHint=document.getElementById('unmute-hint');
-console.log('[AR] Elements found:',{video:!!video,plane:!!plane,loading:!!loading,target:!!target,unmuteHint:!!unmuteHint});
+const shareBtn=document.getElementById('share-btn');
+const orderBtn=document.getElementById('order-btn');
+console.log('[AR] Elements found:',{video:!!video,plane:!!plane,loading:!!loading,target:!!target,unmuteHint:!!unmuteHint,shareBtn:!!shareBtn,orderBtn:!!orderBtn});
 let r={v:false,t:false,m:false};
 let markerActive=false;
 let videoReady=false;
@@ -435,10 +447,11 @@ target.addEventListener('targetFound',()=>{if(markerActive){console.log('[AR] Ma
 const scene=document.querySelector('a-scene');
 scene.addEventListener('arReady',()=>{console.log('[AR] ✓ MindAR ready, camera started');setTimeout(()=>loading.classList.add('hidden'),300)});
 scene.addEventListener('arError',(e)=>{console.error('[AR] ❌ MindAR Error:',e);loading.innerHTML='<h2>Ошибка доступа</h2><p>Проверьте камеру</p>'});
+shareBtn.addEventListener('click',()=>{console.log('[AR] Share button clicked');if(navigator.share){navigator.share({title:'PhotoBooks Gallery AR',text:'Посмотри мой фотоальбом с AR-видео! 📸✨',url:window.location.href}).then(()=>console.log('[AR] ✓ Shared')).catch(e=>console.log('[AR] Share cancelled',e))}else{const url=window.location.href;navigator.clipboard.writeText(url).then(()=>{alert('Ссылка скопирована! 📋');console.log('[AR] ✓ Link copied')}).catch(()=>alert('Скопируйте ссылку: '+url))}});
 console.log('[AR] Listeners attached, waiting for events...');
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
 console.log('[AR] iOS detected:',isIOS);
-function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.currentTime=0;video.muted=true;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing (muted)');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible');if(!isIOS){setTimeout(()=>{video.muted=false;console.log('[AR] ✓ Auto-unmuted (Android/Desktop)')},1000)}else{setTimeout(()=>{unmuteHint.style.display='block';console.log('[AR] 📢 Showing unmute hint (iOS)')},500);const handleUnmute=()=>{if(!video.muted)return;video.muted=false;unmuteHint.style.display='none';console.log('[AR] ✓ Unmuted by user tap (iOS)');document.body.removeEventListener('click',handleUnmute);document.body.removeEventListener('touchstart',handleUnmute)};document.body.addEventListener('click',handleUnmute);document.body.addEventListener('touchstart',handleUnmute)}},200)}).catch(e=>{console.error('[AR] ❌ Play failed even muted:',e);loading.innerHTML='<h2>Ошибка видео</h2><p>'+e.message+'</p>'})}else{console.log('[AR] Play promise undefined')}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
+function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.currentTime=0;video.muted=true;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing (muted)');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible');if(!isIOS){setTimeout(()=>{video.muted=false;console.log('[AR] ✓ Auto-unmuted (Android/Desktop)')},1000)}else{setTimeout(()=>{unmuteHint.style.display='block';console.log('[AR] 📢 Showing unmute hint (iOS)')},500);const handleUnmute=()=>{if(!video.muted)return;video.muted=false;unmuteHint.style.display='none';console.log('[AR] ✓ Unmuted by user tap (iOS)');document.body.removeEventListener('click',handleUnmute);document.body.removeEventListener('touchstart',handleUnmute)};document.body.addEventListener('click',handleUnmute);document.body.addEventListener('touchstart',handleUnmute)}setTimeout(()=>{orderBtn.style.display='block';orderBtn.classList.add('fade-in-up');console.log('[AR] 🛒 Order button shown')},5000)},200)}).catch(e=>{console.error('[AR] ❌ Play failed even muted:',e);loading.innerHTML='<h2>Ошибка видео</h2><p>'+e.message+'</p>'})}else{console.log('[AR] Play promise undefined')}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
 target.addEventListener('targetLost',()=>{console.log('[AR] Marker lost');markerActive=false;plane.setAttribute('visible','false');plane.setAttribute('material','opacity',0);video.pause();video.currentTime=0;unmuteHint.style.display='none'});
 const FIT_MODE='${fitMode}';const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};const ZOOM=${zoom};const OFFSET_X=${offsetX};const OFFSET_Y=${offsetY};const ASPECT_LOCKED=${aspectLocked};console.log('[AR] FitMode:',FIT_MODE,'VideoAR:',VIDEO_AR,'PlaneAR:',PLANE_AR,'Zoom:',ZOOM,'Offset:',OFFSET_X,OFFSET_Y,'AspectLocked:',ASPECT_LOCKED);
 let coverScaleX=1,coverScaleY=1;

@@ -744,13 +744,37 @@ export function createARRouter(): Router {
       let planeScale;
       
       if (cropRegion && cropRegion.width && cropRegion.height) {
-        // Плоскость принимает пропорции cropRegion (видео будет этой формы)
-        const cropAspectRatio = cropRegion.width / cropRegion.height;
-        planeScale = { 
-          width: 1.0, 
-          height: 1.0 / cropAspectRatio 
-        };
-        console.log(`[AR Config] Using cropRegion proportions for plane: ${cropRegion.width}/${cropRegion.height} = AR ${cropAspectRatio.toFixed(3)}`);
+        // КРИТИЧНО: cropRegion.width/height — это ДОЛИ от оригинального видео (0-1), а НЕ пропорции!
+        // Нужно получить реальные размеры видео, чтобы рассчитать правильный aspect ratio обрезанного фрагмента
+        const originalVideoPath = path.join(storageDir, 'video.mp4');
+        
+        try {
+          const { extractVideoMetadata } = await import('../services/media-metadata');
+          const videoMeta = await extractVideoMetadata(originalVideoPath);
+          
+          // Рассчитываем реальные размеры обрезанного фрагмента в пикселях
+          const croppedWidthPx = cropRegion.width * videoMeta.width;
+          const croppedHeightPx = cropRegion.height * videoMeta.height;
+          
+          // Реальный aspect ratio обрезанного видео
+          const cropAspectRatio = croppedWidthPx / croppedHeightPx;
+          
+          planeScale = { 
+            width: 1.0, 
+            height: 1.0 / cropAspectRatio 
+          };
+          console.log(`[AR Config] Crop region: ${cropRegion.width.toFixed(2)}×${cropRegion.height.toFixed(2)} of ${videoMeta.width}×${videoMeta.height}px video`);
+          console.log(`[AR Config] Real cropped dimensions: ${Math.round(croppedWidthPx)}×${Math.round(croppedHeightPx)}px, AR = ${cropAspectRatio.toFixed(3)}`);
+          console.log(`[AR Config] Plane scale: ${planeScale.width} × ${planeScale.height.toFixed(3)}`);
+        } catch (metaError: any) {
+          console.warn('[AR Config] Failed to extract video metadata for crop calculation, using fallback:', metaError.message);
+          // Fallback: используем cropRegion как пропорции (неправильно, но лучше чем ничего)
+          const cropAspectRatio = cropRegion.width / cropRegion.height;
+          planeScale = { 
+            width: 1.0, 
+            height: 1.0 / cropAspectRatio 
+          };
+        }
       } else if (project.photoAspectRatio) {
         // Fallback: используем пропорции фото
         planeScale = { 

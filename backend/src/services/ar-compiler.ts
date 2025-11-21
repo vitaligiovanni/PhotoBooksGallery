@@ -435,7 +435,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 <script>
 console.log('[AR] Page loaded');
 const logoImg=new Image();
-logoImg.src='/api/objects/animate_photobooksgallery.webp';
+logoImg.src='./animate_photobooksgallery.webp';
 logoImg.style.cssText='width:100%;height:100%;object-fit:contain;animation:pulse 2s ease-in-out infinite';
 logoImg.onload=()=>{console.log('[AR] ✓ Logo image loaded');document.getElementById('lottie-container').appendChild(logoImg)};
 logoImg.onerror=()=>{console.warn('[AR] Logo load failed, showing fallback');document.getElementById('lottie-container').innerHTML='<div style="font-size:64px">📸</div>'};
@@ -968,6 +968,20 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
       console.log(`[AR Compiler] Progress: marker-compiled for ${arProjectId}`);
     } catch (err) {
       console.warn('[AR Compiler] Failed to set progressPhase marker-compiled:', (err as any)?.message);
+    }
+
+    // Копировать логотип в папку AR проекта
+    const logoSourcePath = path.join(process.cwd(), 'backend', 'objects', 'local-upload', 'animate_photobooksgallery.webp');
+    const logoDestPath = path.join(storageDir, 'animate_photobooksgallery.webp');
+    try {
+      if (await fs.pathExists(logoSourcePath)) {
+        await fs.copy(logoSourcePath, logoDestPath);
+        console.log('[AR Compiler] ✓ Logo copied to AR storage');
+      } else {
+        console.warn('[AR Compiler] Logo file not found at:', logoSourcePath);
+      }
+    } catch (err) {
+      console.warn('[AR Compiler] Failed to copy logo:', (err as any)?.message);
     }
 
     // Генерировать HTML viewer

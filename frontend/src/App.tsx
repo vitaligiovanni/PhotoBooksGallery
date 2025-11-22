@@ -32,6 +32,7 @@ const PremiumPreview = lazy(() => import("@/pages/PremiumPreview"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Upload = lazy(() => import("@/pages/Upload"));
 const CreateAR = lazy(() => import("@/pages/CreateAR"));
+const CreateARSimple = lazy(() => import("@/pages/CreateARSimple"));
 const AdminAREdit = lazy(() => import("@/pages/AdminAREdit"));
 const AdminARList = lazy(() => import("@/pages/AdminARList"));
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -57,6 +58,7 @@ function Router() {
         <Route path="/profile" component={Profile} />
   <Route path="/upload" component={Upload} />
         <Route path="/create-ar" component={CreateAR} />
+        <Route path="/ar/create" component={CreateARSimple} />
         <Route path="/login" component={Login} />
         <Route path="/admin" component={Admin} />
         <Route path="/admin/currencies" component={CurrencySettings} />

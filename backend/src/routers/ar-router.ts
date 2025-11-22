@@ -1225,5 +1225,209 @@ export function createARRouter(): Router {
     res.redirect(`/api/ar/storage/${id}/index.html`);
   });
 
+  // ============================================================
+  // NEW: Product Integration Endpoints (Nov 22, 2025)
+  // ============================================================
+
+  /**
+   * POST /api/ar/create-with-product
+   * Create AR project linked to a product (for cart integration)
+   * Body: { productId: string } + multipart files (photo, video)
+   */
+  router.post(
+    '/create-with-product',
+    requireAuth,
+    upload.fields([
+      { name: 'photo', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
+    ]),
+    async (req: Request, res: Response) => {
+      try {
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id || 'local-admin';
+        const { productId, arPrice } = req.body;
+
+        // Validate files
+        if (!files.photo || !files.video) {
+          return res.status(400).json({ error: 'Both photo and video are required' });
+        }
+
+        // Validate product exists
+        if (productId) {
+          const { products } = await import('@shared/schema');
+          const [product] = await db.select().from(products).where(eq(products.id, productId)).limit(1);
+          if (!product) {
+            return res.status(404).json({ error: 'Product not found' });
+          }
+        }
+
+        const photoFile = files.photo[0];
+        const videoFile = files.video[0];
+
+        // Move files to AR storage (same as create-automatic)
+        const arId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', arId);
+        await fs.mkdir(storageDir, { recursive: true });
+
+        const photoPath = path.join(storageDir, 'photo.jpg');
+        const videoPath = path.join(storageDir, 'video.mp4');
+
+        await fs.copyFile(photoFile.path, photoPath);
+        await fs.copyFile(videoFile.path, videoPath);
+        await fs.unlink(photoFile.path).catch(() => {});
+        await fs.unlink(videoFile.path).catch(() => {});
+
+        // Create AR project with product link
+        const [arProject] = await db.insert(arProjects).values({
+          id: arId,
+          userId,
+          productId: productId || null, // Link to product
+          arPrice: arPrice || '500.00', // Default AR price
+          photoUrl: `/api/ar/storage/${arId}/photo.jpg`,
+          videoUrl: `/api/ar/storage/${arId}/video.mp4`,
+          status: 'pending',
+        }).returning();
+
+        // Trigger compilation in background (async)
+        compileARProject(arId).catch((e) => {
+          console.error(`[AR Router] Background compilation failed for ${arId}:`, e);
+        });
+
+        res.status(201).json({
+          message: 'AR project created with product link',
+          data: {
+            arId: arProject.id,
+            productId: arProject.productId,
+            arPrice: arProject.arPrice,
+            status: arProject.status,
+          },
+        });
+      } catch (error: any) {
+        console.error('[AR Router] create-with-product error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create AR with product' });
+      }
+    }
+  );
+
+  /**
+   * GET /api/ar/pricing
+   * Get AR pricing info (for cart calculations)
+   * Query: ?productId=xxx (optional)
+   */
+  router.get('/pricing', async (req: Request, res: Response) => {
+    try {
+      const { productId } = req.query;
+      
+      // Default AR pricing
+      const defaultPrice = 500; // 500 AMD
+      
+      // If productId provided, check if there's custom pricing
+      let customPrice = null;
+      if (productId && typeof productId === 'string') {
+        const [project] = await db
+          .select()
+          .from(arProjects)
+          .where(eq(arProjects.productId, productId))
+          .orderBy(desc(arProjects.createdAt))
+          .limit(1);
+        
+        if (project?.arPrice) {
+          customPrice = parseFloat(project.arPrice as string);
+        }
+      }
+
+      res.json({
+        data: {
+          defaultPrice,
+          customPrice,
+          finalPrice: customPrice || defaultPrice,
+          currency: 'AMD',
+          // Multi-language display
+          display: {
+            hy: `${customPrice || defaultPrice} ֏`,
+            ru: `${Math.round((customPrice || defaultPrice) / 4)} ₽`,
+            en: `$${((customPrice || defaultPrice) / 400).toFixed(2)}`,
+          },
+        },
+      });
+    } catch (error: any) {
+      console.error('[AR Router] pricing error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get AR pricing' });
+    }
+  });
+
+  /**
+   * PATCH /api/ar/:id/attach-to-order
+   * Mark AR project as attached to order (for tracking)
+   * Body: { orderId: string }
+   */
+  router.patch('/:id/attach-to-order', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { orderId } = req.body;
+
+      if (!orderId) {
+        return res.status(400).json({ error: 'orderId is required' });
+      }
+
+      // Update AR project
+      const [updated] = await db
+        .update(arProjects)
+        .set({
+          orderId,
+          attachedToOrder: true,
+          updatedAt: new Date(),
+        })
+        .where(eq(arProjects.id, id))
+        .returning();
+
+      if (!updated) {
+        return res.status(404).json({ error: 'AR project not found' });
+      }
+
+      res.json({
+        message: 'AR project attached to order',
+        data: {
+          arId: updated.id,
+          orderId: updated.orderId,
+          attachedToOrder: updated.attachedToOrder,
+        },
+      });
+    } catch (error: any) {
+      console.error('[AR Router] attach-to-order error:', error);
+      res.status(500).json({ error: error.message || 'Failed to attach AR to order' });
+    }
+  });
+
+  /**
+   * GET /api/ar/by-product/:productId
+   * Get all AR projects for a specific product
+   */
+  router.get('/by-product/:productId', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { productId } = req.params;
+      const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;
+
+      const projects = await db
+        .select()
+        .from(arProjects)
+        .where(
+          and(
+            eq(arProjects.productId, productId),
+            eq(arProjects.userId, userId)
+          )
+        )
+        .orderBy(desc(arProjects.createdAt));
+
+      res.json({
+        data: projects,
+        count: projects.length,
+      });
+    } catch (error: any) {
+      console.error('[AR Router] by-product error:', error);
+      res.status(500).json({ error: error.message || 'Failed to get AR projects for product' });
+    }
+  });
+
   return router;
 }

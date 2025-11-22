@@ -1232,6 +1232,11 @@ export const arProjects = pgTable("ar_projects", {
   notificationSent: boolean("notification_sent").default(false),
   notificationSentAt: timestamp("notification_sent_at"),
   
+  // Product relation (for pricing and cart integration)
+  productId: integer("product_id").references(() => products.id), // Связь с продуктом
+  attachedToOrder: boolean("attached_to_order").default(false), // Прикреплён ли к заказу
+  arPrice: decimal("ar_price", { precision: 10, scale: 2 }).default("500.00"), // Цена AR в AMD
+  
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -1240,6 +1245,7 @@ export const arProjects = pgTable("ar_projects", {
   index("IDX_ar_projects_order_id").on(table.orderId),
   index("IDX_ar_projects_status").on(table.status),
   index("IDX_ar_projects_created_at").on(table.createdAt),
+  index("IDX_ar_projects_product_id").on(table.productId), // NEW index
 ]);
 
 // AR Project Configuration type

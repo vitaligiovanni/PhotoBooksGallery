@@ -30,6 +30,9 @@ import { currencyRouter } from "./routers/currency-router";
 import { photoUploadRouter } from "./routers/photo-upload-router";
 import { mockAuth, jwtAuth } from "./routers/middleware";
 import { devRouter } from "./routers/dev-router";
+// AR feature routers (projects + items)
+import { createARRouter } from "./routers/ar-router";
+import { createARItemsRouter } from "./routers/ar-items-router";
 
 // Для локальной разработки используем локальное хранилище
 const localStorageService = new LocalStorageService();
@@ -153,6 +156,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.use('/api', sitePagesRouter);
   app.use('/api/popups', popupsRouter);
   app.use('/api/special-offers', specialOffersRouter);
+  // AR routers (mounted after auth middleware so they require auth unless in development mockAuth)
+  const arRouter = createARRouter();
+  const arItemsRouter = createARItemsRouter();
+  app.use('/api/ar', arRouter);
+  app.use('/api/ar', arItemsRouter);
 
 
   // Encoding / locale diagnostics

@@ -3,8 +3,9 @@
 -- Purpose: Connect AR projects with products for pricing and cart integration
 
 -- Step 1: Add product_id column (nullable for backward compatibility)
+-- Note: products.id is VARCHAR (UUID), not INTEGER
 ALTER TABLE ar_projects 
-ADD COLUMN IF NOT EXISTS product_id INTEGER REFERENCES products(id) ON DELETE SET NULL;
+ADD COLUMN IF NOT EXISTS product_id VARCHAR REFERENCES products(id) ON DELETE SET NULL;
 
 -- Step 2: Add attached_to_order flag (track if AR is part of an order)
 ALTER TABLE ar_projects

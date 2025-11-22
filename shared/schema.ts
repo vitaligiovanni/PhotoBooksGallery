@@ -1233,7 +1233,7 @@ export const arProjects = pgTable("ar_projects", {
   notificationSentAt: timestamp("notification_sent_at"),
   
   // Product relation (for pricing and cart integration)
-  productId: integer("product_id").references(() => products.id), // Связь с продуктом
+  productId: varchar("product_id").references(() => products.id), // Связь с продуктом (UUID)
   attachedToOrder: boolean("attached_to_order").default(false), // Прикреплён ли к заказу
   arPrice: decimal("ar_price", { precision: 10, scale: 2 }).default("500.00"), // Цена AR в AMD
   

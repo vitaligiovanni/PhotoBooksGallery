@@ -77,10 +77,10 @@ export interface CompilationResult {
  * Main AR compilation workflow (runs in Worker Thread)
  * 
  * WORKFLOW:
- * 1. Resize photo (5000px → 1920px) - 3-5x faster compilation
+ * 1. Resize photo (5000px → 1024px) - 5-8x faster compilation
  * 2. Enhance marker with unique border (hash-based pattern)
  * 3. Crop border for MindAR (clean center recognition)
- * 4. Compile .mind file (SLOWEST: 120 seconds CPU blocking)
+ * 4. Compile .mind file with MD5 caching (105s first, 2-5s cached)
  * 5. Generate HTML5 viewer (A-Frame + MindAR)
  * 6. Generate QR code for sharing
  * 7. Copy assets (video, logo, etc.)
@@ -94,9 +94,9 @@ export async function compileARProject(job: CompilationJob): Promise<Compilation
   console.log(`[AR Core] Config:`, JSON.stringify(job.config, null, 2));
   
   try {
-    // STEP 1: Resize photo (5000px → 1920px for faster compilation)
+    // STEP 1: Resize photo (5000px → 1024px for faster compilation)
     console.log('[AR Core] 📐 STEP 1: Resizing photo...');
-    const resizedPhotoPath = await resizePhotoIfNeeded(job.photoPath, job.storageDir, 1920);
+    const resizedPhotoPath = await resizePhotoIfNeeded(job.photoPath, job.storageDir, 1024);
     console.log(`[AR Core] ✅ Photo resized: ${resizedPhotoPath}`);
     
     // STEP 2: Enhance marker with unique border
@@ -143,9 +143,36 @@ export async function compileARProject(job: CompilationJob): Promise<Compilation
       console.log(`[AR Core] ✅ Video copied: ${videoWidth}x${videoHeight}, ${videoDurationMs}ms`);
     }
     
-    // STEP 6: Compile .mind file (SLOWEST PART - 120 seconds)
-    console.log('[AR Core] ⏳ STEP 4: Compiling .mind marker (this takes ~120 seconds)...');
-    const mindResult = await compileMindFile(finalMarkerSourcePath, job.storageDir, 'marker');
+    // STEP 6: Check cache and compile .mind marker
+    console.log('[AR Core] ⏳ STEP 4: Checking cache and compiling .mind marker...');
+    
+    // MD5 cache: Reuse .mind file if photo unchanged
+    const photoBuffer = await fs.readFile(finalMarkerSourcePath);
+    const photoHash = crypto.createHash('md5').update(photoBuffer).digest('hex');
+    const cacheDir = path.join(job.storageDir, '..', 'mind-cache');
+    const cachedMindPath = path.join(cacheDir, `${photoHash}.mind`);
+    
+    let mindResult: { success: boolean; error?: string; mindFilePath?: string; compilationTimeMs: number };
+    const cachedExists = await fs.access(cachedMindPath).then(() => true).catch(() => false);
+    
+    if (cachedExists) {
+      console.log(`[AR Core] ✅ Cache HIT! Reusing compiled .mind file (hash: ${photoHash.slice(0, 8)}...)`);
+      const targetMindPath = path.join(job.storageDir, 'marker.mind');
+      await fs.copyFile(cachedMindPath, targetMindPath);
+      console.log('[AR Core] ⚡ Compilation skipped (2-5s vs ~105s!)');
+      mindResult = { success: true, mindFilePath: targetMindPath, compilationTimeMs: 0 };
+    } else {
+      console.log(`[AR Core] ❌ Cache MISS. Compiling new .mind file (hash: ${photoHash.slice(0, 8)}...)`);
+      console.log('[AR Core] ⏳ This takes ~105 seconds with 1024px resolution...');
+      mindResult = await compileMindFile(finalMarkerSourcePath, job.storageDir, 'marker');
+      
+      // Save to cache for future use
+      if (mindResult.success && mindResult.mindFilePath) {
+        await fs.mkdir(cacheDir, { recursive: true });
+        await fs.copyFile(mindResult.mindFilePath, cachedMindPath);
+        console.log(`[AR Core] 💾 Cached .mind file for future compilations`);
+      }
+    }
     
     if (!mindResult.success) {
       throw new Error(`MindAR compilation failed: ${mindResult.error}`);
@@ -251,10 +278,10 @@ export async function compileARProject(job: CompilationJob): Promise<Compilation
 // ==== HELPER FUNCTIONS (extracted from backend) ====
 
 /**
- * Resize photo to 1920px (3-5x faster compilation)
+ * Resize photo to 1024px (5-8x faster compilation)
  * FROM: backend/src/services/ar-compiler.ts lines 31-62
  */
-async function resizePhotoIfNeeded(photoPath: string, outputDir: string, maxDimension: number = 1920): Promise<string> {
+async function resizePhotoIfNeeded(photoPath: string, outputDir: string, maxDimension: number = 1024): Promise<string> {
   try {
     const metadata = await sharp(photoPath).metadata();
     const { width, height } = metadata;
@@ -608,7 +635,7 @@ async function compileMindFile(
   photoPath: string,
   outputDir: string,
   markerBaseName: string = 'marker'
-): Promise<{ success: boolean; compilationTimeMs: number; error?: string }> {
+): Promise<{ success: boolean; compilationTimeMs: number; error?: string; mindFilePath?: string }> {
   const startTime = Date.now();
   
   try {
@@ -619,7 +646,7 @@ async function compileMindFile(
     let image = await loadImage(photoPath);
     console.log(`[AR Core] Original image: ${image.width}x${image.height}px`);
 
-    const MAX_DIMENSION = 1920;
+    const MAX_DIMENSION = 1024;
     if (image.width > MAX_DIMENSION || image.height > MAX_DIMENSION) {
       const aspectRatio = image.width / image.height;
       let targetWidth = image.width;
@@ -670,7 +697,8 @@ async function compileMindFile(
 
     return {
       success: true,
-      compilationTimeMs
+      compilationTimeMs,
+      mindFilePath
     };
   } catch (error: any) {
     const compilationTimeMs = Date.now() - startTime;

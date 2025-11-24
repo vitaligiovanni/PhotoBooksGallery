@@ -12,6 +12,7 @@
   "dependencies": {
     "@msgpack/msgpack": "^3.0.0-beta2",
     "@tensorflow/tfjs": "^4.16.0",
+    "@tensorflow/tfjs-node": "^4.22.0",
     "axios": "^1.6.2",
     "canvas": "^2.11.2",
     "cors": "^2.8.5",

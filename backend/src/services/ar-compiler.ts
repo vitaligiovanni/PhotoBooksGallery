@@ -97,13 +97,9 @@ interface ARViewerConfig {
  * Generate multi-target viewer (multiple живые фото)
  */
 async function generateMultiTargetViewer(arProjectId: string, items: any[], storageDir: string): Promise<void> {
-  // Build list of marker .mind files with ./ prefix for proper relative loading
-  // Note: MindAR requires comma-separated list WITHOUT spaces
-  // NOTE: MindAR "imageTargetSrc" official API expects a SINGLE .mind file containing multiple targets.
-  // Current pipeline produces individual marker-N.mind files (one per item). Full aggregation step is pending.
-  // Temporary fallback: use ONLY the first marker file so at least one target works and the viewer exits loading state.
-  // Roadmap: implement multi-upload compile to produce a combined targets.mind, then switch imageTargetSrc accordingly.
-  const markerFiles = `./marker-0.mind`; // fallback (was comma-separated list of individual mind files)
+  // MindAR "imageTargetSrc" expects a SINGLE .mind file containing multiple targets
+  // The compileMultiItemProject() function now generates targets.mind with all markers combined
+  const markerFiles = `./targets.mind`;
   
   // Build video assets + entities
   const videoAssets = items.map((item, idx) => {
@@ -692,41 +688,36 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
     // Sort items by targetIndex
     const sortedItems = items.sort((a, b) => a.targetIndex - b.targetIndex);
 
-    // Compile each item's marker
+    // Prepare all photo paths for multi-target compilation
+    console.log(`[AR Compiler Multi] 📸 Preparing ${sortedItems.length} photos for multi-target compilation...`);
+    const photoPaths: string[] = [];
+    
     for (const item of sortedItems) {
-      console.log(`[AR Compiler Multi] Compiling item ${item.name} (targetIndex ${item.targetIndex})`);
       const photoPath = path.join(process.cwd(), item.photoUrl);
-      const markerName = `marker-${item.targetIndex}`;
-      
-      // Apply unique border enhancement for this item
       const itemStorageDir = path.join(storageDir, `item-${item.targetIndex}`);
       await fs.mkdir(itemStorageDir, { recursive: true });
       
       // OPTIMIZATION: Resize photo first (3-5x faster)
       const resizedPhotoPath = await resizePhotoIfNeeded(photoPath, itemStorageDir, 1920);
+      photoPaths.push(resizedPhotoPath);
       
-      // Border enhancement handled by AR microservice
-      const finalMarkerSourcePath = resizedPhotoPath;
-      
-      // Compile to final destination
-      const mindFinalPath = path.join(storageDir, `${markerName}.mind`);
-
-      const { compileMindFile } = await import('./ar-compiler-v2');
-      const compileResult = await compileMindFile(
-        finalMarkerSourcePath,
-        storageDir,
-        markerName
-      );
-
-      if (!compileResult.success) {
-        throw new Error(`Item ${item.name} marker compilation failed: ${compileResult.error}`);
-      }
-
-      console.log(`[AR Compiler Multi] ✅ Item ${item.name} marker compiled successfully`);
-
-      // Progress logging only (DB update removed to prevent locks)
-      console.log(`[AR Compiler Multi] ✓ Item ${item.targetIndex} marked as compiled`);
+      console.log(`[AR Compiler Multi] ✓ Item ${item.name} (targetIndex ${item.targetIndex}) prepared`);
     }
+
+    // Compile ALL photos into ONE targets.mind file using ar-compiler-v2
+    console.log(`[AR Compiler Multi] 🎯 Compiling ${photoPaths.length} photos into single targets.mind file...`);
+    const { compileMultiTargetMindFile } = await import('./ar-compiler-v2');
+    const compileResult = await compileMultiTargetMindFile(
+      photoPaths,
+      storageDir,
+      'targets.mind'
+    );
+
+    if (!compileResult.success) {
+      throw new Error(`Multi-target compilation failed: ${compileResult.error}`);
+    }
+
+    console.log(`[AR Compiler Multi] ✅ All ${photoPaths.length} targets compiled into single targets.mind (${(compileResult.fileSize! / 1024).toFixed(1)} KB)`);
 
     // Generate multi-target viewer
     await generateMultiTargetViewer(arProjectId, sortedItems, storageDir);

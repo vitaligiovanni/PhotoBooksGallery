@@ -11,7 +11,16 @@ WORKDIR /workspace/backend
 COPY backend/package*.json ./
 ENV NODE_ENV=development
 ENV NPM_CONFIG_PRODUCTION=false
-RUN npm install --include=dev --no-audit --no-fund
+
+# Configure npm для лучшей стабильности сети
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 300000
+
+RUN npm install --include=dev --no-audit --no-fund --prefer-offline || \
+    (sleep 10 && npm install --include=dev --no-audit --no-fund --prefer-offline) || \
+    (sleep 20 && npm install --include=dev --no-audit --no-fund)
 ## Ensure @types/node is present (some environments miss it due to cache quirks)
 RUN npm ls @types/node || npm install -D @types/node@latest --no-audit --no-fund
 RUN ls -la node_modules/@types || true && npm ls @types/node || true
@@ -42,13 +51,27 @@ RUN apk add --no-cache curl
 
 # Copy package manifests and install only production deps
 COPY backend/package*.json ./
-# Install only production dependencies
-RUN npm install --omit=dev --prefer-offline --no-audit --no-fund
+
+# Configure npm для стабильности сети
+RUN npm config set fetch-retries 5 && \
+    npm config set fetch-retry-mintimeout 20000 && \
+    npm config set fetch-retry-maxtimeout 120000 && \
+    npm config set fetch-timeout 300000
+
+# Install only production dependencies with retry
+RUN npm install --omit=dev --prefer-offline --no-audit --no-fund || \
+    (sleep 10 && npm install --omit=dev --prefer-offline --no-audit --no-fund) || \
+    (sleep 20 && npm install --omit=dev --no-audit --no-fund)
 
 # Copy built app and necessary runtime files
 COPY --from=builder /workspace/backend/dist ./dist
 COPY --from=builder /workspace/backend/.env* ./
 COPY --from=builder /workspace/backend/public ./public
+
+# Copy shared compiled code to node_modules/@shared for runtime resolution
+RUN mkdir -p node_modules/@shared
+COPY --from=builder /workspace/backend/dist/shared ./node_modules/@shared
+
 RUN mkdir -p uploads
 
 # Expose API port

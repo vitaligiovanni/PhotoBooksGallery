@@ -40,7 +40,22 @@ coverage
 tmp
 temp
 uploads
-objects/local-upload
+objects
+backups
+
+# AR Service (не нужно для основных сервисов)
+ar-service/node_modules
+ar-service/dist
+ar-service/storage
+
+# Backend build artifacts
+backend/dist
+backend/node_modules
+backend/objects
+
+# Frontend build
+frontend/node_modules
+frontend/dist
 
 # OS files
 .DS_Store

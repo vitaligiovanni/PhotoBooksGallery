@@ -78,6 +78,9 @@ export function Header() {
           <nav className="flex items-center gap-6 text-sm">
             <Link href="/catalog" className="hover:text-primary text-muted-foreground" data-testid="link-catalog">{t('catalog')}</Link>
             <Link href="/graduation-albums" className="hover:text-primary text-muted-foreground" data-testid="link-graduation-albums">{t('graduationAlbums')}</Link>
+            <Link href="/living-photos" className="hover:text-primary text-muted-foreground font-medium" data-testid="link-living-photos">
+              {i18n.language === 'ru' ? 'Живые фото' : i18n.language === 'hy' ? 'Կենդանի լուսանկարներ' : 'Living Photos'}
+            </Link>
             <Link href="/editor" className="text-primary font-medium" data-testid="link-editor">{t('editor')}</Link>
             <Link href="/blog" className="hover:text-primary text-muted-foreground" data-testid="link-blog">{t('blog')}</Link>
             <Link href="/about" className="hover:text-primary text-muted-foreground" data-testid="link-about">{t('about')}</Link>
@@ -240,6 +243,9 @@ export function Header() {
             <div className="grid gap-2 text-sm">
               <Link href="/catalog" className="px-3 py-2 rounded-md bg-muted hover:bg-muted/70 transition-colors" data-testid="mnav-catalog" onClick={() => setIsMobileMenuOpen(false)}>{t('catalog')}</Link>
               <Link href="/graduation-albums" className="px-3 py-2 rounded-md hover:bg-muted transition-colors" data-testid="mnav-graduation-albums" onClick={() => setIsMobileMenuOpen(false)}>{t('graduationAlbums')}</Link>
+              <Link href="/living-photos" className="px-3 py-2 rounded-md hover:bg-muted transition-colors font-medium" data-testid="mnav-living-photos" onClick={() => setIsMobileMenuOpen(false)}>
+                {i18n.language === 'ru' ? 'Живые фото' : i18n.language === 'hy' ? 'Կենդանի լուսանկարներ' : 'Living Photos'}
+              </Link>
               <Link href="/editor" className="px-3 py-2 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-colors" data-testid="mnav-editor" onClick={() => setIsMobileMenuOpen(false)}>{t('editor')}</Link>
               <Link href="/blog" className="px-3 py-2 rounded-md hover:bg-muted transition-colors" data-testid="mnav-blog" onClick={() => setIsMobileMenuOpen(false)}>{t('blog')}</Link>
               <Link href="/about" className="px-3 py-2 rounded-md hover:bg-muted transition-colors" data-testid="mnav-about" onClick={() => setIsMobileMenuOpen(false)}>{t('about')}</Link>

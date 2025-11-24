@@ -35,6 +35,8 @@ const CreateAR = lazy(() => import("@/pages/CreateAR"));
 const CreateARSimple = lazy(() => import("@/pages/CreateARSimple"));
 const AdminAREdit = lazy(() => import("@/pages/AdminAREdit"));
 const AdminARList = lazy(() => import("@/pages/AdminARList"));
+const LivingPhotos = lazy(() => import("@/pages/LivingPhotos"));
+const ARViewRedirect = lazy(() => import("@/pages/ARViewRedirect"));
 import { AppLayout } from "@/components/layout/AppLayout";
 
 function HomePage() {
@@ -59,6 +61,8 @@ function Router() {
   <Route path="/upload" component={Upload} />
         <Route path="/create-ar" component={CreateAR} />
         <Route path="/ar/create" component={CreateARSimple} />
+        <Route path="/ar/view/:id" component={ARViewRedirect} />
+        <Route path="/living-photos" component={LivingPhotos} />
         <Route path="/login" component={Login} />
         <Route path="/admin" component={Admin} />
         <Route path="/admin/currencies" component={CurrencySettings} />

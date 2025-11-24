@@ -25,11 +25,18 @@ function maskDbUrl(url: string) {
 console.log('[DB] Using connection string:', maskDbUrl(process.env.DATABASE_URL));
 
 // Создаем пул соединений с PostgreSQL
+// 🔥 CRITICAL: MindAR compilation BLOCKS CPU for 120 seconds (unavoidable)
+// connectionTimeoutMillis MUST be > compilation time to prevent "Connection terminated"
+// Real solution: Move compilation to Worker Thread (separate CPU core)
 export const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000,
+  max: 50, // Larger pool to handle concurrent requests during compilation
+  min: 10, // Keep 10 warm connections ready
+  idleTimeoutMillis: 30000, // 30s: normal idle timeout
+  connectionTimeoutMillis: 180000, // 180s: MUST be > MindAR compilation time (120s)
+  allowExitOnIdle: false,
+  // PostgreSQL query_timeout: kill individual queries >30s
+  query_timeout: 30000, // 30 seconds per query
 });
 
 pool.on('error', (err) => {

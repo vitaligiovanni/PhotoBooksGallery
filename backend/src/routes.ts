@@ -161,6 +161,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const arItemsRouter = createARItemsRouter();
   app.use('/api/ar', arRouter);
   app.use('/api/ar', arItemsRouter);
+  
+  // CRITICAL: Duplicate /ar routes WITHOUT /api prefix for QR codes and ngrok direct access
+  // QR codes generate URLs like https://.../ar/view/demo-xxx (not /api/ar/view/demo-xxx)
+  app.use('/ar', arRouter);
 
 
   // Encoding / locale diagnostics

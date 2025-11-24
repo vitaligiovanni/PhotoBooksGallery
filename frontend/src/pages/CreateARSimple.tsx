@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation } from 'wouter';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -31,13 +32,9 @@ interface Product {
 export default function CreateARSimple() {
   const [location, navigate] = useLocation();
   const queryClient = useQueryClient();
-  
-  // Get language from context (default: hy)
-  const lang: 'hy' | 'ru' | 'en' = useMemo(() => {
-    const stored = localStorage.getItem('language');
-    return (stored === 'ru' || stored === 'en') ? stored : 'hy';
-  }, []);
-  
+  const { i18n } = useTranslation();
+  // Use active i18n language; fallback to 'ru'
+  const lang: 'hy' | 'ru' | 'en' = (i18n.language === 'hy' || i18n.language === 'ru' || i18n.language === 'en') ? i18n.language as any : 'ru';
   const t = (key: string) => getARTranslation(lang, `ar.${key}`);
   
   // Get productId from URL query (?product=xxx)

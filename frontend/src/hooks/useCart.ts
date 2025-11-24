@@ -99,6 +99,32 @@ export function useCart() {
     saveCartAndNotify(currentItems);
   }, []);
 
+  // Добавление AR дополнения как отдельной позиции корзины
+  const addARAddon = useCallback((baseProduct: Product, arPrice: number, addonName: string) => {
+    const currentItems = [...globalCartItems];
+    const addonId = `${baseProduct.id}-AR`;
+    const existingIndex = currentItems.findIndex(i => i.id === addonId);
+    if (existingIndex >= 0) {
+      // Уже существует — ничего не делаем (чтобы не дублировать)
+      return;
+    }
+    const imgUrl = (baseProduct.images && baseProduct.images.length > 0)
+      ? baseProduct.images[0]
+      : (typeof baseProduct.imageUrl === 'string' ? baseProduct.imageUrl : undefined);
+    const addonItem: CartItem = {
+      id: addonId,
+      name: addonName,
+      price: arPrice,
+      quantity: 1,
+      imageUrl: imgUrl,
+      options: { parentProductId: baseProduct.id },
+      isReadyMade: true,
+      isARAddon: true,
+    };
+    currentItems.push(addonItem);
+    saveCartAndNotify(currentItems);
+  }, []);
+
   const removeFromCart = useCallback((productId: string) => {
     const updatedItems = globalCartItems.filter(item => item.id !== productId);
     saveCartAndNotify(updatedItems);
@@ -134,6 +160,7 @@ export function useCart() {
     updateQuantity,
     clearCart,
     getCartTotal: getCartTotal(),
-    getCartCount: getCartCount()
+    getCartCount: getCartCount(),
+    addARAddon
   };
 }

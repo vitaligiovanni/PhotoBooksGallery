@@ -1,11 +1,12 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface ARProjectListItem {
   id: string;
@@ -17,6 +18,8 @@ interface ARProjectListItem {
   createdAt: string;
   fitMode?: string;
   errorMessage?: string | null;
+  isDemo?: boolean;
+  expiresAt?: string;
 }
 
 interface ARProjectsResponse {
@@ -40,6 +43,9 @@ export default function AdminARListPage() {
   // UI Filters
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
+  const [viewMode, setViewMode] = useState<'all' | 'real' | 'demo'>('all');
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const { data: response, isLoading, error, refetch } = useQuery<ARProjectsResponse>({
     queryKey: ['/api/ar/all'],
@@ -51,8 +57,43 @@ export default function AdminARListPage() {
     refetchInterval: 7000, // refresh every 7s
   });
 
+  // Extend demo expiration mutation
+  const extendDemoMutation = useMutation({
+    mutationFn: async (arId: string) => {
+      const res = await fetch(`/api/ar/${arId}/extend-demo`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hours: 24 }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Срок продлён',
+        description: 'Демо-проект продлён на 24 часа',
+      });
+      queryClient.invalidateQueries({ queryKey: ['/api/ar/all'] });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: err.message || 'Не удалось продлить срок',
+      });
+    },
+  });
+
   const rawProjects = response?.data || [];
+  
+  // Split into real and demo
+  const realProjects = rawProjects.filter(p => !p.isDemo);
+  const demoProjects = rawProjects.filter(p => p.isDemo);
+  
   const projects = rawProjects.filter(p => {
+    if (viewMode === 'real' && p.isDemo) return false;
+    if (viewMode === 'demo' && !p.isDemo) return false;
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     if (search && !p.id.startsWith(search)) return false;
     return true;
@@ -80,6 +121,32 @@ export default function AdminARListPage() {
             </Alert>
           )}
 
+          {/* Mode Switcher */}
+          <div className="flex gap-2 mb-6">
+            <Button
+              variant={viewMode === 'all' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('all')}
+            >
+              Все ({rawProjects.length})
+            </Button>
+            <Button
+              variant={viewMode === 'real' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('real')}
+            >
+              Реальные проекты ({realProjects.length})
+            </Button>
+            <Button
+              variant={viewMode === 'demo' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('demo')}
+              className="border-orange-300"
+            >
+              Демо (24ч) ({demoProjects.length})
+            </Button>
+          </div>
+
           {/* Filters */}
           <div className="flex flex-col md:flex-row md:items-end gap-4 mb-6">
             <div>
@@ -98,7 +165,7 @@ export default function AdminARListPage() {
               <input value={search} onChange={e=>setSearch(e.target.value.trim())} placeholder="Начало ID" className="w-full border rounded px-2 py-1 text-sm" />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={()=>{setStatusFilter('all'); setSearch('');}}>Сброс</Button>
+              <Button variant="outline" size="sm" onClick={()=>{setStatusFilter('all'); setSearch(''); setViewMode('all');}}>Сброс</Button>
               <Button variant="outline" size="sm" onClick={()=>refetch()}>Обновить</Button>
             </div>
           </div>
@@ -126,6 +193,11 @@ export default function AdminARListPage() {
                           <StatusIcon className={`h-3 w-3 ${project.status === 'processing' ? 'animate-spin' : ''}`} />
                           {statusInfo.label}
                         </Badge>
+                        {project.isDemo && (
+                          <Badge variant="secondary" className="bg-orange-100 text-orange-700 border-orange-300">
+                            <Clock className="h-3 w-3 mr-1" /> ДЕМО
+                          </Badge>
+                        )}
                         <span className="font-mono text-sm text-muted-foreground">
                           {project.id.slice(0, 8)}...
                         </span>
@@ -138,6 +210,11 @@ export default function AdminARListPage() {
 
                       <div className="text-xs text-muted-foreground space-y-1">
                         <div>Создан: {new Date(project.createdAt).toLocaleString('ru-RU')}</div>
+                        {project.isDemo && project.expiresAt && (
+                          <div className="text-orange-600 font-medium">
+                            Истекает: {new Date(project.expiresAt).toLocaleString('ru-RU')}
+                          </div>
+                        )}
                         {project.orderId && <div>Заказ: {project.orderId}</div>}
                         {project.markerQuality && (
                           <div>Качество маркера: {(parseFloat(project.markerQuality) * 100).toFixed(0)}%</div>
@@ -149,6 +226,18 @@ export default function AdminARListPage() {
                     </div>
 
                     <div className="flex gap-2">
+                      {project.isDemo && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                          onClick={() => extendDemoMutation.mutate(project.id)}
+                          disabled={extendDemoMutation.isPending}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> +24ч
+                        </Button>
+                      )}
+                      
                       {(project.viewerHtmlUrl || project.viewUrl) && (
                         <Button
                           size="sm"

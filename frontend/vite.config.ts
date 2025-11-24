@@ -15,11 +15,14 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    // Allow all localtunnel and localhost.run subdomains for mobile testing
+    // Allow all localtunnel, localhost.run and ngrok subdomains for mobile testing
     allowedHosts: [
       '.loca.lt',
       '.lhr.life',
       '.localhost.run',
+      '.ngrok-free.app',
+      '.ngrok-free.dev',
+      '.ngrok.io',
     ],
     proxy: {
       '/api': {

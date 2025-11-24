@@ -19,15 +19,11 @@ Write-Host ""
 
 # Step 2: Check if migration already applied
 Write-Host "🔍 Step 2: Checking if migration already applied..." -ForegroundColor Yellow
-$checkQuery = @"
-SELECT column_name 
-FROM information_schema.columns 
-WHERE table_name='ar_projects' AND column_name='product_id'
-"@
+$checkQuery = "SELECT column_name FROM information_schema.columns WHERE table_name='ar_projects' AND column_name='product_id'"
 
-$result = docker exec photobooksgallery-db-1 psql -U photobooks_user -d photobooks_db -t -c "$checkQuery" 2>$null
+$result = docker exec photobooksgallery-db-1 psql -U photobooks_user -d photobooks_db -t -c $checkQuery
 
-if ($result -match "product_id") {
+if ($result -and $result.ToString().Contains("product_id")) {
     Write-Host "⚠️  Migration already applied! Skipping..." -ForegroundColor Yellow
     Write-Host ""
     Write-Host "✅ Database is up to date" -ForegroundColor Green
@@ -44,7 +40,7 @@ Write-Host "   Adding: product_id, attached_to_order, ar_price columns" -Foregro
 $migrationSQL = Get-Content ".\backend\migrations\add-ar-product-relation.sql" -Raw
 
 try {
-    docker exec -i photobooksgallery-db-1 psql -U photobooks_user -d photobooks_db <<< $migrationSQL
+    $migrationSQL | docker exec -i photobooksgallery-db-1 psql -U photobooks_user -d photobooks_db
     
     if ($LASTEXITCODE -ne 0) {
         throw "Migration failed"
@@ -56,18 +52,9 @@ try {
     # Step 4: Verify migration
     Write-Host "🔍 Step 4: Verifying migration..." -ForegroundColor Yellow
     
-    $verifyQuery = @"
-SELECT 
-    column_name, 
-    data_type, 
-    is_nullable
-FROM information_schema.columns 
-WHERE table_name='ar_projects' 
-AND column_name IN ('product_id', 'attached_to_order', 'ar_price')
-ORDER BY column_name
-"@
+    $verifyQuery = "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name='ar_projects' AND column_name IN ('product_id', 'attached_to_order', 'ar_price') ORDER BY column_name"
     
-    $verification = docker exec photobooksgallery-db-1 psql -U photobooks_user -d photobooks_db -c "$verifyQuery"
+    $verification = docker exec photobooksgallery-db-1 psql -U photobooks_user -d photobooks_db -c $verifyQuery
     
     Write-Host ""
     Write-Host $verification

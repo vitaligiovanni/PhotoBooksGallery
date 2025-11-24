@@ -80,6 +80,8 @@
     "drizzle"
   ],
   "dependencies": {
+    "@types/fluent-ffmpeg": "^2.1.28",
+    "fluent-ffmpeg": "^2.1.3",
     "form-data": "^4.0.4",
     "node-fetch": "^3.3.2"
   }

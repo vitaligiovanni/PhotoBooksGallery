@@ -23,7 +23,7 @@ import { ARAddon } from "@/components/ARAddon";
 export default function ProductPage() {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
-  const { addToCart } = useCart();
+  const { addToCart, addARAddon } = useCart();
   const { toast } = useToast();
   const { getFreeShippingThreshold } = useSettings();
   const { convertPrice, formatPrice, currentCurrency, baseCurrency } = useCurrency();
@@ -48,6 +48,24 @@ export default function ProductPage() {
     },
     enabled: !!id,
   });
+
+  // Проверяем, есть ли уже AR-проект для этого продукта (чтобы автоматически активировать AR-addon)
+  const { data: existingAR } = useQuery<{ data: any[]; count: number }>({
+    queryKey: ['ar-by-product', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/ar/by-product/${id}`, { credentials: 'include' });
+      if (!res.ok) return { data: [], count: 0 };
+      return res.json();
+    },
+    enabled: !!id,
+  });
+
+  // Автоактивация AR если уже есть готовый проект
+  useEffect(() => {
+    if (existingAR?.data?.some(p => p.status === 'ready')) {
+      setHasARAddon(true);
+    }
+  }, [existingAR]);
 
   // Calculate values that we need for useEffect (when product is available)
   const name = product ? (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Untitled' : '';
@@ -90,7 +108,7 @@ export default function ProductPage() {
   };
 
   // Handle add to cart
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
     if (!product) return;
     
     // Create a product copy with the current configuration
@@ -111,13 +129,36 @@ export default function ProductPage() {
       }
     }
     
-    // Include AR addon selection
+    // Include AR addon selection (add later as separate cart item)
+    const withOptions = Object.keys(options).length > 0 ? options : undefined;
+    addToCart(configuredProduct, quantity, withOptions);
+
+    // If AR выбран - получаем цену и добавляем отдельный CartItem
     if (hasARAddon) {
-      options.hasARAddon = true;
+      try {
+        const pricingRes = await fetch(`/api/ar/pricing?productId=${product.id}`);
+        let finalPriceAMD = 500;
+        let displayName = '';
+        if (pricingRes.ok) {
+          const pricingJson = await pricingRes.json();
+          finalPriceAMD = pricingJson.data?.finalPrice || 500;
+          const lang = i18n.language as 'ru'|'hy'|'en';
+          const baseName = (product.name as LocalizedText)?.[lang] || 'Товар';
+          displayName = lang === 'ru'
+            ? `AR-эффект для «${baseName}»`
+            : lang === 'hy'
+              ? `AR էֆեկտ «${baseName}» ապրանքի համար`
+              : `AR Effect for "${baseName}"`;
+          // Конвертация: удобнее опереться на backend display (там уже multi-currency), но cart хранит числовую цену.
+          // Оставляем базовую цену в AMD для расчётов, можно расширить позднее реальной конвертацией.
+        }
+        addARAddon(product, finalPriceAMD, displayName || 'AR-эффект');
+        console.log('[ProductPage] AR addon added', { productId: product.id, priceAMD: finalPriceAMD });
+      } catch (e) {
+        console.warn('[ProductPage] Failed to add AR addon:', e);
+      }
     }
-    
-    addToCart(configuredProduct, quantity, Object.keys(options).length > 0 ? options : undefined);
-    
+
     const productName = (product.name as LocalizedText)?.[i18n.language as keyof LocalizedText] || 'Товар';
     toast({
       title: t("addedToCart"),
@@ -125,9 +166,10 @@ export default function ProductPage() {
     });
   };
 
-  const handleBuyNow = () => {
-    handleAddToCart();
-    // Navigate to cart
+  const handleBuyNow = async () => {
+    // Важно дождаться завершения async логики добавления AR, иначе позиция AR может не успеть появиться.
+    await handleAddToCart();
+    // Переход в корзину только после того как обе позиции добавлены
     window.location.href = '/cart';
   };
 
@@ -703,7 +745,7 @@ export default function ProductPage() {
                   size="lg" 
                   variant="outline" 
                   className="flex-1"
-                  onClick={handleAddToCart}
+                  onClick={() => { handleAddToCart(); }}
                   data-testid="button-add-to-cart"
                 >
                   <ShoppingCart className="h-4 w-4 mr-2" />

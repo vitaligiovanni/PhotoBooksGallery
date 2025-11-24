@@ -174,7 +174,7 @@ export default function Cart() {
               </CardHeader>
               <CardContent className="space-y-4">
                 {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center space-x-4 p-4 border rounded-lg">
+                  <div key={item.id} className={`flex items-center space-x-4 p-4 border rounded-lg ${item.isARAddon ? 'bg-purple-50 border-purple-200' : ''}`}>                    
                     <div className="flex-shrink-0">
                       <img
                         src={item.imageUrl || '/placeholder.png'}
@@ -186,13 +186,18 @@ export default function Cart() {
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-medium text-gray-900 truncate">{item.name}</h3>
                       <p className="text-sm text-gray-600">₽{item.price.toLocaleString()}</p>
-                      {item.isReadyMade && (
+                      {item.isARAddon && (
+                        <div className="flex items-center gap-1 text-xs text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full w-fit mt-1">
+                          <Sparkles className="w-3 h-3" /> AR дополнение
+                        </div>
+                      )}
+                      {item.isReadyMade && !item.isARAddon && (
                         <div className="flex items-center gap-1 text-xs text-green-700 bg-green-100 px-2 py-0.5 rounded-full w-fit mt-1">
                           <Package className="w-3 h-3" />
                           Готовый товар
                         </div>
                       )}
-                      {item.isReadyMade === false && (
+                      {item.isReadyMade === false && !item.isARAddon && (
                         <div className="flex items-center gap-1 text-xs text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full w-fit mt-1">
                           <Sparkles className="w-3 h-3" />
                           Индивидуальный заказ

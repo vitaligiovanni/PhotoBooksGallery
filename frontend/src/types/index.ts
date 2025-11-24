@@ -8,6 +8,8 @@ export interface CartItem {
   imageUrl?: string;
   options?: Record<string, any>;
   isReadyMade?: boolean; // Готовый товар не требует регистрации
+  isARAddon?: boolean; // Дополнение AR (надбавка к товару)
+  parentProductId?: string; // Ссылка на основной продукт (если это дополнение)
 }
 
 export interface CartState {

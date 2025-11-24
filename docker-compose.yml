@@ -26,6 +26,30 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  ar-db:
+    image: postgres:15-alpine
+    container_name: photobooks-ar-db
+    environment:
+      POSTGRES_DB: ar_db
+      POSTGRES_USER: photobooks
+      POSTGRES_PASSWORD: SecurePassword2025
+    ports:
+      - "5434:5432"
+    volumes:
+      - ar_db_data:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U photobooks -d ar_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
   migrator:
     build:
       context: .
@@ -35,7 +59,7 @@ services:
     working_dir: /workspace/backend
     environment:
       <<: *default-env
-      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+      DATABASE_URL: postgresql://photobooks:Manana08012023@db:5432/${POSTGRES_DB:-photobooks}
     depends_on:
       db:
         condition: service_healthy
@@ -53,7 +77,7 @@ services:
       # Local filesystem storage only
       NODE_ENV: development
       PORT: 5002
-      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+      DATABASE_URL: postgresql://photobooks:Manana08012023@db:5432/${POSTGRES_DB:-photobooks}
       DOMAIN: ${DOMAIN:-localhost}
       FRONTEND_URL: ${FRONTEND_URL:-http://frontend}
       # Public API URL used for generating presigned links; baseUrl derived by stripping /api
@@ -177,3 +201,4 @@ services:
 
 volumes:
   postgres_data:
+  ar_db_data:

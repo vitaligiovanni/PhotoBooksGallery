@@ -1237,6 +1237,10 @@ export const arProjects = pgTable("ar_projects", {
   attachedToOrder: boolean("attached_to_order").default(false), // Прикреплён ли к заказу
   arPrice: decimal("ar_price", { precision: 10, scale: 2 }).default("500.00"), // Цена AR в AMD
   
+  // Demo mode (temporary projects with 24h expiration)
+  isDemo: boolean("is_demo").default(false), // Демо-проект (временный, удаляется через 24 часа)
+  expiresAt: timestamp("expires_at"), // Время истечения демо-проекта
+  
   // Timestamps
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

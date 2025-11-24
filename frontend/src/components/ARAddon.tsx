@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -26,14 +28,35 @@ interface ARAddonProps {
 export function ARAddon({ productId, productName, onARToggle, defaultChecked = false }: ARAddonProps) {
   const [arEnabled, setAREnabled] = useState(defaultChecked);
   const { currentCurrency } = useCurrency();
-  
-  const currencyCode = (currentCurrency?.id || 'AMD') as 'AMD' | 'USD' | 'RUB';
-  const arPrice = AR_ADDON_PRICE[currencyCode] || AR_ADDON_PRICE.AMD;
-  const formattedPrice = formatCurrency(arPrice, currencyCode);
+  const { i18n } = useTranslation();
+
+  // Получаем динамическую цену AR с бэкенда (учёт индивидуальной цены если уже создан AR)
+  const { data: pricingData } = useQuery<{ data: { defaultPrice: number; customPrice: number|null; finalPrice: number; display: { hy: string; ru: string; en: string; } } }>({
+    queryKey: ['ar-pricing', productId],
+    queryFn: async () => {
+      const res = await fetch(`/api/ar/pricing?productId=${productId}`);
+      if (!res.ok) throw new Error('Failed pricing');
+      return res.json();
+    },
+    staleTime: 60_000,
+  });
+
+  // Язык интерфейса
+  const lang = (i18n.language === 'ru' || i18n.language === 'hy' || i18n.language === 'en') ? i18n.language : 'ru';
+
+  // Выбираем отображение из pricingData или fallback на константы
+  const backendDisplay = pricingData?.data?.display?.[lang];
+  const fallbackCurrencyCode = (currentCurrency?.id || 'AMD') as 'AMD' | 'USD' | 'RUB';
+  const fallbackPrice = AR_ADDON_PRICE[fallbackCurrencyCode] || AR_ADDON_PRICE.AMD;
+  const formattedFallback = formatCurrency(fallbackPrice, fallbackCurrencyCode);
+  const formattedPrice = backendDisplay || formattedFallback;
 
   const handleToggle = (checked: boolean) => {
     setAREnabled(checked);
     onARToggle?.(checked);
+    if (checked) {
+      console.log('[ARAddon] Enabled AR addon for product', { productId, productName, pricing: pricingData?.data });
+    }
   };
 
   return (
@@ -89,6 +112,15 @@ export function ARAddon({ productId, productName, onARToggle, defaultChecked = f
                 <span className="text-lg font-bold text-purple-600">
                   +{formattedPrice}
                 </span>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-2"
+                  onClick={() => window.location.href = '/living-photos'}
+                >
+                  Узнать больше
+                </Button>
 
                 <Dialog>
                   <DialogTrigger asChild>

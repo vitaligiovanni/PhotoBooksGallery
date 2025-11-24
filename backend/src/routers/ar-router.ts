@@ -9,6 +9,7 @@ import { storage } from '../storage';
 import { arProjects, arProjectItems, insertARProjectSchema } from '@shared/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { compileARProject, generateARViewer } from '../services/ar-compiler';
+import { requestARCompilation, getARStatus, getARViewerUrl } from '../services/ar-service-client';
 import { jwtAuth, mockAuth } from './middleware';
 
 // Ensure temp upload directory exists to prevent ENOENT errors from multer
@@ -46,11 +47,34 @@ export function createARRouter(): Router {
 
   /**
    * POST /api/ar/create-automatic
-   * Создать AR проект (автоматическая компиляция)
-   * Requires: JWT authentication
+   * DEPRECATED: Используйте /api/ar/create-demo вместо этого
+   * Старый компилятор отключён, все запросы идут через AR микросервис
    */
   router.post(
     '/create-automatic',
+    requireAuth,
+    upload.fields([
+      { name: 'photo', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
+    ]),
+    async (req: Request, res: Response) => {
+      // Старый компилятор отключён - перенаправляем на новый эндпоинт
+      return res.status(410).json({
+        error: 'This endpoint is deprecated',
+        message: 'Please use /api/ar/create-demo instead. Old AR compiler is disabled.',
+        newEndpoint: '/api/ar/create-demo',
+      });
+      
+      /* СТАРЫЙ КОД ОТКЛЮЧЁН
+      // Весь старый код закомментирован - используйте AR микросервис
+      */
+    }
+  );
+
+  // СТАРЫЙ КОД /create-automatic ЗАКОММЕНТИРОВАН НИЖЕ
+  /*
+  router.post(
+    '/create-automatic-OLD-DISABLED',
     requireAuth,
     upload.fields([
       { name: 'photo', maxCount: 1 },
@@ -171,175 +195,64 @@ export function createARRouter(): Router {
 
         console.log(`[AR Router] Created AR project ${arProject.id} for user ${userId}`);
 
-        // Start compilation in background (don't await)
-        compileARProject(arProject.id).catch((error) => {
-          console.error(`[AR Router] Background compilation failed for ${arProject.id}:`, error);
-        });
-
-        // Return immediate response
-        res.status(201).json({
-          message: 'AR project created and compilation started',
-          data: {
-            arId: arProject.id,
-            status: 'pending',
-            estimatedTime: '5-10 seconds',
-            checkStatusUrl: `/api/ar/status/${arProject.id}`,
-          },
-        });
+        // СТАРЫЙ КОД ЗАКОММЕНТИРОВАН
+        // compileARProject(arProject.id).catch((error) => {
+        //   console.error(`[AR Router] Background compilation failed for ${arProject.id}:`, error);
+        // });
       } catch (error: any) {
-        console.error('[AR Router] Error creating AR project:', error);
-        res.status(500).json({
-          error: 'Failed to create AR project',
-          details: error.message,
-        });
+        console.error('[AR Router] Error in old create-automatic endpoint:', error);
       }
     }
   );
+  */ // КОНЕЦ СТАРОГО КОДА
 
   /**
    * GET /api/ar/status/:id
-   * Получить статус AR проекта с полными данными для asset panel
+   * Получить статус AR проекта - проксирует запрос в AR microservice
    */
   router.get('/status/:id', requireAuth, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;
-  const userRole = (req as any).user?.role || (req as any).user?.userData?.role;
+      const userRole = (req as any).user?.role || (req as any).user?.userData?.role;
 
-      let arProject: any | undefined;
-      if (userRole === 'admin') {
-        // Admins can access any AR project
-        const result = await db
-          .select()
-          .from(arProjects)
-          .where(eq(arProjects.id, id))
-          .limit(1);
-        arProject = result[0];
-      } else {
-        const result = await db
-          .select()
-          .from(arProjects)
-          .where(and(eq(arProjects.id, id), eq(arProjects.userId, userId)))
-          .limit(1);
-        arProject = result[0];
-      }
+      console.log(`[AR Router] 🔍 Proxying status check for project ${id} to AR microservice...`);
 
-      if (!arProject) {
-        return res.status(404).json({
-          error: 'AR project not found',
-        });
-      }
+      // Proxy request to AR microservice
+      const microserviceStatus = await getARStatus(id);
 
-      // Construct full URLs for assets
-      // Log access to status (after ensuring project exists)
-      console.log(`[AR Router] GET /status/${id} by user=${userId} role=${userRole} status=${arProject.status}`);
+      console.log(`[AR Router] ✅ AR microservice returned status: ${microserviceStatus.status}, progress: ${microserviceStatus.progress}%`);
 
-      // Normalize and construct asset URLs consistently using /api/ar/storage
-      const photoUrl = arProject.photoUrl && arProject.photoUrl.startsWith('http')
-        ? arProject.photoUrl
-        : (arProject.photoUrl ? `/api/${arProject.photoUrl.replace(/^\/?api\//, '')}` : null);
-
-      const videoUrl = arProject.videoUrl && arProject.videoUrl.startsWith('http')
-        ? arProject.videoUrl
-        : (arProject.videoUrl ? `/api/${arProject.videoUrl.replace(/^\/?api\//, '')}` : null);
-
-      const maskUrl = arProject.maskUrl
-        ? (arProject.maskUrl.startsWith('http')
-          ? arProject.maskUrl.replace('/api/ar-storage/', '/api/ar/storage/')
-          : `/api/ar/storage/${arProject.id}/${path.basename(arProject.maskUrl)}`)
-        : null;
-
-      const viewerHtmlUrl = arProject.viewerHtmlUrl
-        ? (arProject.viewerHtmlUrl.startsWith('http')
-          ? arProject.viewerHtmlUrl.replace('/api/ar-storage/', '/api/ar/storage/')
-          : `/api/ar/storage/${arProject.id}/index.html`)
-        : null;
-
-      const qrCodeUrl = arProject.qrCodeUrl
-        ? (arProject.qrCodeUrl.startsWith('http')
-          ? arProject.qrCodeUrl.replace('/api/ar-storage/', '/api/ar/storage/')
-          : `/api/ar/storage/${arProject.id}/qr-code.png`)
-        : null;
-
-      // Extract progressPhase from config if available
-      const progressPhase = (arProject.config as any)?.progressPhase || null;
-
-      // Tunnel availability probing (only if external absolute URL uses known tunnel domains)
-      let tunnelStatus: 'reachable' | 'unreachable' | 'unknown' = 'unknown';
-      const externalCandidate = arProject.viewUrl && String(arProject.viewUrl).startsWith('http') ? String(arProject.viewUrl) : null;
-      if (externalCandidate && /(loca\.lt|trycloudflare\.com|ngrok\.io)/i.test(externalCandidate)) {
-        try {
-          const controller = new AbortController();
-          const timeout = setTimeout(() => controller.abort(), 4000);
-          const resp = await fetch(externalCandidate, { method: 'HEAD', signal: controller.signal });
-          clearTimeout(timeout);
-          if (resp.ok) {
-            tunnelStatus = 'reachable';
-          } else {
-            tunnelStatus = 'unreachable';
-          }
-        } catch {
-          tunnelStatus = 'unreachable';
-        }
-      }
-
+      // Return microservice response directly (simplified for now)
+      // TODO: If authorization is needed, store userId in AR microservice database
       res.json({
         message: 'AR project status',
         data: {
-          id: arProject.id,
-          status: arProject.status,
-          progressPhase, // NEW: current phase for UI progress bar
-
-          // Asset URLs
-          photoUrl,
-          videoUrl,
-          maskUrl,
-          viewerHtmlUrl,
-          viewUrl: arProject.viewUrl,
-          // externalViewUrl: always return original absolute URL if present (for tunnels)
-          externalViewUrl: (arProject.viewUrl && String(arProject.viewUrl).startsWith('http')) ? arProject.viewUrl : null,
-          qrCodeUrl,
-          tunnelStatus,
-
-          // Dimensions & aspect ratios
-          photoWidth: arProject.photoWidth,
-          photoHeight: arProject.photoHeight,
-          videoWidth: arProject.videoWidth,
-          videoHeight: arProject.videoHeight,
-          videoDurationMs: arProject.videoDurationMs,
-          photoAspectRatio: arProject.photoAspectRatio ? String(arProject.photoAspectRatio) : null,
-          videoAspectRatio: arProject.videoAspectRatio ? String(arProject.videoAspectRatio) : null,
-
-          // Mask info
-          maskWidth: arProject.maskWidth,
-          maskHeight: arProject.maskHeight,
-
-          // Scaling & fit
-          scaleWidth: arProject.scaleWidth ? String(arProject.scaleWidth) : null,
-          scaleHeight: arProject.scaleHeight ? String(arProject.scaleHeight) : null,
-
-          // Calibration
-          isCalibrated: arProject.isCalibrated,
-          calibratedPosX: arProject.calibratedPosX ? String(arProject.calibratedPosX) : null,
-          calibratedPosY: arProject.calibratedPosY ? String(arProject.calibratedPosY) : null,
-          calibratedPosZ: arProject.calibratedPosZ ? String(arProject.calibratedPosZ) : null,
-
-          // Quality metrics
-          markerQuality: arProject.markerQuality ? String(arProject.markerQuality) : null,
-          keyPointsCount: arProject.keyPointsCount,
-          compilationTimeMs: arProject.compilationTimeMs,
-
-          // Config
-          config: arProject.config,
-
-          // Error & timestamps
-          errorMessage: arProject.errorMessage,
-          createdAt: arProject.createdAt,
-          updatedAt: arProject.updatedAt,
+          id: microserviceStatus.projectId,
+          status: microserviceStatus.status,
+          progress: microserviceStatus.progress,
+          viewUrl: microserviceStatus.viewUrl,
+          qrCodeUrl: microserviceStatus.qrCodeUrl,
+          markerMindUrl: microserviceStatus.markerMindUrl,
+          compilationTimeMs: microserviceStatus.compilationTimeMs,
+          errorMessage: microserviceStatus.errorMessage,
+          isDemo: microserviceStatus.isDemo,
+          expiresAt: microserviceStatus.expiresAt,
+          createdAt: microserviceStatus.createdAt,
+          updatedAt: microserviceStatus.updatedAt,
         },
       });
     } catch (error: any) {
-      console.error('[AR Router] Error getting AR status:', error);
+      console.error('[AR Router] ❌ Error proxying status check:', error);
+      
+      // Check if it's a 404 from microservice
+      if (error.message?.includes('not found') || error.message?.includes('404')) {
+        return res.status(404).json({
+          error: 'AR project not found',
+          details: error.message,
+        });
+      }
+      
       res.status(500).json({
         error: 'Failed to get AR status',
         details: error.message,
@@ -453,6 +366,8 @@ export function createARRouter(): Router {
         fitMode: (p as any).fitMode,
         config: (p as any).config || null,
         errorMessage: (p as any).errorMessage || null,
+        isDemo: p.isDemo || false,
+        expiresAt: p.expiresAt || null,
       }));
 
       res.json({
@@ -1218,11 +1133,12 @@ export function createARRouter(): Router {
 
   /**
    * GET /ar/view/:id
-   * Редирект на AR viewer HTML
+   * Редирект на AR viewer HTML (для QR кодов и ngrok ссылок)
    */
   router.get('/view/:id', (req: Request, res: Response) => {
     const { id } = req.params;
-    res.redirect(`/api/ar/storage/${id}/index.html`);
+    // FIXED: /objects/ar-storage/ (NOT /api/ar/storage/)
+    res.redirect(`/objects/ar-storage/${id}/index.html`);
   });
 
   // ============================================================
@@ -1277,14 +1193,15 @@ export function createARRouter(): Router {
         await fs.unlink(photoFile.path).catch(() => {});
         await fs.unlink(videoFile.path).catch(() => {});
 
-        // Create AR project with product link
+        // IMPORTANT: Store raw internal file paths (without leading /api) so compiler can access them
+        // Compiler uses path.join(process.cwd(), project.photoUrl)
         const [arProject] = await db.insert(arProjects).values({
           id: arId,
           userId,
           productId: productId || null, // Link to product
-          arPrice: arPrice || '500.00', // Default AR price
-          photoUrl: `/api/ar/storage/${arId}/photo.jpg`,
-          videoUrl: `/api/ar/storage/${arId}/video.mp4`,
+          arPrice: arPrice || '500.00', // Default AR price (AMD)
+          photoUrl: `objects/ar-storage/${arId}/photo.jpg`,
+          videoUrl: `objects/ar-storage/${arId}/video.mp4`,
           status: 'pending',
         }).returning();
 
@@ -1426,6 +1343,131 @@ export function createARRouter(): Router {
     } catch (error: any) {
       console.error('[AR Router] by-product error:', error);
       res.status(500).json({ error: error.message || 'Failed to get AR projects for product' });
+    }
+  });
+
+  /**
+   * POST /api/ar/create-demo
+   * Create temporary demo AR project (24h expiration)
+   * No product linkage, no pricing — just demo
+   */
+  router.post(
+    '/create-demo',
+    requireAuth,
+    upload.fields([
+      { name: 'photo', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
+    ]),
+    async (req: Request, res: Response) => {
+      try {
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id || 'local-admin';
+
+        // Validate files
+        if (!files.photo || !files.video) {
+          return res.status(400).json({ error: 'Both photo and video are required' });
+        }
+
+        const photoFile = files.photo[0];
+        const videoFile = files.video[0];
+
+        // Move files to shared uploads directory (AR microservice will access them)
+        const arId = `demo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const uploadsDir = path.join(process.cwd(), 'objects', 'uploads');
+        await fs.mkdir(uploadsDir, { recursive: true });
+
+        const photoFilename = `${arId}-photo.jpg`;
+        const videoFilename = `${arId}-video.mp4`;
+        const photoPath = path.join(uploadsDir, photoFilename);
+        const videoPath = path.join(uploadsDir, videoFilename);
+
+        await fs.copyFile(photoFile.path, photoPath);
+        await fs.copyFile(videoFile.path, videoPath);
+        await fs.unlink(photoFile.path).catch(() => {});
+        await fs.unlink(videoFile.path).catch(() => {});
+
+        console.log('[AR Router] ✅ Files copied to shared uploads:', { photoPath, videoPath });
+
+        // Calculate expiration (24 hours from now)
+        const expiresAt = new Date();
+        expiresAt.setHours(expiresAt.getHours() + 24);
+
+        // Send compilation request to AR microservice
+        console.log('[AR Router] 📤 Sending to AR microservice...');
+        
+        const compileResult = await requestARCompilation({
+          userId,
+          photoUrl: `/objects/uploads/${photoFilename}`,
+          videoUrl: `/objects/uploads/${videoFilename}`,
+          isDemo: true,
+        });
+
+        console.log('[AR Router] ✅ AR microservice accepted:', compileResult.projectId);
+
+        res.status(201).json({
+          message: 'Demo AR project created (expires in 24 hours)',
+          data: {
+            arId: compileResult.projectId,
+            status: compileResult.status,
+            expiresAt: expiresAt,
+            isDemo: true,
+            estimatedTimeSeconds: compileResult.estimatedTimeSeconds,
+            statusUrl: `/api/ar/status/${compileResult.projectId}`,
+          },
+        });
+      } catch (error: any) {
+        console.error('[AR Router] create-demo error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create demo AR' });
+      }
+    }
+  );
+
+  /**
+   * PATCH /api/ar/:id/extend-demo
+   * Extend demo project expiration (admin only)
+   */
+  router.patch('/:id/extend-demo', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { hours = 24 } = req.body;
+
+      // Check if project exists and is demo
+      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      
+      if (!project) {
+        return res.status(404).json({ error: 'AR project not found' });
+      }
+
+      if (!project.isDemo) {
+        return res.status(400).json({ error: 'Cannot extend non-demo project' });
+      }
+
+      // Calculate new expiration
+      const currentExpires = project.expiresAt ? new Date(project.expiresAt) : new Date();
+      const newExpires = new Date(currentExpires);
+      newExpires.setHours(newExpires.getHours() + hours);
+
+      // Update expiration
+      const [updated] = await db
+        .update(arProjects)
+        .set({ 
+          expiresAt: newExpires,
+          updatedAt: new Date(),
+        } as any)
+        .where(eq(arProjects.id, id))
+        .returning();
+
+      res.json({
+        message: `Demo extended by ${hours} hours`,
+        data: {
+          arId: updated.id,
+          expiresAt: updated.expiresAt,
+          isDemo: updated.isDemo,
+        },
+      });
+    } catch (error: any) {
+      console.error('[AR Router] extend-demo error:', error);
+      res.status(500).json({ error: error.message || 'Failed to extend demo' });
     }
   });
 

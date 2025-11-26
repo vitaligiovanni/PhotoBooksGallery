@@ -74,9 +74,11 @@ Write-Host "Archives created!`n" -ForegroundColor Green
 
 # Step 3: Copy docker-compose.yml with production settings
 Write-Host "[3/8] Preparing docker-compose for production..." -ForegroundColor Yellow
-$composeContent = Get-Content ".\docker-compose.yml" -Raw
+$composeContent = Get-Content ".\docker-compose.yml" -Raw -Encoding UTF8
 # Change NODE_ENV to production
 $composeContent = $composeContent -replace 'NODE_ENV: development', 'NODE_ENV: production'
+# Change VITE_API_URL to production domain
+$composeContent = $composeContent -replace 'VITE_API_URL=http://localhost:8080', 'VITE_API_URL=https://photobooksgallery.am'
 if (-not $DryRun) {
     $composeContent | Set-Content ".\deployment-temp\docker-compose.yml" -Encoding UTF8
 }
@@ -102,6 +104,12 @@ if (-not $DryRun) {
     Write-Host "  - Uploading archives..." -ForegroundColor Gray
     scp ".\deployment-temp\*" "${SERVER}:${REMOTE_PATH}/"
     
+    Write-Host "  - Preparing directories on server..." -ForegroundColor Gray
+    ssh $SERVER @"
+cd $REMOTE_PATH
+mkdir -p frontend/dist ar-service backend shared
+"@
+    
     Write-Host "  - Extracting archives on server..." -ForegroundColor Gray
     ssh $SERVER @"
 cd $REMOTE_PATH
@@ -109,7 +117,13 @@ tar -xzf frontend-dist.tar.gz -C frontend/dist/
 tar -xzf backend.tar.gz -C backend/
 tar -xzf ar-service.tar.gz -C ar-service/
 tar -xzf shared.tar.gz -C shared/
-rm -f *.tar.gz
+cp nginx.conf frontend/
+cp frontend.Dockerfile frontend/Dockerfile
+cp backend.Dockerfile backend/Dockerfile
+cp ar-service.Dockerfile ar-service/Dockerfile
+cp docker-compose.yml docker-compose.yml
+cp .env .env
+rm -f *.tar.gz *.Dockerfile nginx.conf
 "@
 }
 Write-Host "Files uploaded and extracted!`n" -ForegroundColor Green
@@ -117,13 +131,14 @@ Write-Host "Files uploaded and extracted!`n" -ForegroundColor Green
 # Step 6: Install dependencies on server
 Write-Host "[6/8] Installing dependencies on server..." -ForegroundColor Yellow
 if (-not $DryRun) {
-    ssh $SERVER @"
-cd $REMOTE_PATH
-cd backend && npm install --production
-cd ../ar-service && npm install --production
-cd ../shared && npm install --production
-cd ..
-"@
+    Write-Host "  - Installing backend dependencies..." -ForegroundColor Gray
+    ssh $SERVER "cd $REMOTE_PATH/backend && npm install --production --no-audit"
+    
+    Write-Host "  - Installing ar-service dependencies..." -ForegroundColor Gray
+    ssh $SERVER "cd $REMOTE_PATH/ar-service && npm install --production --no-audit"
+    
+    Write-Host "  - Installing shared dependencies..." -ForegroundColor Gray
+    ssh $SERVER "cd $REMOTE_PATH/shared && npm install --production --no-audit"
 }
 Write-Host "Dependencies installed!`n" -ForegroundColor Green
 

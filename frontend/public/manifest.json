@@ -78,13 +78,25 @@
   ],
   "shortcuts": [
     {
-      "name": "Создать фотокнигу",
-      "short_name": "Редактор",
-      "description": "Быстро создать новую фотокнигу",
-      "url": "/editor",
+      "name": "Создать живое фото",
+      "short_name": "Создать AR",
+      "description": "Создать новый проект с живыми фотографиями",
+      "url": "/ar/create",
       "icons": [
         {
-          "src": "/icons/shortcut-editor.png",
+          "src": "/icons/icon-192x192.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Мои проекты",
+      "short_name": "Проекты",
+      "description": "Посмотреть мои AR проекты",
+      "url": "/profile",
+      "icons": [
+        {
+          "src": "/icons/icon-192x192.png",
           "sizes": "96x96"
         }
       ]
@@ -96,19 +108,7 @@
       "url": "/catalog",
       "icons": [
         {
-          "src": "/icons/shortcut-catalog.png",
-          "sizes": "96x96"
-        }
-      ]
-    },
-    {
-      "name": "Связаться с нами",
-      "short_name": "Контакты",
-      "description": "Связаться с поддержкой",
-      "url": "/contacts",
-      "icons": [
-        {
-          "src": "/icons/shortcut-contacts.png",
+          "src": "/icons/icon-192x192.png",
           "sizes": "96x96"
         }
       ]

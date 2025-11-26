@@ -16,6 +16,9 @@ interface StatusResponse {
   viewUrl?: string;
   qrCodeUrl?: string;
   markerMindUrl?: string;
+  photoUrl?: string;
+  videoUrl?: string;
+  viewerHtmlUrl?: string;
   compilationTimeMs?: number;
   errorMessage?: string;
   createdAt: string;
@@ -46,6 +49,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       const result = await client.query(
         `SELECT 
           id, status, view_url, qr_code_url, marker_mind_url,
+          photo_url, video_url, viewer_html_url,
           compilation_time_ms, error_message, is_demo, expires_at,
           created_at, updated_at
         FROM ar_projects
@@ -74,6 +78,9 @@ router.get('/:id', async (req: Request, res: Response) => {
         viewUrl: project.view_url || undefined,
         qrCodeUrl: project.qr_code_url || undefined,
         markerMindUrl: project.marker_mind_url || undefined,
+        photoUrl: project.photo_url || undefined,
+        videoUrl: project.video_url || undefined,
+        viewerHtmlUrl: project.viewer_html_url || undefined,
         compilationTimeMs: project.compilation_time_ms || undefined,
         errorMessage: project.error_message || undefined,
         createdAt: project.created_at,

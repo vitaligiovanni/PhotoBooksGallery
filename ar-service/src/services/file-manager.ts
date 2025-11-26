@@ -4,8 +4,12 @@ import * as fs from 'fs-extra';
 // File Manager for AR Storage
 // Handles file paths, creation, cleanup
 
-const AR_STORAGE_PATH = process.env.AR_STORAGE_PATH || '/app/storage/ar-storage';
-const SHARED_UPLOADS_PATH = process.env.SHARED_UPLOADS_PATH || '/app/storage/uploads';
+// Используем переменные окружения из .env (Windows пути для dev, Docker для prod)
+const AR_STORAGE_PATH = process.env.AR_STORAGE_PATH || path.join(process.cwd(), '..', 'backend', 'objects', 'ar-storage');
+const SHARED_UPLOADS_PATH = process.env.SHARED_UPLOADS_PATH || path.join(process.cwd(), '..', 'backend', 'objects', 'uploads');
+
+console.log('[FileManager] AR_STORAGE_PATH:', AR_STORAGE_PATH);
+console.log('[FileManager] SHARED_UPLOADS_PATH:', SHARED_UPLOADS_PATH);
 
 export class FileManager {
   
@@ -45,10 +49,14 @@ export class FileManager {
    */
   resolveStoragePath(relativePath: string): string {
     // /objects/ar-storage/demo-xxx/file.jpg
-    // → /app/storage/ar-storage/demo-xxx/file.jpg
+    // → C:/Projects/.../backend/objects/ar-storage/demo-xxx/file.jpg (Windows)
+    // → /app/storage/ar-storage/demo-xxx/file.jpg (Docker)
     
     if (relativePath.startsWith('/objects/ar-storage/')) {
-      return relativePath.replace('/objects/ar-storage/', AR_STORAGE_PATH + '/');
+      const subPath = relativePath.replace('/objects/ar-storage/', '');
+      const fullPath = path.join(AR_STORAGE_PATH, subPath);
+      console.log(`[FileManager] resolveStoragePath: ${relativePath} → ${fullPath}`);
+      return fullPath;
     }
     
     return relativePath;
@@ -73,10 +81,14 @@ export class FileManager {
    */
   resolveUploadPath(uploadUrl: string): string {
     // /objects/uploads/uuid.jpg
-    // → /app/storage/uploads/uuid.jpg
+    // → C:/Projects/.../backend/objects/uploads/uuid.jpg (Windows)
+    // → /app/storage/uploads/uuid.jpg (Docker)
     
     if (uploadUrl.startsWith('/objects/uploads/')) {
-      return uploadUrl.replace('/objects/uploads/', SHARED_UPLOADS_PATH + '/');
+      const fileName = uploadUrl.replace('/objects/uploads/', '');
+      const fullPath = path.join(SHARED_UPLOADS_PATH, fileName);
+      console.log(`[FileManager] resolveUploadPath: ${uploadUrl} → ${fullPath}`);
+      return fullPath;
     }
     
     return uploadUrl;

@@ -8,9 +8,13 @@ import { fileURLToPath } from 'url';
 interface CompilationJob {
   projectId: string;
   userId: string; // Required by ar-compiler-core
-  photoPath: string;
-  videoPath?: string; // Optional (AR can work without video)
-  maskPath?: string;
+  photoPath?: string; // LEGACY: Single photo (deprecated)
+  photoPaths?: string[]; // MULTI-TARGET: Array of photo paths
+  videoPath?: string; // LEGACY: Single video (deprecated)
+  videoPaths?: string[]; // MULTI-TARGET: Array of video paths (one per photo)
+  maskPath?: string; // Single custom mask (legacy)
+  maskUrls?: string[]; // MULTI-TARGET: Array of custom mask paths
+  shapeType?: 'circle' | 'oval' | 'square' | 'rect' | 'custom'; // Auto-generate mask shape
   storageDir: string;
   config: Record<string, any>;
 }
@@ -23,11 +27,17 @@ interface CompilationResult {
   viewerHtmlUrl?: string;
   qrCodeUrl?: string;
   metadata?: {
-    photoWidth: number;
-    photoHeight: number;
-    videoWidth: number;
-    videoHeight: number;
-    videoDurationMs: number;
+    markersCount?: number;
+    multiTarget?: boolean;
+    photoWidth?: number;
+    photoHeight?: number;
+    videoWidth?: number;
+    videoHeight?: number;
+    videoDurationMs?: number;
+    photoAspectRatio?: string;
+    videoAspectRatio?: string;
+    videoDurationSec?: number;
+    maskFiles?: string[];
   };
 }
 

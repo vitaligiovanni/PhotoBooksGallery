@@ -29,11 +29,15 @@ const upload = multer({
   fileFilter: (_req, file, cb) => {
     const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp'];
     const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
+    const allowedMaskTypes = ['image/png', 'image/webp']; // ✅ Маски - PNG/WebP
     
-    if (file.fieldname === 'photo' && allowedPhotoTypes.includes(file.mimetype)) {
+    // Поддержка как photo/photos, так и video/videos, и mask
+    if ((file.fieldname === 'photo' || file.fieldname === 'photos') && allowedPhotoTypes.includes(file.mimetype)) {
       cb(null, true);
-    } else if (file.fieldname === 'video' && allowedVideoTypes.includes(file.mimetype)) {
+    } else if ((file.fieldname === 'video' || file.fieldname === 'videos') && allowedVideoTypes.includes(file.mimetype)) {
       cb(null, true);
+    } else if (file.fieldname === 'mask' && allowedMaskTypes.includes(file.mimetype)) {
+      cb(null, true); // ✅ Разрешаем маски!
     } else {
       cb(new Error(`Invalid file type for ${file.fieldname}: ${file.mimetype}`));
     }
@@ -223,17 +227,45 @@ export function createARRouter(): Router {
 
       console.log(`[AR Router] ✅ AR microservice returned status: ${microserviceStatus.status}, progress: ${microserviceStatus.progress}%`);
 
-      // Return microservice response directly (simplified for now)
-      // TODO: If authorization is needed, store userId in AR microservice database
+      // Sync Backend DB with AR microservice status (eventual consistency)
+      try {
+        const [existing] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+        
+        if (existing) {
+          // Update existing project
+          await db.update(arProjects).set({
+            status: microserviceStatus.status,
+            photoUrl: microserviceStatus.photoUrl || existing.photoUrl || null,
+            videoUrl: microserviceStatus.videoUrl || existing.videoUrl || null,
+            viewUrl: microserviceStatus.viewUrl || null,
+            qrCodeUrl: microserviceStatus.qrCodeUrl || null,
+            markerMindUrl: microserviceStatus.markerMindUrl || null,
+            viewerHtmlUrl: microserviceStatus.viewerHtmlUrl || (microserviceStatus.viewUrl ? `/objects/ar-storage/${id}/index.html` : null),
+            compilationTimeMs: microserviceStatus.compilationTimeMs || null,
+            errorMessage: microserviceStatus.errorMessage || null,
+            updatedAt: new Date(),
+          } as any).where(eq(arProjects.id, id));
+          console.log('[AR Router] ✅ Synced Backend DB with microservice status');
+        } else {
+          console.warn('[AR Router] ⚠️ Project not in Backend DB, will be invisible in /api/ar/all');
+        }
+      } catch (syncError: any) {
+        console.warn('[AR Router] ⚠️ Failed to sync Backend DB:', syncError.message);
+      }
+
+      // Return microservice response directly
       res.json({
         message: 'AR project status',
         data: {
           id: microserviceStatus.projectId,
           status: microserviceStatus.status,
           progress: microserviceStatus.progress,
+          photoUrl: microserviceStatus.photoUrl,
+          videoUrl: microserviceStatus.videoUrl,
           viewUrl: microserviceStatus.viewUrl,
           qrCodeUrl: microserviceStatus.qrCodeUrl,
           markerMindUrl: microserviceStatus.markerMindUrl,
+          viewerHtmlUrl: microserviceStatus.viewerHtmlUrl,
           compilationTimeMs: microserviceStatus.compilationTimeMs,
           errorMessage: microserviceStatus.errorMessage,
           isDemo: microserviceStatus.isDemo,
@@ -408,8 +440,22 @@ export function createARRouter(): Router {
 
       const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
       const viewerHtmlPath = path.join(storageDir, 'index.html');
+      
+      // Check for video file (multi-target: video-0.mp4, legacy: video.mp4)
+      let videoFileName = 'video.mp4';
+      const video0Path = path.join(storageDir, 'video-0.mp4');
       const videoPath = path.join(storageDir, 'video.mp4');
-      try { await fs.access(videoPath); } catch { return res.status(409).json({ error: 'Video not prepared yet. Compile project first.' }); }
+      
+      try {
+        await fs.access(video0Path);
+        videoFileName = 'video-0.mp4';
+      } catch {
+        try {
+          await fs.access(videoPath);
+        } catch {
+          return res.status(409).json({ error: 'Video not prepared yet. Compile project first.' });
+        }
+      }
 
       await fs.mkdir(storageDir, { recursive: true });
       const ext = path.extname(file.originalname).toLowerCase();
@@ -434,11 +480,18 @@ export function createARRouter(): Router {
 
       // regenerate viewer HTML keeping same config
       const markerName = 'marker';
-      const videoScale = project.scaleWidth && project.scaleHeight ? { width: Number(project.scaleWidth), height: Number(project.scaleHeight) } : (project.config as any)?.videoScale;
+      
+      // CRITICAL: Use photo aspect ratio for scale (NOT old scaleWidth/scaleHeight from DB!)
+      const photoAR = Number(project.photoAspectRatio) || 
+        (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+      const videoScale = { width: 1.0, height: 1.0 / photoAR };
+      
+      console.log(`[AR Mask Upload] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
+      
       await generateARViewer({
         arId: id,
         markerBaseName: markerName,
-        videoFileName: 'video.mp4',
+        videoFileName, // Use detected filename (video.mp4 or video-0.mp4)
         maskFileName,
         videoPosition: (project.config as any)?.videoPosition,
         videoRotation: (project.config as any)?.videoRotation,
@@ -460,6 +513,82 @@ export function createARRouter(): Router {
     } catch (error: any) {
       console.error('[AR Router] Failed to upload/regenerate mask:', error);
       res.status(500).json({ error: 'Failed to update mask', details: error.message });
+    }
+  });
+
+  /**
+   * DELETE /api/ar/:id/mask (admin only)
+   * Удалить пользовательскую маску и регенерировать viewer без маски
+   */
+  router.delete('/:id/mask', requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userRole = (req as any).user?.role || (req as any).user?.userData?.role;
+      if (process.env.NODE_ENV === 'production' && userRole !== 'admin') {
+        return res.status(403).json({ error: 'Admin access required' });
+      }
+      const { id } = req.params;
+
+      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      if (!project) return res.status(404).json({ error: 'AR project not found' });
+
+      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+      const viewerHtmlPath = path.join(storageDir, 'index.html');
+      
+      // Find and delete existing mask files
+      const possibleMasks = ['mask.png', 'mask.webp', 'mask.gif', 'mask-0.png', 'mask-0.webp'];
+      for (const maskFile of possibleMasks) {
+        const maskPath = path.join(storageDir, maskFile);
+        try {
+          await fs.unlink(maskPath);
+          console.log(`[AR Mask Delete] Removed ${maskFile}`);
+        } catch {
+          // File doesn't exist, skip
+        }
+      }
+
+      // Update DB - remove mask reference
+      await db.update(arProjects).set({
+        maskUrl: null as any,
+        maskWidth: null as any,
+        maskHeight: null as any,
+        updatedAt: new Date() as any,
+      } as any).where(eq(arProjects.id, id));
+
+      // Regenerate viewer HTML without mask
+      const markerName = 'marker';
+      let videoFileName = 'video.mp4';
+      const video0Path = path.join(storageDir, 'video-0.mp4');
+      try {
+        await fs.access(video0Path);
+        videoFileName = 'video-0.mp4';
+      } catch {}
+
+      const photoAR = Number(project.photoAspectRatio) || 
+        (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+      const videoScale = { width: 1.0, height: 1.0 / photoAR };
+      
+      await generateARViewer({
+        arId: id,
+        markerBaseName: markerName,
+        videoFileName,
+        maskFileName: undefined, // NO MASK
+        videoPosition: (project.config as any)?.videoPosition,
+        videoRotation: (project.config as any)?.videoRotation,
+        videoScale,
+        autoPlay: (project.config as any)?.autoPlay ?? true,
+        loop: (project.config as any)?.loop ?? true,
+      }, viewerHtmlPath);
+
+      res.json({
+        message: 'Mask removed and viewer regenerated',
+        data: {
+          id,
+          viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+        }
+      });
+    } catch (error: any) {
+      console.error('[AR Router] Failed to delete mask:', error);
+      res.status(500).json({ error: 'Failed to delete mask', details: error.message });
     }
   });
 
@@ -547,9 +676,13 @@ export function createARRouter(): Router {
       const viewerHtmlPath = path.join(storageDir, 'index.html');
       const markerName = 'marker';
       const existingConfig = (project.config as any) || {};
-      const videoScale = project.scaleWidth && project.scaleHeight 
-        ? { width: Number(project.scaleWidth), height: Number(project.scaleHeight) } 
-        : existingConfig.videoScale;
+      
+      // CRITICAL: Use photo aspect ratio for scale (NOT old scaleWidth/scaleHeight!)
+      const photoAR = Number(project.photoAspectRatio) || 
+        (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+      const videoScale = { width: 1.0, height: 1.0 / photoAR };
+      
+      console.log(`[AR Convert Mask] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
 
       await generateARViewer({
         arId: id,
@@ -589,7 +722,7 @@ export function createARRouter(): Router {
         return res.status(403).json({ error: 'Admin access required' });
       }
       const { id } = req.params;
-      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked } = req.body;
+      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked, shapeType } = req.body;
 
       const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
       if (!project) return res.status(404).json({ error: 'AR project not found' });
@@ -623,6 +756,7 @@ export function createARRouter(): Router {
         ...(offsetX !== undefined && { offsetX }), // Смещение по X (−0.5 до +0.5)
         ...(offsetY !== undefined && { offsetY }), // Смещение по Y (−0.5 до +0.5)
         ...(aspectLocked !== undefined && { aspectLocked }), // Блокировка пропорций
+        ...(shapeType && { shapeType }), // Mask shape: circle, oval, square, rect, custom
       };
 
       // Update DB
@@ -637,20 +771,95 @@ export function createARRouter(): Router {
         updatedAt: new Date() as any,
       } as any).where(eq(arProjects.id, id));
 
+      let maskFileName: string | undefined;
+      
+      // If shapeType is provided, generate mask locally (no full recompilation needed)
+      if (shapeType && shapeType !== 'custom') {
+        console.log(`[AR Config] 🎭 Generating ${shapeType} mask locally...`);
+        
+        const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+        const maskDestPath = path.join(storageDir, 'mask-0.png');
+        
+        try {
+          // Load template from ar-mask-templates
+          const templatePath = path.join(process.cwd(), '..', 'ar-mask-templates', `${shapeType}.png`);
+          
+          // Check if template exists
+          try {
+            await fs.access(templatePath);
+          } catch {
+            console.error(`[AR Config] ❌ Mask template not found: ${templatePath}`);
+            return res.status(500).json({ 
+              error: `Mask template "${shapeType}.png" not found in ar-mask-templates/` 
+            });
+          }
+          
+          // Get photo dimensions for mask sizing
+          const photoWidth = Number(project.photoWidth) || 1024;
+          const photoHeight = Number(project.photoHeight) || 1024;
+          
+          console.log(`[AR Config] Generating mask at ${photoWidth}×${photoHeight}px (matches photo)`);
+          
+          // Resize template with 'contain' to preserve shape (circle stays circle!)
+          await sharp(templatePath)
+            .resize(photoWidth, photoHeight, { 
+              fit: 'contain', // ✅ Preserves circle/oval shape!
+              background: { r: 0, g: 0, b: 0, alpha: 0 } 
+            })
+            .png()
+            .toFile(maskDestPath);
+          
+          console.log(`[AR Config] ✅ Mask generated with corrected alpha: ${maskDestPath}`);
+          
+          // Update DB with mask URL
+          await db.update(arProjects).set({
+            maskUrl: `/objects/ar-storage/${id}/mask-0.png` as any,
+            updatedAt: new Date() as any,
+          } as any).where(eq(arProjects.id, id));
+          
+          maskFileName = 'mask-0.png';
+        } catch (maskError: any) {
+          console.error('[AR Config] ❌ Failed to generate mask:', maskError);
+          return res.status(500).json({ 
+            error: 'Failed to generate mask', 
+            details: maskError.message 
+          });
+        }
+      }
+
       const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
       
-      // If cropRegion is provided, crop the video
+      // Determine correct video filename (multi-target uses video-0.mp4, legacy uses video.mp4)
       let videoFileName = 'video.mp4';
+      const video0Path = path.join(storageDir, 'video-0.mp4');
+      const videoPath = path.join(storageDir, 'video.mp4');
+      
+      try {
+        await fs.access(video0Path);
+        videoFileName = 'video-0.mp4'; // Multi-target project
+        console.log('[AR Config] Multi-target project detected, using video-0.mp4');
+      } catch {
+        try {
+          await fs.access(videoPath);
+          console.log('[AR Config] Legacy project detected, using video.mp4');
+        } catch {
+          console.error('[AR Config] ❌ No video file found in storage!');
+          return res.status(500).json({ error: 'Video file not found in storage' });
+        }
+      }
+      
+      // If cropRegion is provided, crop the video
       if (cropRegion && cropRegion.x !== undefined && cropRegion.y !== undefined && 
           cropRegion.width && cropRegion.height) {
         console.log(`[AR Config] Cropping video with region:`, cropRegion);
-        const originalVideoPath = path.join(storageDir, 'video.mp4');
-        const croppedVideoPath = path.join(storageDir, 'video-cropped.mp4');
+        const originalVideoPath = path.join(storageDir, videoFileName);
+        const croppedVideoName = videoFileName.replace('.mp4', '-cropped.mp4');
+        const croppedVideoPath = path.join(storageDir, croppedVideoName);
         
         try {
           const { cropVideoByRegion } = await import('../services/media-metadata');
           await cropVideoByRegion(originalVideoPath, croppedVideoPath, cropRegion);
-          videoFileName = 'video-cropped.mp4';
+          videoFileName = croppedVideoName;
           console.log(`[AR Config] Video cropped successfully: ${croppedVideoPath}`);
         } catch (cropError: any) {
           console.error('[AR Config] Failed to crop video:', cropError);
@@ -659,17 +868,19 @@ export function createARRouter(): Router {
         }
       }
 
-      // Regenerate viewer with cropped video
+      // Regenerate viewer with cropped video and mask (if generated above)
       const viewerHtmlPath = path.join(storageDir, 'index.html');
       const markerName = 'marker';
       
-      let maskFileName: string | undefined;
-      if ((project as any).maskUrl) {
+      // If mask wasn't generated above, check if one already exists
+      if (!maskFileName && (project as any).maskUrl) {
         const maskPath = path.join(storageDir, path.basename((project as any).maskUrl as string));
         try {
           await fs.access(maskPath);
           maskFileName = path.basename(maskPath);
-        } catch {}
+        } catch {
+          console.warn('[AR Config] Mask URL in DB but file not found:', maskPath);
+        }
       }
 
       // Plane scale: use cropRegion proportions if available, otherwise photo dimensions
@@ -678,7 +889,7 @@ export function createARRouter(): Router {
       if (cropRegion && cropRegion.width && cropRegion.height) {
         // КРИТИЧНО: cropRegion.width/height — это ДОЛИ от оригинального видео (0-1), а НЕ пропорции!
         // Нужно получить реальные размеры видео, чтобы рассчитать правильный aspect ratio обрезанного фрагмента
-        const originalVideoPath = path.join(storageDir, 'video.mp4');
+        const originalVideoPath = path.join(storageDir, videoFileName.includes('-cropped') ? videoFileName.replace('-cropped', '') : videoFileName);
         
         try {
           const { extractVideoMetadata } = await import('../services/media-metadata');
@@ -707,21 +918,21 @@ export function createARRouter(): Router {
             height: 1.0 / cropAspectRatio 
           };
         }
-      } else if (project.photoAspectRatio) {
-        // Fallback: используем пропорции фото
+      } else {
+        // Use photo aspect ratio for plane scale
+        // Video has been resized to match photo dimensions in AR compiler
+        // So plane should match photo AR, not force 1:1
+        const photoAR = Number(project.photoAspectRatio) || (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+        
         planeScale = { 
           width: 1.0, 
-          height: 1.0 / Number(project.photoAspectRatio) 
+          height: 1.0 / photoAR 
         };
-        console.log(`[AR Config] Using photo proportions for plane: AR ${project.photoAspectRatio}`);
-      } else {
-        // Fallback: используем videoScale или дефолтные значения
-        planeScale = videoScale || { 
-          width: Number(project.scaleWidth) || 1.0, 
-          height: Number(project.scaleHeight) || 0.75 
-        };
-        console.log(`[AR Config] Using fallback proportions for plane`);
+        console.log(`[AR Config] Using photo AR=${photoAR.toFixed(3)}, plane=${planeScale.width}×${planeScale.height.toFixed(3)}`);
       }
+      
+      // Generate viewer HTML with correct video filename (video.mp4 or video-0.mp4)
+      console.log(`[AR Config] Generating viewer with video: ${videoFileName}, mask: ${maskFileName || 'none'}`);
       
       await generateARViewer({
         arId: id,
@@ -1349,14 +1560,16 @@ export function createARRouter(): Router {
   /**
    * POST /api/ar/create-demo
    * Create temporary demo AR project (24h expiration)
+   * Supports multiple photos for multi-target AR
+   * Each photo can have its own video
    * No product linkage, no pricing — just demo
    */
   router.post(
     '/create-demo',
     requireAuth,
     upload.fields([
-      { name: 'photo', maxCount: 1 },
-      { name: 'video', maxCount: 1 },
+      { name: 'photos', maxCount: 10 }, // До 10 фотографий
+      { name: 'videos', maxCount: 10 }, // До 10 видео (по одному на фото)
     ]),
     async (req: Request, res: Response) => {
       try {
@@ -1364,55 +1577,108 @@ export function createARRouter(): Router {
         const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id || 'local-admin';
 
         // Validate files
-        if (!files.photo || !files.video) {
-          return res.status(400).json({ error: 'Both photo and video are required' });
+        if (!files.photos || files.photos.length === 0) {
+          return res.status(400).json({ error: 'At least one photo is required' });
+        }
+        
+        if (!files.videos || files.videos.length === 0) {
+          return res.status(400).json({ error: 'At least one video is required' });
         }
 
-        const photoFile = files.photo[0];
-        const videoFile = files.video[0];
+        // Проверка соответствия количества фото и видео
+        if (files.photos.length !== files.videos.length) {
+          return res.status(400).json({ 
+            error: `Mismatch: ${files.photos.length} photos but ${files.videos.length} videos. Each photo needs its own video.` 
+          });
+        }
+
+        const photoFiles = files.photos;
+        const videoFiles = files.videos;
 
         // Move files to shared uploads directory (AR microservice will access them)
         const arId = `demo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         const uploadsDir = path.join(process.cwd(), 'objects', 'uploads');
         await fs.mkdir(uploadsDir, { recursive: true });
 
-        const photoFilename = `${arId}-photo.jpg`;
-        const videoFilename = `${arId}-video.mp4`;
-        const photoPath = path.join(uploadsDir, photoFilename);
-        const videoPath = path.join(uploadsDir, videoFilename);
+        // Process multiple photos and videos
+        const photoUrls: string[] = [];
+        const videoUrls: string[] = [];
+        
+        for (let i = 0; i < photoFiles.length; i++) {
+          // Copy photo
+          const photoFile = photoFiles[i];
+          const photoFilename = `${arId}-photo-${i}.jpg`;
+          const photoPath = path.join(uploadsDir, photoFilename);
+          
+          await fs.copyFile(photoFile.path, photoPath);
+          await fs.unlink(photoFile.path).catch(() => {});
+          photoUrls.push(`/objects/uploads/${photoFilename}`);
 
-        await fs.copyFile(photoFile.path, photoPath);
-        await fs.copyFile(videoFile.path, videoPath);
-        await fs.unlink(photoFile.path).catch(() => {});
-        await fs.unlink(videoFile.path).catch(() => {});
+          // Copy corresponding video
+          const videoFile = videoFiles[i];
+          const videoFilename = `${arId}-video-${i}.mp4`;
+          const videoPath = path.join(uploadsDir, videoFilename);
+          
+          await fs.copyFile(videoFile.path, videoPath);
+          await fs.unlink(videoFile.path).catch(() => {});
+          videoUrls.push(`/objects/uploads/${videoFilename}`);
+        }
 
-        console.log('[AR Router] ✅ Files copied to shared uploads:', { photoPath, videoPath });
+        console.log('[AR Router] ✅ Files copied to shared uploads:', { 
+          photos: photoUrls.length,
+          videos: videoUrls.length 
+        });
 
         // Calculate expiration (24 hours from now)
         const expiresAt = new Date();
         expiresAt.setHours(expiresAt.getHours() + 24);
 
-        // Send compilation request to AR microservice
-        console.log('[AR Router] 📤 Sending to AR microservice...');
+        // Send compilation request to AR microservice with multiple photos and videos
+        console.log(`[AR Router] 📤 Sending ${photoUrls.length} photo(s) + ${videoUrls.length} video(s) to AR microservice...`);
         
         const compileResult = await requestARCompilation({
           userId,
-          photoUrl: `/objects/uploads/${photoFilename}`,
-          videoUrl: `/objects/uploads/${videoFilename}`,
+          photoUrls: photoUrls, // Массив фотографий
+          videoUrls: videoUrls, // Массив видео (по одному на фото)
           isDemo: true,
         });
 
-        console.log('[AR Router] ✅ AR microservice accepted:', compileResult.projectId);
+        // FIXED: ar-service returns ONE projectId for multi-target (multiple markers in ONE project)
+        const projectId = compileResult.projectId;
+        const markersCount = compileResult.markersCount || photoUrls.length;
+        console.log(`[AR Router] ✅ AR microservice created multi-target project: ${projectId} (${markersCount} markers)`);
+
+        // IMPORTANT: Save ONE project record with markersCount
+        try {
+          await db.insert(arProjects).values({
+            id: projectId,
+            userId,
+            photoUrl: photoUrls[0], // First photo as representative
+            videoUrl: videoUrls[0], // First video as representative
+            status: 'pending',
+            isDemo: true,
+            expiresAt: expiresAt,
+            config: { markersCount }, // Store markers count in config
+          } as any);
+          
+          console.log(`[AR Router] ✅ Multi-target project saved to Backend DB: ${projectId} (${markersCount} markers)`);
+        } catch (dbError: any) {
+          console.warn('[AR Router] ⚠️ Failed to save project to Backend DB:', dbError.message);
+          // Non-critical: AR service will still compile, but won't appear in /api/ar/all list
+        }
 
         res.status(201).json({
-          message: 'Demo AR project created (expires in 24 hours)',
+          message: `Multi-target AR project with ${markersCount} markers created (expires in 24 hours)`,
           data: {
-            arId: compileResult.projectId,
+            arId: projectId, // Single project ID
+            projectId, // Same as arId
             status: compileResult.status,
+            markersCount,
             expiresAt: expiresAt,
             isDemo: true,
             estimatedTimeSeconds: compileResult.estimatedTimeSeconds,
-            statusUrl: `/api/ar/status/${compileResult.projectId}`,
+            statusUrl: `/api/ar/status/${projectId}`,
+            viewUrl: compileResult.viewUrl,
           },
         });
       } catch (error: any) {

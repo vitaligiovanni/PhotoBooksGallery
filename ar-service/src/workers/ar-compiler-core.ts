@@ -22,6 +22,17 @@ import sharp from 'sharp';
 import QRCode from 'qrcode';
 import crypto from 'crypto';
 import { createCanvas, loadImage, Image as CanvasImage, CanvasRenderingContext2D } from 'canvas';
+import ffmpeg from 'fluent-ffmpeg';
+import ffprobeStatic from 'ffprobe-static';
+import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
+
+// Configure ffmpeg paths
+if (ffmpegInstaller?.path) {
+  ffmpeg.setFfmpegPath(ffmpegInstaller.path);
+}
+if (ffprobeStatic?.path) {
+  ffmpeg.setFfprobePath(ffprobeStatic.path);
+}
 // TensorFlow MUST be imported and configured BEFORE mind-ar
 // Using pure JavaScript version (@tensorflow/tfjs) instead of @tensorflow/tfjs-node
 // to avoid native compilation issues on Windows
@@ -29,12 +40,118 @@ import * as tf from '@tensorflow/tfjs';
 
 // ==== INTERFACES (from backend) ====
 
+/**
+ * Extract video dimensions using ffprobe
+ */
+function extractVideoMetadata(videoPath: string): Promise<{ width: number; height: number; aspectRatio: number }> {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(videoPath, (err, data) => {
+      if (err) return reject(err);
+      const stream = data.streams.find(s => s.width && s.height) as any;
+      const width = stream?.width;
+      const height = stream?.height;
+      if (!width || !height) {
+        return reject(new Error('Unable to read video dimensions'));
+      }
+      resolve({ width, height, aspectRatio: width / height });
+    });
+  });
+}
+
+/**
+ * Resize/crop video to match photo dimensions
+ * - If video AR ≈ photo AR: just resize
+ * - If video wider: crop sides to match photo AR, then resize
+ * - If video taller: crop top/bottom to match photo AR, then resize
+ * - Never upscale beyond 1920px (keeps file size reasonable)
+ */
+async function resizeVideoToMatchPhoto(
+  videoSrc: string,
+  photoWidth: number,
+  photoHeight: number,
+  outputPath: string
+): Promise<void> {
+  const photoAR = photoWidth / photoHeight;
+  const videoMeta = await extractVideoMetadata(videoSrc);
+  const videoAR = videoMeta.width / videoMeta.height;
+  
+  console.log(`[AR Video] Source: ${videoMeta.width}×${videoMeta.height} (AR=${videoAR.toFixed(3)})`);
+  console.log(`[AR Video] Target: ${photoWidth}×${photoHeight} (AR=${photoAR.toFixed(3)})`);
+  
+  // Calculate target dimensions (max 1920px on longest side)
+  const maxDimension = 1920;
+  let targetWidth = photoWidth;
+  let targetHeight = photoHeight;
+  
+  if (Math.max(photoWidth, photoHeight) > maxDimension) {
+    const scale = maxDimension / Math.max(photoWidth, photoHeight);
+    targetWidth = Math.round(photoWidth * scale);
+    targetHeight = Math.round(photoHeight * scale);
+    console.log(`[AR Video] Optimizing: scaled to ${targetWidth}×${targetHeight} (max ${maxDimension}px)`);
+  }
+  
+  // Build ffmpeg command
+  let command = ffmpeg(videoSrc);
+  
+  // If aspect ratios differ significantly, crop first
+  const arDiff = Math.abs(videoAR - photoAR);
+  if (arDiff > 0.05) {
+    if (videoAR > photoAR) {
+      // Video wider → crop sides (center crop)
+      const cropWidth = Math.round(videoMeta.height * photoAR);
+      const cropX = Math.round((videoMeta.width - cropWidth) / 2);
+      console.log(`[AR Video] Cropping sides: ${cropWidth}×${videoMeta.height} (offset X=${cropX})`);
+      command = command.videoFilters(`crop=${cropWidth}:${videoMeta.height}:${cropX}:0`);
+    } else {
+      // Video taller → crop top/bottom (center crop)
+      const cropHeight = Math.round(videoMeta.width / photoAR);
+      const cropY = Math.round((videoMeta.height - cropHeight) / 2);
+      console.log(`[AR Video] Cropping top/bottom: ${videoMeta.width}×${cropHeight} (offset Y=${cropY})`);
+      command = command.videoFilters(`crop=${videoMeta.width}:${cropHeight}:0:${cropY}`);
+    }
+  }
+  
+  // Resize to target dimensions
+  return new Promise((resolve, reject) => {
+    command
+      .size(`${targetWidth}x${targetHeight}`)
+      .videoCodec('libx264')
+      .outputOptions([
+        '-crf 23', // Good quality, reasonable size
+        '-preset fast', // Balance speed/quality
+        '-movflags +faststart', // Web optimization
+      ])
+      .output(outputPath)
+      .on('start', (cmdLine) => {
+        console.log(`[AR Video] ffmpeg: ${cmdLine}`);
+      })
+      .on('progress', (progress) => {
+        if (progress.percent) {
+          console.log(`[AR Video] Progress: ${Math.round(progress.percent)}%`);
+        }
+      })
+      .on('end', () => {
+        console.log(`[AR Video] ✅ Processed: ${outputPath}`);
+        resolve();
+      })
+      .on('error', (err) => {
+        console.error(`[AR Video] ❌ ffmpeg error:`, err);
+        reject(err);
+      })
+      .run();
+  });
+}
+
 export interface CompilationJob {
   projectId: string;
   userId: string;
-  photoPath: string; // Absolute path to uploaded photo
-  videoPath?: string; // Absolute path to uploaded video (optional)
-  maskPath?: string; // Absolute path to mask/overlay image (optional)
+  photoPath?: string; // Legacy: single photo path
+  videoPath?: string; // Legacy: single video path
+  photoPaths?: string[]; // Multi-target: array of photo paths
+  videoPaths?: string[]; // Multi-target: array of video paths (one per photo)
+  maskPath?: string; // Absolute path to custom mask/overlay image (optional)
+  maskUrls?: string[]; // Multi-target: array of mask URLs (optional)
+  shapeType?: 'circle' | 'oval' | 'square' | 'rect' | 'custom'; // Auto-generate mask shape
   storageDir: string; // Project storage directory (e.g., /app/storage/ar-storage/project-123)
   config: {
     fitMode?: 'contain' | 'cover' | 'fill' | 'exact'; // Video fit mode
@@ -47,6 +164,7 @@ export interface CompilationJob {
     videoPosition?: { x: number; y: number; z: number };
     videoRotation?: { x: number; y: number; z: number };
     videoScale?: { width: number; height: number };
+    markersCount?: number; // Number of markers for multi-target
   };
 }
 
@@ -58,16 +176,21 @@ export interface CompilationResult {
   viewerHtmlUrl?: string;
   qrCodeUrl?: string;
   metadata?: {
-    photoWidth: number;
-    photoHeight: number;
-    videoWidth: number;
-    videoHeight: number;
-    videoDurationMs: number;
-    photoAspectRatio: string;
-    videoAspectRatio: string;
-    fitMode: string;
-    scaleWidth: string;
-    scaleHeight: string;
+    markersCount?: number; // Multi-target mode
+    multiTarget?: boolean; // True for multi-target
+    photoWidth?: number; // DEPRECATED: use photoSizes instead
+    photoHeight?: number; // DEPRECATED: use photoSizes instead
+    photoSizes?: Array<{ width: number; height: number; aspectRatio: number }>; // Multi-target: size for each marker
+    videoWidth?: number; // Optional in multi-target
+    videoHeight?: number; // Optional in multi-target
+    videoDurationMs?: number; // Optional in multi-target
+    photoAspectRatio?: string; // DEPRECATED: use photoSizes instead
+    videoAspectRatio?: string; // Optional in multi-target
+    fitMode?: string; // Optional in multi-target
+    scaleWidth?: string; // Optional in multi-target
+    scaleHeight?: string; // Optional in multi-target
+    maskEnabled?: boolean; // True if mask applied
+    maskFiles?: string[]; // ['mask-0.png', 'mask-1.png', ...]
   };
 }
 
@@ -88,128 +211,217 @@ export interface CompilationResult {
 export async function compileARProject(job: CompilationJob): Promise<CompilationResult> {
   const startTime = Date.now();
   
+  // Support both single and multi-target modes
+  const photoPaths = job.photoPaths || (job.photoPath ? [job.photoPath] : []);
+  const videoPaths = job.videoPaths || (job.videoPath ? [job.videoPath] : []);
+  const markersCount = photoPaths.length;
+  
   console.log(`[AR Core] 🔨 Starting compilation for project: ${job.projectId}`);
-  console.log(`[AR Core] Photo: ${job.photoPath}`);
-  console.log(`[AR Core] Video: ${job.videoPath || 'NONE (photo-only mode)'}`);
+  console.log(`[AR Core] Mode: ${markersCount > 1 ? 'MULTI-TARGET' : 'SINGLE'} (${markersCount} marker(s))`);
   console.log(`[AR Core] Config:`, JSON.stringify(job.config, null, 2));
   
+  // CRITICAL: Validate photo paths
+  if (photoPaths.length === 0) {
+    const compilationTimeMs = Date.now() - startTime;
+    console.error('[AR Core] ❌❌❌ VALIDATION FAILED: At least one photo is required! ❌❌❌');
+    return {
+      success: false,
+      error: 'At least one photo is required for compilation',
+      compilationTimeMs
+    };
+  }
+  
+  // Check if all photo files exist
+  for (let i = 0; i < photoPaths.length; i++) {
+    const photoExists = await fs.pathExists(photoPaths[i]);
+    if (!photoExists) {
+      const compilationTimeMs = Date.now() - startTime;
+      console.error(`[AR Core] ❌❌❌ VALIDATION FAILED: Photo ${i + 1} not found: ${photoPaths[i]} ❌❌❌`);
+      return {
+        success: false,
+        error: `Photo file ${i + 1} not found: ${photoPaths[i]}`,
+        compilationTimeMs
+      };
+    }
+    console.log(`[AR Core] ✅ Photo ${i + 1}/${markersCount} validated: ${photoPaths[i]}`);
+  }
+  
   try {
-    // STEP 1: Resize photo (5000px → 1024px for faster compilation)
-    console.log('[AR Core] 📐 STEP 1: Resizing photo...');
-    const resizedPhotoPath = await resizePhotoIfNeeded(job.photoPath, job.storageDir, 1024);
-    console.log(`[AR Core] ✅ Photo resized: ${resizedPhotoPath}`);
+    // STEP 1: Process ALL photos (resize + enhance)
+    console.log(`[AR Core] 📐 STEP 1: Processing ${markersCount} photo(s)...`);
+    const processedPhotos: string[] = [];
+    const resizedPhotos: string[] = []; // Store pre-cropped photos for metadata
     
-    // STEP 2: Enhance marker with unique border
-    console.log('[AR Core] 🎨 STEP 2: Enhancing marker with unique border...');
-    const enhancerResult = await enhanceMarkerPhotoSimple(resizedPhotoPath, job.storageDir, job.projectId);
+    for (let i = 0; i < photoPaths.length; i++) {
+      console.log(`[AR Core] Processing photo ${i + 1}/${markersCount}...`);
+      
+      // Resize with unique filename per photo
+      const resizedPhotoPath = await resizePhotoIfNeeded(photoPaths[i], job.storageDir, 1024, i);
+      resizedPhotos.push(resizedPhotoPath); // SAVE: Pre-cropped photo for metadata
+      
+      // DISABLED: Border enhancement completely disabled for ALL projects (single + multi)
+      // MindAR does not need border - it uses natural feature detection
+      const finalPath = resizedPhotoPath;
+      console.log(`[AR Core] Using resized photo AS-IS (no border) for photo ${i + 1}`);
+      
+      processedPhotos.push(finalPath);
+      console.log(`[AR Core] ✅ Photo ${i + 1}/${markersCount} processed: ${finalPath}`);
+    }
     
-    // STEP 3: Crop border for MindAR (so it recognizes clean center)
-    let finalMarkerSourcePath: string;
+    console.log(`[AR Core] ✅ All ${markersCount} photo(s) processed for compilation`);
     
-    if (enhancerResult.enhanced) {
-      console.log('[AR Core] 🎨 Enhanced with border → cropping for clean marker recognition');
-      finalMarkerSourcePath = await createCroppedMindMarker(enhancerResult.photoPath, job.storageDir);
-      console.log('[AR Core] ✨ Professional mode: Print clean photo, get stable tracking!');
+    // STEP 2: Process ALL videos - resize/crop to match photo dimensions
+    console.log(`[AR Core] 🎬 STEP 2: Processing ${videoPaths.length} video(s) to match photo dimensions...`);
+    for (let i = 0; i < videoPaths.length; i++) {
+      if (videoPaths[i]) {
+        const videoDestPath = path.join(job.storageDir, `video-${i}.mp4`);
+        
+        // CRITICAL: Get photo dimensions from RESIZED (pre-cropped) photo, not cropped one!
+        const photoMeta = await sharp(resizedPhotos[i]).metadata();
+        if (!photoMeta.width || !photoMeta.height) {
+          throw new Error(`Cannot read dimensions of photo ${i}`);
+        }
+        
+        console.log(`[AR Core] 📐 Original photo ${i}: ${photoMeta.width}×${photoMeta.height}px (pre-crop for video)`);
+        
+        // Resize/crop video to match ORIGINAL photo dimensions (not cropped)
+        await resizeVideoToMatchPhoto(
+          videoPaths[i],
+          photoMeta.width,
+          photoMeta.height,
+          videoDestPath
+        );
+        
+        console.log(`[AR Core] ✅ Video ${i + 1}/${videoPaths.length} processed and matched to photo`);
+      }
+    }
+    
+    // STEP 2.5: Generate or copy masks (if enabled)
+    const maskFiles: string[] = [];
+    const maskEnabled = job.shapeType || job.maskPath || (job.maskUrls && job.maskUrls.length > 0);
+    
+    if (maskEnabled) {
+      console.log(`[AR Core] 🎭 STEP 2.5: Processing masks...`);
+      
+      for (let i = 0; i < markersCount; i++) {
+        const maskFileName = `mask-${i}.png`;
+        const maskDestPath = path.join(job.storageDir, maskFileName);
+        
+        // CRITICAL: Get dimensions from RESIZED (pre-cropped) photo to match video!
+        const photoMeta = await sharp(resizedPhotos[i]).metadata();
+        const maskWidth = photoMeta.width || 1024;
+        const maskHeight = photoMeta.height || 1024;
+        
+        console.log(`[AR Core] 🎭 Mask ${i + 1}: generating at ${maskWidth}×${maskHeight}px (matches original photo + video)`);
+        
+        if (job.shapeType && job.shapeType !== 'custom') {
+          // Auto-generate mask from shape template
+          await generateMask(job.shapeType, maskDestPath, undefined, maskWidth, maskHeight);
+          maskFiles.push(maskFileName);
+          console.log(`[AR Core] ✅ Mask ${i + 1}/${markersCount}: auto-generated (${job.shapeType})`);
+        } else if (job.maskPath) {
+          // Single custom mask for all markers
+          await generateMask('custom', maskDestPath, job.maskPath, maskWidth, maskHeight);
+          maskFiles.push(maskFileName);
+          console.log(`[AR Core] ✅ Mask ${i + 1}/${markersCount}: custom mask copied`);
+        } else if (job.maskUrls && job.maskUrls[i]) {
+          // Individual mask per marker (multi-target custom)
+          const maskSourcePath = job.maskUrls[i];
+          if (await fs.pathExists(maskSourcePath)) {
+            await generateMask('custom', maskDestPath, maskSourcePath, maskWidth, maskHeight);
+            maskFiles.push(maskFileName);
+            console.log(`[AR Core] ✅ Mask ${i + 1}/${markersCount}: individual custom mask`);
+          } else {
+            console.warn(`[AR Core] ⚠️ Mask ${i + 1} not found: ${maskSourcePath}, skipping`);
+          }
+        }
+      }
+      
+      if (maskFiles.length > 0) {
+        console.log(`[AR Core] ✅ ${maskFiles.length} mask(s) processed`);
+      }
     } else {
-      console.log('[AR Core] 📸 Using resized photo (enhancer disabled)');
-      finalMarkerSourcePath = resizedPhotoPath;
+      console.log('[AR Core] ℹ️ No masks enabled, videos will display in rectangular plane');
     }
     
-    // STEP 4: Extract photo metadata
-    const photoMeta = await sharp(finalMarkerSourcePath).metadata();
-    const photoWidth = photoMeta.width!;
-    const photoHeight = photoMeta.height!;
-    const photoAspectRatio = photoWidth / photoHeight;
+    // STEP 3: Compile .mind file with MULTIPLE markers
+    console.log(`[AR Core] ⏳ STEP 3: Compiling .mind file with ${markersCount} marker(s)...`);
     
-    // STEP 5: Process video (if provided)
-    let videoWidth = 1920;
-    let videoHeight = 1080;
-    let videoDurationMs = 0;
-    let videoAspectRatio = 16 / 9;
-    
-    if (job.videoPath) {
-      console.log('[AR Core] 🎬 STEP 3: Processing video...');
-      
-      // Copy video to storage
-      const videoDestPath = path.join(job.storageDir, 'video.mp4');
-      await fs.copyFile(job.videoPath, videoDestPath);
-      
-      // Extract video metadata (simplified - real impl would use ffprobe)
-      videoWidth = 1920;
-      videoHeight = 1080;
-      videoDurationMs = 10000;
-      videoAspectRatio = videoWidth / videoHeight;
-      
-      console.log(`[AR Core] ✅ Video copied: ${videoWidth}x${videoHeight}, ${videoDurationMs}ms`);
-    }
-    
-    // STEP 6: Check cache and compile .mind marker
-    console.log('[AR Core] ⏳ STEP 4: Checking cache and compiling .mind marker...');
-    
-    // MD5 cache: Reuse .mind file if photo unchanged
-    const photoBuffer = await fs.readFile(finalMarkerSourcePath);
-    const photoHash = crypto.createHash('md5').update(photoBuffer).digest('hex');
+    // Calculate combined hash for cache
+    const combinedBuffer = Buffer.concat(await Promise.all(
+      processedPhotos.map(p => fs.readFile(p))
+    ));
+    const combinedHash = crypto.createHash('md5').update(combinedBuffer).digest('hex');
     const cacheDir = path.join(job.storageDir, '..', 'mind-cache');
-    const cachedMindPath = path.join(cacheDir, `${photoHash}.mind`);
+    const cachedMindPath = path.join(cacheDir, `multi-${markersCount}-${combinedHash}.mind`);
     
     let mindResult: { success: boolean; error?: string; mindFilePath?: string; compilationTimeMs: number };
     const cachedExists = await fs.access(cachedMindPath).then(() => true).catch(() => false);
     
     if (cachedExists) {
-      console.log(`[AR Core] ✅ Cache HIT! Reusing compiled .mind file (hash: ${photoHash.slice(0, 8)}...)`);
+      console.log(`[AR Core] ✅ Cache HIT! Reusing multi-target .mind file (${markersCount} markers)`);
       const targetMindPath = path.join(job.storageDir, 'marker.mind');
       await fs.copyFile(cachedMindPath, targetMindPath);
-      console.log('[AR Core] ⚡ Compilation skipped (2-5s vs ~105s!)');
+      console.log('[AR Core] ⚡ Compilation skipped (instant vs ~2min per marker!)');
       mindResult = { success: true, mindFilePath: targetMindPath, compilationTimeMs: 0 };
     } else {
-      console.log(`[AR Core] ❌ Cache MISS. Compiling new .mind file (hash: ${photoHash.slice(0, 8)}...)`);
-      console.log('[AR Core] ⏳ This takes ~105 seconds with 1024px resolution...');
-      mindResult = await compileMindFile(finalMarkerSourcePath, job.storageDir, 'marker');
+      console.log(`[AR Core] ❌ Cache MISS. Compiling ${markersCount} markers into ONE .mind file...`);
+      console.log(`[AR Core] ⏳ This takes ~${markersCount * 60}s (${markersCount} markers × ~60s each)...`);
+      mindResult = await compileMultiTargetMindFile(processedPhotos, job.storageDir, 'marker');
       
-      // Save to cache for future use
+      // Save to cache
       if (mindResult.success && mindResult.mindFilePath) {
         await fs.mkdir(cacheDir, { recursive: true });
         await fs.copyFile(mindResult.mindFilePath, cachedMindPath);
-        console.log(`[AR Core] 💾 Cached .mind file for future compilations`);
+        console.log(`[AR Core] 💾 Cached multi-target .mind file for future use`);
       }
     }
     
     if (!mindResult.success) {
-      throw new Error(`MindAR compilation failed: ${mindResult.error}`);
+      throw new Error(`MindAR multi-target compilation failed: ${mindResult.error}`);
     }
     
-    console.log(`[AR Core] ✅ .mind file compiled in ${mindResult.compilationTimeMs}ms`);
+    console.log(`[AR Core] ✅ Multi-target .mind file compiled in ${mindResult.compilationTimeMs}ms`);
     
-    // STEP 7: Calculate video scale
-    const effectiveFitMode = job.config.fitMode || 'contain';
-    const scaleWidth = 1;
-    const scaleHeight = photoHeight / photoWidth;
+    // STEP 4: Get photo metadata from ALL resized photos (each marker has unique size!)
+    const photoSizes = await Promise.all(
+      resizedPhotos.map(async (photoPath) => {
+        const meta = await sharp(photoPath).metadata();
+        const width = meta.width!;
+        const height = meta.height!;
+        const aspectRatio = width / height;
+        return { width, height, aspectRatio };
+      })
+    );
     
-    // STEP 8: Generate HTML viewer
-    console.log('[AR Core] 🌐 STEP 5: Generating HTML5 viewer...');
+    console.log(`[AR Core] 📐 Photo dimensions for each marker:`);
+    photoSizes.forEach((size, i) => {
+      console.log(`  Marker ${i + 1}: ${size.width}×${size.height}px (AR=${size.aspectRatio.toFixed(3)})`);
+    });
+    
+    // STEP 5: Generate multi-target HTML viewer
+    console.log(`[AR Core] 🌐 STEP 4: Generating multi-target HTML viewer with ${markersCount} videos...`);
     const viewerHtmlPath = path.join(job.storageDir, 'index.html');
-    await generateARViewer(
+    const videoFiles = videoPaths.map((_, i) => `video-${i}.mp4`);
+    
+    await generateMultiTargetARViewer(
       {
         arId: job.projectId,
         markerBaseName: 'marker',
-        videoFileName: job.videoPath ? 'video.mp4' : undefined!,
-        maskFileName: job.config ? undefined : undefined,
+        markersCount,
+        videoFiles,
+        photoSizes, // CRITICAL: Array of sizes, one per marker
+        maskFiles: maskFiles.length > 0 ? maskFiles : undefined,
         videoPosition: job.config.videoPosition || { x: 0, y: 0, z: 0 },
         videoRotation: job.config.videoRotation || { x: 0, y: 0, z: 0 },
-        videoScale: job.config.videoScale || { width: scaleWidth, height: scaleHeight },
-        autoPlay: job.config.autoPlay ?? true,
         loop: job.config.loop ?? true,
-        fitMode: effectiveFitMode,
-        videoAspectRatio,
-        planeAspectRatio: photoAspectRatio,
         zoom: job.config.zoom ?? 1.0,
         offsetX: job.config.offsetX ?? 0,
         offsetY: job.config.offsetY ?? 0,
-        aspectLocked: job.config.aspectLocked ?? true,
       },
       viewerHtmlPath
     );
-    console.log('[AR Core] ✅ HTML viewer generated');
+    console.log(`[AR Core] ✅ Multi-target HTML viewer generated with ${markersCount} videos${maskFiles.length > 0 ? ' + masks' : ''}`);
     
     // STEP 9: Generate QR codes
     console.log('[AR Core] 📱 STEP 6: Generating QR codes...');
@@ -239,7 +451,8 @@ export async function compileARProject(job: CompilationJob): Promise<Compilation
     // DONE!
     const compilationTimeMs = Date.now() - startTime;
     
-    console.log(`[AR Core] ✅✅✅ COMPILATION COMPLETED in ${(compilationTimeMs / 1000).toFixed(1)}s ✅✅✅`);
+    console.log(`[AR Core] ✅✅✅ MULTI-TARGET COMPILATION COMPLETED in ${(compilationTimeMs / 1000).toFixed(1)}s ✅✅✅`);
+    console.log(`[AR Core] 📊 Result: ${markersCount} markers, 1 .mind file, ${markersCount} videos`);
     
     return {
       success: true,
@@ -248,16 +461,11 @@ export async function compileARProject(job: CompilationJob): Promise<Compilation
       viewerHtmlUrl: `/objects/ar-storage/${job.projectId}/index.html`,
       qrCodeUrl: `/objects/ar-storage/${job.projectId}/qr-code.png`,
       metadata: {
-        photoWidth,
-        photoHeight,
-        videoWidth,
-        videoHeight,
-        videoDurationMs,
-        photoAspectRatio: photoAspectRatio.toFixed(3),
-        videoAspectRatio: videoAspectRatio.toFixed(3),
-        fitMode: effectiveFitMode,
-        scaleWidth: scaleWidth.toString(),
-        scaleHeight: scaleHeight.toFixed(3)
+        markersCount,
+        photoSizes, // Array of sizes for all markers
+        multiTarget: true,
+        maskEnabled: maskFiles.length > 0,
+        maskFiles: maskFiles.length > 0 ? maskFiles : undefined
       }
     };
     
@@ -281,7 +489,7 @@ export async function compileARProject(job: CompilationJob): Promise<Compilation
  * Resize photo to 1024px (5-8x faster compilation)
  * FROM: backend/src/services/ar-compiler.ts lines 31-62
  */
-async function resizePhotoIfNeeded(photoPath: string, outputDir: string, maxDimension: number = 1024): Promise<string> {
+async function resizePhotoIfNeeded(photoPath: string, outputDir: string, maxDimension: number = 1024, photoIndex: number = 0): Promise<string> {
   try {
     const metadata = await sharp(photoPath).metadata();
     const { width, height } = metadata;
@@ -298,7 +506,7 @@ async function resizePhotoIfNeeded(photoPath: string, outputDir: string, maxDime
     
     console.log(`[AR Core] 📐 Resizing large photo ${width}x${height}px → max ${maxDimension}px for 3-5x faster compilation...`);
     
-    const resizedPath = path.join(outputDir, 'photo-resized.jpg');
+    const resizedPath = path.join(outputDir, `photo-resized-${photoIndex}.jpg`);
     await sharp(photoPath)
       .resize(maxDimension, maxDimension, {
         fit: 'inside', // Preserve aspect ratio
@@ -570,16 +778,16 @@ async function enhanceMarkerPhotoSimple(
  * Crop border from enhanced photo (for MindAR clean recognition)
  * FROM: backend/src/services/ar-compiler.ts lines 1007-1018
  */
-async function createCroppedMindMarker(enhancedPhotoPath: string, outputDir: string): Promise<string> {
-  const croppedPath = path.join(outputDir, 'marker-for-mind.jpg');
+async function createCroppedMindMarker(enhancedPhotoPath: string, outputDir: string, suffix: string = ''): Promise<string> {
+  const croppedPath = path.join(outputDir, `marker-for-mind${suffix}.jpg`);
   
   const meta = await sharp(enhancedPhotoPath).metadata();
   const w = meta.width!;
   const h = meta.height!;
   
-  // Calculate border thickness (12-15% of max side)
+  // Calculate border thickness (5% instead of 13.5% to preserve more photo area)
   const maxSide = Math.max(w, h);
-  const borderThickness = Math.round(maxSide * 0.135); // Average 13.5%
+  const borderThickness = Math.round(maxSide * 0.05); // 5% - minimal crop
   
   await sharp(enhancedPhotoPath)
     .extract({
@@ -593,6 +801,73 @@ async function createCroppedMindMarker(enhancedPhotoPath: string, outputDir: str
   
   console.log('[AR Core] ✅ Cropped center for MindAR (clean marker)');
   return croppedPath;
+}
+
+/**
+ * Generate mask PNG from shape type or resize custom mask
+ * Supports: circle, oval, square, rect, custom
+ */
+async function generateMask(
+  shapeType: 'circle' | 'oval' | 'square' | 'rect' | 'custom',
+  outputPath: string,
+  customMaskPath?: string,
+  targetWidth: number = 1024,
+  targetHeight: number = 1024
+): Promise<void> {
+  console.log(`[AR Core] 🎭 Generating mask: ${shapeType} (${targetWidth}x${targetHeight})`);
+
+  if (shapeType === 'custom' && customMaskPath) {
+    // Resize custom mask to match video dimensions
+    const maskExists = await fs.pathExists(customMaskPath);
+    if (!maskExists) {
+      throw new Error(`Custom mask not found: ${customMaskPath}`);
+    }
+    
+    await sharp(customMaskPath)
+      .resize(targetWidth, targetHeight, {
+        fit: 'fill',
+        background: { r: 0, g: 0, b: 0, alpha: 0 }
+      })
+      .png()
+      .toFile(outputPath);
+    
+    console.log('[AR Core] ✅ Custom mask resized and saved');
+    return;
+  }
+
+  // Auto-generate mask from template
+  const templateDir = path.join(process.cwd(), '..', 'ar-mask-templates');
+  const templateFiles: Record<string, string> = {
+    circle: 'circle.png',
+    oval: 'oval.png',
+    square: 'square.png',
+    rect: 'rounded-rect.png'
+  };
+
+  const templateFile = templateFiles[shapeType];
+  if (!templateFile) {
+    throw new Error(`Unknown shape type: ${shapeType}. Use: circle, oval, square, rect`);
+  }
+
+  const templatePath = path.join(templateDir, templateFile);
+  const templateExists = await fs.pathExists(templatePath);
+  
+  if (!templateExists) {
+    throw new Error(`Mask template not found: ${templatePath}. Run generate-templates.js first.`);
+  }
+
+  // CRITICAL: Use 'contain' to preserve shape proportions (circle stays circle!)
+  // Template is square (1024×1024), target may be portrait/landscape
+  // 'contain' = fit inside, background fills edges with transparent black
+  await sharp(templatePath)
+    .resize(targetWidth, targetHeight, {
+      fit: 'contain', // ✅ PRESERVES CIRCLE SHAPE!
+      background: { r: 0, g: 0, b: 0, alpha: 0 } // Transparent edges
+    })
+    .png()
+    .toFile(outputPath);
+
+  console.log(`[AR Core] ✅ Mask generated with preserved proportions: ${templateFile}`);
 }
 
 /**
@@ -614,10 +889,12 @@ async function initMindAR() {
     console.log('[AR Core] ✅ TensorFlow backend ready:', tf.getBackend());
 
     // Now import MindAR (it will use TensorFlow that's already loaded)
+    // @ts-ignore - mind-ar has no type definitions
     const compilerModule = await import('mind-ar/src/image-target/offline-compiler.js');
     OfflineCompiler = compilerModule.OfflineCompiler;
 
     // Force load CPU kernels for offline compilation (no GPU in Node.js)
+    // @ts-ignore - mind-ar has no type definitions
     await import('mind-ar/src/image-target/detector/kernels/cpu/index.js');
     
     console.log('[AR Core] ✅ MindAR OfflineCompiler loaded');
@@ -631,6 +908,104 @@ async function initMindAR() {
   }
 }
 
+/**
+ * Compile MULTIPLE images into ONE .mind file (multi-target AR)
+ * FROM: Modified compileMindFile to support arrays
+ */
+async function compileMultiTargetMindFile(
+  photoPaths: string[],
+  outputDir: string,
+  markerBaseName: string = 'marker'
+): Promise<{ success: boolean; compilationTimeMs: number; error?: string; mindFilePath?: string }> {
+  const startTime = Date.now();
+  
+  try {
+    await initMindAR();
+    
+    console.log(`[AR Core] 📸 Loading ${photoPaths.length} images for multi-target compilation...`);
+    const images: any[] = [];
+    
+    for (let i = 0; i < photoPaths.length; i++) {
+      await fs.access(photoPaths[i]);
+      let image = await loadImage(photoPaths[i]);
+      console.log(`[AR Core] Image ${i + 1}: ${image.width}x${image.height}px`);
+      
+      // Resize if needed
+      const MAX_DIMENSION = 1024;
+      if (image.width > MAX_DIMENSION || image.height > MAX_DIMENSION) {
+        const aspectRatio = image.width / image.height;
+        let targetWidth = image.width;
+        let targetHeight = image.height;
+        
+        if (image.width > image.height) {
+          targetWidth = MAX_DIMENSION;
+          targetHeight = Math.round(MAX_DIMENSION / aspectRatio);
+        } else {
+          targetHeight = MAX_DIMENSION;
+          targetWidth = Math.round(MAX_DIMENSION * aspectRatio);
+        }
+        
+        console.log(`[AR Core] 📐 Resizing image ${i + 1} to ${targetWidth}x${targetHeight}px...`);
+        const canvas = createCanvas(targetWidth, targetHeight);
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(image as any, 0, 0, targetWidth, targetHeight);
+        image = canvas as any;
+      }
+      
+      images.push(image);
+    }
+    
+    console.log(`[AR Core] ✅ All ${images.length} images loaded. Starting multi-target compilation...`);
+    
+    const compiler = new OfflineCompiler({ maxScale: 640 });
+    let lastProgressLog = 0;
+
+    // CRITICAL: Pass array of images to compile multiple markers
+    await compiler.compileImageTargets(images, (progress: number) => {
+      if (Math.floor(progress / 10) > lastProgressLog) {
+        lastProgressLog = Math.floor(progress / 10);
+        console.log(`[AR Core] 🔄 Multi-target compilation progress: ${progress.toFixed(1)}%`);
+      }
+    });
+
+    console.log('[AR Core] 🎯 Extracting tracking features for all markers...');
+
+    const exportedBuffer = compiler.exportData();
+    
+    await fs.mkdir(outputDir, { recursive: true });
+    const mindFilePath = path.join(outputDir, `${markerBaseName}.mind`);
+    await fs.writeFile(mindFilePath, exportedBuffer);
+
+    const compilationTimeMs = Date.now() - startTime;
+    const fileSize = exportedBuffer.length;
+
+    console.log(
+      `[AR Core] ✅ MULTI-TARGET SUCCESS! Created ${mindFilePath}\n` +
+      `  - Markers: ${images.length}\n` +
+      `  - Size: ${(fileSize / 1024).toFixed(1)} KB\n` +
+      `  - Time: ${(compilationTimeMs / 1000).toFixed(1)}s`
+    );
+
+    return {
+      success: true,
+      compilationTimeMs,
+      mindFilePath
+    };
+  } catch (error: any) {
+    const compilationTimeMs = Date.now() - startTime;
+    console.error(`[AR Core] ❌ Multi-target compilation FAILED after ${compilationTimeMs}ms:`, error);
+
+    return {
+      success: false,
+      error: error.message || 'Unknown compilation error',
+      compilationTimeMs
+    };
+  }
+}
+
+/**
+ * Compile SINGLE image .mind file (legacy single-target)
+ */
 async function compileMindFile(
   photoPath: string,
   outputDir: string,
@@ -761,6 +1136,187 @@ interface ARViewerConfig {
   aspectLocked?: boolean;
 }
 
+/**
+ * Generate MULTI-TARGET HTML5 AR viewer
+ * FROM: Modified generateARViewer to support multiple videos
+ */
+interface MultiTargetARViewerConfig {
+  arId: string;
+  markerBaseName: string;
+  markersCount: number;
+  videoFiles: string[]; // ['video-0.mp4', 'video-1.mp4', ...]
+  maskFiles?: string[]; // ['mask-0.png', 'mask-1.png', ...] (optional)
+  photoSizes: Array<{ width: number; height: number; aspectRatio: number }>; // Size for EACH marker
+  videoPosition?: { x: number; y: number; z: number };
+  videoRotation?: { x: number; y: number; z: number };
+  videoScale?: { width: number; height: number }; // DEPRECATED: use photoSizes instead
+  autoPlay?: boolean;
+  loop?: boolean;
+  fitMode?: string;
+  zoom?: number;
+  offsetX?: number;
+  offsetY?: number;
+}
+
+async function generateMultiTargetARViewer(
+  config: MultiTargetARViewerConfig,
+  outputPath: string
+): Promise<void> {
+  const {
+    arId,
+    markerBaseName,
+    markersCount,
+    videoFiles,
+    maskFiles,
+    videoPosition = { x: 0, y: 0, z: 0 },
+    videoRotation = { x: 0, y: 0, z: 0 },
+    videoScale = { width: 1, height: 0.75 },
+    loop = true,
+    zoom = 1.0,
+    offsetX = 0,
+    offsetY = 0,
+  } = config;
+
+  const hasMasks = maskFiles && maskFiles.length > 0;
+
+  // Generate <a-assets> with multiple videos and masks
+  const videoAssetsHTML = videoFiles.map((file, i) => 
+    `<video id="vid${i}" src="./${file}?t=${Date.now()}" preload="auto" ${loop ? 'loop' : ''} muted playsinline crossorigin="anonymous"></video>`
+  ).join('\n    ');
+
+  const maskAssetsHTML = hasMasks ? maskFiles.map((file, i) =>
+    `<img id="mask${i}" src="./${file}?t=${Date.now()}" crossorigin="anonymous">`
+  ).join('\n    ') : '';
+
+  const assetsHTML = `${videoAssetsHTML}${hasMasks ? '\n    ' + maskAssetsHTML : ''}`;
+
+  // Generate multiple <a-entity mindar-image-target> with different videos and masks
+  const targetsHTML = videoFiles.map((file, i) => {
+    const maskMaterial = hasMasks && maskFiles[i]
+      ? `src:#vid${i};alphaMap:#mask${i};shader:standard;transparent:true;opacity:0;side:double;roughness:1;metalness:0`
+      : `src:#vid${i};shader:flat;transparent:true;opacity:0;side:double`;
+
+    // CRITICAL: Each marker has its OWN size based on its photo dimensions
+    const photoSize = config.photoSizes[i];
+    const planeWidth = 1.0;
+    const planeHeight = 1.0 / photoSize.aspectRatio; // height = width / AR
+
+    return `
+<a-entity mindar-image-target="targetIndex:${i}">
+  <a-plane id="plane${i}" 
+    rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" 
+    width="${planeWidth}" 
+    height="${planeHeight}" 
+    position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" 
+    material="${maskMaterial}" 
+    visible="false" 
+    animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid${i};easing:easeInOutQuad">
+  </a-plane>
+</a-entity>`;
+  }).join('\n');
+
+  const html = `<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>PhotoBooks Gallery AR - ${arId} (${markersCount} photos)</title>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
+.arjs-loader{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
+.arjs-loader.hidden{opacity:0;pointer-events:none}
+.loading-text{font-size:20px;font-weight:600;color:#667eea;text-align:center;padding:0 20px}
+#instructions{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:16px 32px;border-radius:40px;font-size:16px;font-weight:600;z-index:100}
+#marker-counter{position:fixed;top:20px;right:20px;background:rgba(0,0,0,0.75);color:#fff;padding:12px 20px;border-radius:20px;font-size:18px;font-weight:600;z-index:101}
+</style>
+</head>
+<body>
+<div class="arjs-loader" id="loading">
+  <div style="font-size:64px;margin-bottom:20px">📸${hasMasks ? '🎭' : ''}</div>
+  <div class="loading-text">Загрузка AR с ${markersCount} фотографиями${hasMasks ? ' + маски' : ''}...</div>
+</div>
+<div id="instructions">Наведите на любую фотографию из альбома</div>
+<div id="marker-counter">Найдено: <span id="found-count">0</span>/${markersCount}</div>
+
+<a-scene embedded 
+  mindar-image="imageTargetSrc:./${markerBaseName}.mind?t=${Date.now()};maxTrack:${Math.min(markersCount, 2)};filterMinCF:0.0001;filterBeta:0.003;warmupTolerance:5;missTolerance:10" 
+  color-space="sRGB" 
+  renderer="colorManagement:true;antialias:true;alpha:true" 
+  vr-mode-ui="enabled:false" 
+  device-orientation-permission-ui="enabled:false">
+  
+  <a-assets timeout="30000">
+    ${assetsHTML}
+  </a-assets>
+  
+  <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
+  
+  ${targetsHTML}
+  
+</a-scene>
+
+<script>
+console.log('[AR Multi-Target] ${markersCount} markers loaded');
+const loading = document.getElementById('loading');
+const foundCount = document.getElementById('found-count');
+const markerStates = Array(${markersCount}).fill(false);
+let foundMarkers = 0;
+
+// Setup all videos and planes
+${videoFiles.map((file, i) => `
+const video${i} = document.getElementById('vid${i}');
+const plane${i} = document.getElementById('plane${i}');
+const target${i} = document.querySelectorAll('[mindar-image-target]')[${i}];
+
+video${i}.load();
+video${i}.addEventListener('canplay', () => console.log('[AR] Video ${i} ready'));
+
+target${i}.addEventListener('targetFound', () => {
+  console.log('[AR] ✓ Marker ${i} found!');
+  if (!markerStates[${i}]) {
+    markerStates[${i}] = true;
+    foundMarkers++;
+    foundCount.textContent = foundMarkers;
+  }
+  video${i}.currentTime = 0;
+  video${i}.muted = true;
+  video${i}.play().then(() => {
+    plane${i}.setAttribute('visible', 'true');
+    plane${i}.emit('showvid${i}');
+    setTimeout(() => video${i}.muted = false, 800);
+  });
+});
+
+target${i}.addEventListener('targetLost', () => {
+  console.log('[AR] Marker ${i} lost');
+  plane${i}.setAttribute('visible', 'false');
+  video${i}.pause();
+  video${i}.currentTime = 0;
+});
+`).join('\n')}
+
+const scene = document.querySelector('a-scene');
+scene.addEventListener('arReady', () => {
+  console.log('[AR] MindAR ready with ${markersCount} markers');
+  setTimeout(() => loading.classList.add('hidden'), 300);
+});
+scene.addEventListener('arError', (e) => {
+  console.error('[AR] Error:', e);
+  loading.innerHTML = '<h2>Ошибка камеры</h2>';
+});
+</script>
+</body>
+</html>`;
+
+  await fs.writeFile(outputPath, html, 'utf-8');
+  console.log(`[AR Core] ✅ Generated multi-target viewer with ${markersCount} markers at ${outputPath}`);
+}
+
+/**
+ * Generate SINGLE-TARGET HTML5 AR viewer (legacy)
+ */
 async function generateARViewer(
   config: ARViewerConfig,
   outputPath: string

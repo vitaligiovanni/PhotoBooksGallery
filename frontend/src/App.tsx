@@ -38,6 +38,7 @@ const AdminARList = lazy(() => import("@/pages/AdminARList"));
 const LivingPhotos = lazy(() => import("@/pages/LivingPhotos"));
 const ARViewRedirect = lazy(() => import("@/pages/ARViewRedirect"));
 import { AppLayout } from "@/components/layout/AppLayout";
+import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
 
 function HomePage() {
   // Всегда показываем Landing страницу - она более красивая
@@ -95,6 +96,7 @@ function App() {
                 <Suspense fallback={null}>
                   <AppPopups />
                 </Suspense>
+                <PWAInstallPrompt />
               </AppLayout>
             </TooltipProvider>
           </CurrencyProvider>

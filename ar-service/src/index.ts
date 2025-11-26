@@ -132,10 +132,22 @@ const fileManager = new FileManager();
  */
 async function handleCompileJob(job: any) {
   const { id: jobId, data } = job;
-  const { projectId, userId, photoPath, videoPath, maskPath, storageDir, config } = data;
+  const { projectId, userId, photoPaths, videoPaths, photoPath, videoPath, maskPath, maskUrls, shapeType, storageDir, config } = data;
+  
+  // Support both multi-target (photoPaths[]) and single (photoPath)
+  const finalPhotoPaths = photoPaths || (photoPath ? [photoPath] : []);
+  const finalVideoPaths = videoPaths || (videoPath ? [videoPath] : []);
   
   console.log(`\n[Worker] 🔨 Starting compilation job: ${jobId}`);
   console.log(`[Worker] Project: ${projectId}`);
+  console.log(`[Worker] Multi-target: ${finalPhotoPaths.length} marker(s)`);
+  if (finalPhotoPaths.length === 1) {
+    console.log(`[Worker] Photo: ${finalPhotoPaths[0]}`);
+    console.log(`[Worker] Video: ${finalVideoPaths[0] || 'NONE'}`);
+  } else {
+    console.log(`[Worker] Photos:`, finalPhotoPaths.map((p: string, i: number) => `\n  ${i + 1}. ${p}`).join(''));
+    console.log(`[Worker] Videos:`, finalVideoPaths.map((v: string, i: number) => `\n  ${i + 1}. ${v}`).join(''));
+  }
   
   // Update status to 'processing'
   const client = await pool.connect();
@@ -156,9 +168,13 @@ async function handleCompileJob(job: any) {
     const result = await compilerWorker.compile({
       projectId,
       userId,
-      photoPath,
-      videoPath,
-      maskPath,
+      photoPaths: finalPhotoPaths, // Array of photo paths
+      videoPaths: finalVideoPaths, // Array of video paths
+      photoPath: finalPhotoPaths[0], // Legacy: first photo
+      videoPath: finalVideoPaths[0], // Legacy: first video
+      maskPath, // Single custom mask (legacy)
+      maskUrls, // Array of custom mask paths (multi-target)
+      shapeType, // Auto-generate mask shape (circle, oval, square, rect)
       storageDir,
       config
     } as any);

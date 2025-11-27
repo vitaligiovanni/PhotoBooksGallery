@@ -66,7 +66,7 @@ export default function Admin() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [originalLanguage] = useState(i18n.language);
 
-  // Force Russian language for Admin panel and restore on unmount
+  // Force Russian language for Admin panel and restore on unmount - v2
   useEffect(() => {
     const currentLang = i18n.language;
     if (currentLang !== 'ru') {
@@ -216,8 +216,8 @@ export default function Admin() {
           <div className="p-6 border-b border-gray-200">
             <button
               onClick={() => navigate("/")}
-              className="w-full text-left hover:opacity-80 transition-opacity duration-200 group"
-              title="Go to home page"
+              className="w-full text-left hover:opacity-80 transition-opacity duration-200 group cursor-pointer"
+              title="Go to home page - Click to return to homepage"
             >
               <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600">PhotoBooksGallery</h2>
               <p className="text-sm text-gray-500 mt-1">{t("crmPanel")}</p>

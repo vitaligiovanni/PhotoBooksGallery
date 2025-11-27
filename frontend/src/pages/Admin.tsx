@@ -1,8 +1,10 @@
 // Admin.tsx
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useLocation } from "wouter";
 import { cn } from "@/lib/utils";
 
 // UI компоненты
@@ -60,7 +62,22 @@ export default function Admin() {
   const { t } = useTranslation();
   const { user, isAuthenticated, isLoading } = useAuth();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const [activeSection, setActiveSection] = useState("dashboard");
+  const [originalLanguage] = useState(i18n.language);
+
+  // Force Russian language for Admin panel and restore on unmount
+  useEffect(() => {
+    const currentLang = i18n.language;
+    if (currentLang !== 'ru') {
+      i18n.changeLanguage('ru');
+    }
+    
+    return () => {
+      // Restore original language when leaving Admin panel
+      i18n.changeLanguage(originalLanguage);
+    };
+  }, [originalLanguage]);
 
   // Redirect если нет доступа
   useEffect(() => {
@@ -197,8 +214,14 @@ export default function Admin() {
         {/* Sidebar */}
         <div className="w-64 bg-white shadow-lg border-r border-gray-200 min-h-screen">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-800">PhotoBooksGallery</h2>
-            <p className="text-sm text-gray-500 mt-1">{t("crmPanel")}</p>
+            <button
+              onClick={() => navigate("/")}
+              className="w-full text-left hover:opacity-80 transition-opacity duration-200 group"
+              title="Go to home page"
+            >
+              <h2 className="text-xl font-bold text-gray-800 group-hover:text-blue-600">PhotoBooksGallery</h2>
+              <p className="text-sm text-gray-500 mt-1">{t("crmPanel")}</p>
+            </button>
           </div>
           <nav className="p-4 space-y-2">
             {getNavigationItems(t).map((item) => (

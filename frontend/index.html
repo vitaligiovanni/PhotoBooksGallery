@@ -9,10 +9,35 @@
     <meta name="keywords" content="фотокниги, фото-сувениры, фоторамки, печать фото, подарки">
     
     <!-- Open Graph -->
+    <meta property="og:url" content="https://photobooksgallery.am/">
     <meta property="og:title" content="PhotoBooksGallery - Фотокниги и фото-сувениры">
     <meta property="og:description" content="Превратите ваши драгоценные воспоминания в красивые фотокниги, рамки и уникальные сувениры">
     <meta property="og:type" content="website">
     <meta property="og:image" content="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:locale" content="ru_RU">
+    
+    <!-- Facebook Domain Verification -->
+    <meta name="facebook-domain-verification" content="zi3sosfkqamz6ohvf9gwer4dcqz305" />
+    
+    <!-- Facebook Pages -->
+    <meta property="fb:pages" content="458715287477310" />
+    
+    <!-- Meta Pixel Code -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '413934249815588');
+      fbq('track', 'PageView');
+    </script>
+    <!-- End Meta Pixel Code -->
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.json">
@@ -47,5 +72,11 @@
     <script type="module" src="/src/main.tsx"></script>
     <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
     <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+    
+    <!-- Meta Pixel noscript -->
+    <noscript>
+      <img height="1" width="1" style="display:none"
+           src="https://www.facebook.com/tr?id=413934249815588&ev=PageView&noscript=1" />
+    </noscript>
   </body>
 </html>

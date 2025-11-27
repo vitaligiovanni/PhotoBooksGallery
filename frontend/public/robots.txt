@@ -1,21 +1,37 @@
 # robots.txt для PhotoBooksGallery
-# Дата: 24 сентября 2025
-# Домен: photobooksgallery.am
+# Domain: photobooksgallery.am
+# Optimized for Facebook Sharing and SEO
 
+# CRITICAL: Allow Facebook crawler with no restrictions
+User-agent: facebookexternalhit
+Disallow:
+
+# Allow Twitter crawler
+User-agent: Twitterbot
+Disallow:
+
+# Allow other search engines
+User-agent: Googlebot
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Crawl-delay: 1
+
+User-agent: Bingbot
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Crawl-delay: 1
+
+User-agent: Yandex
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+Crawl-delay: 1
+
+# Default rules for all other bots
 User-agent: *
 Allow: /
-
-# Разрешаем индексацию основных страниц
-Allow: /ru/
-Allow: /hy/
-Allow: /en/
-Allow: /about
-Allow: /contacts
-Allow: /catalog
-Allow: /editor
-Allow: /blog
-
-# Запрещаем индексацию административных и служебных разделов
 Disallow: /admin/
 Disallow: /api/
 Disallow: /private/
@@ -23,49 +39,16 @@ Disallow: /uploads/temp/
 Disallow: /server/
 Disallow: /.local/
 Disallow: /migrations/
-Disallow: /objects/
 Disallow: /scripts/
 
-# Разрешаем доступ к изображениям
+# Explicitly allow important static resources
+Allow: /assets/
 Allow: /images/
 Allow: /uploads/
-Allow: *.jpg
-Allow: *.jpeg
-Allow: *.png
-Allow: *.gif
-Allow: *.webp
-Allow: *.svg
+Allow: /objects/
+Allow: /manifest.json
+Allow: /robots.txt
+Allow: /sitemap.xml
 
-# Разрешаем доступ к статическим ресурсам
-Allow: /css/
-Allow: /js/
-Allow: /assets/
-Allow: /*.css
-Allow: /*.js
-
-# Специальные настройки для поисковых ботов
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 1
-
-User-agent: Bingbot
-Allow: /
-Crawl-delay: 1
-
-User-agent: Yandex
-Allow: /
-Crawl-delay: 1
-
-User-agent: facebookexternalhit/
-Allow: /
-
-User-agent: Twitterbot
-Allow: /
-
-# Sitemap
+# Sitemap location
 Sitemap: https://photobooksgallery.am/sitemap.xml
-
-# Дополнительная информация
-# Сайт: PhotoBooksGallery - Создание фотокниг и фотосувениров в Армении
-# Контакты: support@photobooksgallery.am
-# Социальные сети: @photobooksgallery

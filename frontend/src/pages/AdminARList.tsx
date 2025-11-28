@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus } from 'lucide-react';
+import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus, QrCode, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ARProjectListItem {
@@ -106,8 +106,21 @@ export default function AdminARListPage() {
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>AR Проекты (Живые Фото)</CardTitle>
-          <CardDescription>Управление AR проектами с автоматической компиляцией</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>AR Проекты (Живые Фото)</CardTitle>
+              <CardDescription>Управление AR проектами с автоматической компиляцией</CardDescription>
+            </div>
+            <Button 
+              asChild
+              className="bg-purple-600 hover:bg-purple-700"
+            >
+              <Link href="/admin/ar/create">
+                <Plus className="h-4 w-4 mr-2" />
+                Создать AR проект
+              </Link>
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {isLoading && (
@@ -219,6 +232,32 @@ export default function AdminARListPage() {
                         {project.orderId && <div>Заказ: {project.orderId}</div>}
                         {project.markerQuality && (
                           <div>Качество маркера: {(parseFloat(project.markerQuality) * 100).toFixed(0)}%</div>
+                        )}
+                        {(project.viewUrl || project.viewerHtmlUrl) && (
+                          <div className="flex items-center gap-2 mt-2 p-2 bg-blue-50 dark:bg-blue-950 rounded border border-blue-200 dark:border-blue-800">
+                            <ExternalLink className="h-3 w-3 text-blue-600" />
+                            <a 
+                              href={project.viewUrl || project.viewerHtmlUrl || '#'} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline font-mono text-xs break-all"
+                            >
+                              {project.viewUrl || project.viewerHtmlUrl}
+                            </a>
+                          </div>
+                        )}
+                        {project.qrCodeUrl && (
+                          <div className="flex items-center gap-2 mt-2">
+                            <QrCode className="h-3 w-3 text-green-600" />
+                            <a 
+                              href={project.qrCodeUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-green-600 hover:text-green-800 underline text-xs"
+                            >
+                              Скачать QR-код
+                            </a>
+                          </div>
                         )}
                         {project.errorMessage && project.status === 'error' && (
                           <div className="text-red-600">Ошибка: {project.errorMessage.slice(0,120)}{project.errorMessage.length>120?'…':''}</div>

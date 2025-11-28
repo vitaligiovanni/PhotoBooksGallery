@@ -1,0 +1,30 @@
+# Dependencies (will be installed in container)
+node_modules
+npm-debug.log
+
+# Build output (will be built in container)
+dist
+
+# Development files
+*.log
+*.tmp
+.env
+.env.local
+
+# IDE
+.vscode
+.idea
+
+# Git
+.git
+.gitignore
+
+# Nested folders
+ar-service/
+
+# Storage (runtime data)
+storage/uploads/*
+storage/ar-storage/*
+
+# Keep storage structure
+!storage/.gitkeep

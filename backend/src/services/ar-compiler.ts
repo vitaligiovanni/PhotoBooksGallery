@@ -96,10 +96,24 @@ interface ARViewerConfig {
 /**
  * Generate multi-target viewer (multiple живые фото)
  */
-async function generateMultiTargetViewer(arProjectId: string, items: any[], storageDir: string): Promise<void> {
+async function generateMultiTargetViewer(
+  arProjectId: string, 
+  items: any[], 
+  storageDir: string, 
+  metadata?: { photoWidth?: number; photoHeight?: number; photoAspectRatio?: string }
+): Promise<void> {
   // MindAR "imageTargetSrc" expects a SINGLE .mind file containing multiple targets
   // The compileMultiItemProject() function now generates targets.mind with all markers combined
   const markerFiles = `./targets.mind`;
+  
+  // Get photo aspect ratio from metadata (or calculate from dimensions)
+  const photoAR = metadata?.photoAspectRatio 
+    ? parseFloat(metadata.photoAspectRatio)
+    : (metadata?.photoWidth && metadata?.photoHeight 
+        ? metadata.photoWidth / metadata.photoHeight 
+        : 0.75); // Fallback for old projects
+  
+  console.log(`[Multi Viewer] Photo AR: ${photoAR.toFixed(3)} (will use for plane scale)`);
   
   // Build video assets + entities
   const videoAssets = items.map((item, idx) => {
@@ -141,8 +155,12 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
     const config = item.config || {};
     const pos = config.videoPosition || { x: 0, y: 0, z: 0 };
     const rot = config.videoRotation || { x: 0, y: 0, z: 0 };
-    const scale = config.videoScale || { width: 1, height: 0.75 };
+    
+    // CRITICAL: Use photo aspect ratio for scale (video has been resized to match photo)
+    const scale = config.videoScale || { width: 1.0, height: 1.0 / photoAR };
     const autoPlay = config.autoPlay !== false;
+    
+    console.log(`[Multi Viewer] Item ${idx}: scale=${scale.width}×${scale.height.toFixed(3)}`);
 
     return `
     <a-entity mindar-image-target="targetIndex: ${idx}">
@@ -213,6 +231,33 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
     const markerFoundIndicator = document.getElementById('marker-found');
     const videos = [${videoAssets.map((_, idx) => `document.getElementById('ar-video-${idx}')`).join(',')}];
     
+    // Apply THREE.js alphaMap to planes with masks
+    function applyAlphaMasks() {
+      ${videoAssets.filter(({ maskFileName }) => maskFileName).map(({ idx }) => `
+      const plane${idx} = document.getElementById('ar-plane-${idx}');
+      const maskImg${idx} = document.getElementById('ar-mask-${idx}');
+      if (plane${idx} && maskImg${idx} && maskImg${idx}.complete) {
+        try {
+          const mesh${idx} = plane${idx}.getObject3D('mesh');
+          if (mesh${idx} && mesh${idx}.material) {
+            const texture${idx} = new THREE.Texture(maskImg${idx});
+            texture${idx}.needsUpdate = true;
+            mesh${idx}.material.alphaMap = texture${idx};
+            mesh${idx}.material.transparent = true;
+            mesh${idx}.material.needsUpdate = true;
+            console.log('[AR Mask] Applied alphaMap to plane ${idx}');
+          }
+        } catch (e) {
+          console.warn('[AR Mask] Failed to apply alphaMap to plane ${idx}:', e);
+        }
+      }`).join('')}
+    }
+    
+    // Apply masks after scene loads
+    sceneEl.addEventListener('loaded', () => {
+      setTimeout(applyAlphaMasks, 100);
+    });
+    
     videos.forEach(v => { if (v) { try { v.pause(); v.muted = true; } catch {} } });
 
     sceneEl.addEventListener('loaded', () => {
@@ -266,6 +311,31 @@ async function generateMultiTargetViewer(arProjectId: string, items: any[], stor
                     }
                   }
                 }, 100);
+
+                // COVER: динамически подгоняем плоскость под пропорции видео, чтобы заполнить маркер
+                try {
+                  const mesh = planeEl.getObject3D('mesh');
+                  const vRatio = vid.videoWidth && vid.videoHeight ? (vid.videoWidth / vid.videoHeight) : null;
+                  const pWidth = parseFloat(planeEl.getAttribute('width')) || 1;
+                  const pHeight = parseFloat(planeEl.getAttribute('height')) || 1;
+                  const pRatio = pWidth / pHeight;
+                  if (mesh && vRatio && pRatio) {
+                    let scaleX = 1, scaleY = 1;
+                    if (vRatio > pRatio) {
+                      // Видео шире → растягиваем по вертикали
+                      scaleY = vRatio / pRatio;
+                      console.log('[Multi Cover] video wider; scaleY=', scaleY.toFixed(3));
+                    } else if (vRatio < pRatio) {
+                      // Видео выше → растягиваем по горизонтали
+                      scaleX = pRatio / vRatio;
+                      console.log('[Multi Cover] video taller; scaleX=', scaleX.toFixed(3));
+                    }
+                    mesh.scale.set(scaleX, scaleY, 1);
+                    console.log('[Multi Cover] applied scale:', scaleX.toFixed(3), 'x', scaleY.toFixed(3));
+                  }
+                } catch (scaleErr) {
+                  console.warn('[Multi Cover] scale apply failed:', scaleErr);
+                }
                 
                 // ПРОФЕССИОНАЛЬНЫЙ FADE-IN: запускаем через 200ms когда первый кадр загружен
                 setTimeout(() => {
@@ -411,7 +481,7 @@ export async function generateARViewer(
     maskFileName,
     videoPosition = { x: 0, y: 0, z: 0 },
     videoRotation = { x: 0, y: 0, z: 0 },
-    videoScale = { width: 1, height: 0.75 },
+    videoScale = { width: 1, height: 1.333 }, // ✅ Default for portrait (will be overridden)
     autoPlay = true,
     loop = true,
     fitMode = 'contain',
@@ -467,7 +537,10 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 <button id="share-btn" title="Поделиться">📤</button>
 <a id="order-btn" href="https://photobooksgallery.am" target="_blank">🛒 Заказать альбом</a>
 <a-scene embedded mindar-image="imageTargetSrc:./${markerBaseName}.mind?t=${Date.now()};maxTrack:1;filterMinCF:0.0001;filterBeta:0.003;warmupTolerance:5;missTolerance:10" color-space="sRGB" renderer="colorManagement:true;antialias:true;alpha:true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
-<a-assets timeout="30000"><video id="vid" src="./${videoFileName}?t=${Date.now()}" preload="auto" ${loop ? 'loop' : ''} muted playsinline crossorigin="anonymous"></video></a-assets>
+<a-assets timeout="30000">
+<video id="vid" src="./${videoFileName}?t=${Date.now()}" preload="auto" ${loop ? 'loop' : ''} muted playsinline crossorigin="anonymous"></video>
+${maskFileName ? `<img id="mask" src="./${maskFileName}?t=${Date.now()}" crossorigin="anonymous">` : ''}
+</a-assets>
 <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
 <a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>
 </a-scene>
@@ -501,6 +574,52 @@ scene.addEventListener('arReady',()=>{console.log('[AR] ✓ MindAR ready, camera
 scene.addEventListener('arError',(e)=>{console.error('[AR] ❌ MindAR Error:',e);loading.innerHTML='<h2>Ошибка доступа</h2><p>Проверьте камеру</p>'});
 shareBtn.addEventListener('click',()=>{console.log('[AR] Share button clicked');if(navigator.share){navigator.share({title:'PhotoBooks Gallery AR',text:'Посмотри мой фотоальбом с AR-видео! 📸✨',url:window.location.href}).then(()=>console.log('[AR] ✓ Shared')).catch(e=>console.log('[AR] Share cancelled',e))}else{const url=window.location.href;navigator.clipboard.writeText(url).then(()=>{alert('Ссылка скопирована! 📋');console.log('[AR] ✓ Link copied')}).catch(()=>alert('Скопируйте ссылку: '+url))}});
 console.log('[AR] Listeners attached, waiting for events...');
+${maskFileName ? `
+const maskImg = document.getElementById('mask');
+const planeEl = document.getElementById('plane');
+if (maskImg && planeEl) {
+  console.log('[AR] Mask element found, waiting for load...');
+  let maskApplied = false;
+  
+  function applyMask() {
+    if (maskApplied) return;
+    const mesh = planeEl.getObject3D('mesh');
+    if (mesh && mesh.material && maskImg.complete) {
+      console.log('[AR] 🎭 Applying alphaMap to material...');
+      const texture = new THREE.Texture(maskImg);
+      texture.needsUpdate = true;
+      mesh.material.alphaMap = texture;
+      mesh.material.transparent = true;
+      mesh.material.side = THREE.DoubleSide;
+      mesh.material.needsUpdate = true;
+      maskApplied = true;
+      console.log('[AR] ✅ AlphaMap applied successfully! Video should be masked.');
+    }
+  }
+  
+  maskImg.addEventListener('load', () => {
+    console.log('[AR] ✅ Mask image loaded');
+    applyMask();
+  });
+  
+  planeEl.addEventListener('loaded', () => {
+    console.log('[AR] ✅ Plane loaded');
+    setTimeout(applyMask, 100); // Small delay to ensure mesh is ready
+  });
+  
+  maskImg.addEventListener('error', (e) => console.error('[AR] ❌ Mask failed to load:', maskImg.src, e));
+  
+  // Retry application after video starts playing
+  video.addEventListener('playing', () => {
+    if (!maskApplied) {
+      console.log('[AR] Video playing, retrying mask application...');
+      setTimeout(applyMask, 200);
+    }
+  });
+} else {
+  console.error('[AR] ❌ Mask or plane element not found!');
+}
+` : ''}
 const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
 console.log('[AR] iOS detected:',isIOS);
 function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.currentTime=0;video.muted=true;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing (muted)');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible');if(!isIOS){setTimeout(()=>{video.muted=false;console.log('[AR] ✓ Auto-unmuted (Android/Desktop)')},1000)}else{setTimeout(()=>{unmuteHint.style.display='block';console.log('[AR] 📢 Showing unmute hint (iOS)')},500);const handleUnmute=()=>{if(!video.muted)return;video.muted=false;unmuteHint.style.display='none';console.log('[AR] ✓ Unmuted by user tap (iOS)');document.body.removeEventListener('click',handleUnmute);document.body.removeEventListener('touchstart',handleUnmute)};document.body.addEventListener('click',handleUnmute);document.body.addEventListener('touchstart',handleUnmute)}setTimeout(()=>{orderBtn.style.display='block';orderBtn.classList.add('fade-in-up');console.log('[AR] 🛒 Order button shown')},5000)},200)}).catch(e=>{console.error('[AR] ❌ Play failed even muted:',e);loading.innerHTML='<h2>Ошибка видео</h2><p>'+e.message+'</p>'})}else{console.log('[AR] Play promise undefined')}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
@@ -719,8 +838,42 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
 
     console.log(`[AR Compiler Multi] ✅ All ${photoPaths.length} targets compiled into single targets.mind (${(compileResult.fileSize! / 1024).toFixed(1)} KB)`);
 
-    // Generate multi-target viewer
-    await generateMultiTargetViewer(arProjectId, sortedItems, storageDir);
+    // CRITICAL: Process videos to match photo dimensions (resize/crop)
+    console.log(`[AR Compiler Multi] 🎬 Processing videos to match photo dimensions...`);
+    const { extractPhotoMetadata } = await import('./media-metadata');
+    
+    for (let i = 0; i < sortedItems.length; i++) {
+      const item = sortedItems[i];
+      if (!item.videoUrl) continue;
+      
+      const videoSrc = path.join(process.cwd(), item.videoUrl);
+      const videoDest = path.join(storageDir, `video-${i}.mp4`);
+      
+      // Get photo dimensions
+      const photoPath = photoPaths[i];
+      const photoMeta = await extractPhotoMetadata(photoPath);
+      
+      console.log(`[AR Compiler Multi] Video ${i}: resizing to ${photoMeta.width}×${photoMeta.height} (photo AR=${photoMeta.aspectRatio.toFixed(3)})`);
+      
+      // CRITICAL: Resize/crop video to match photo dimensions using ffmpeg
+      const { resizeVideoToMatchPhoto } = await import('./video-processor');
+      try {
+        await resizeVideoToMatchPhoto(
+          videoSrc,
+          photoMeta.width,
+          photoMeta.height,
+          videoDest
+        );
+        console.log(`[AR Compiler Multi] ✅ Video ${i} processed successfully`);
+      } catch (videoError: any) {
+        console.error(`[AR Compiler Multi] ❌ Video processing failed for ${i}:`, videoError.message);
+        console.log(`[AR Compiler Multi] Falling back to copy...`);
+        await fs.copyFile(videoSrc, videoDest);
+      }
+    }
+
+    // Generate multi-target viewer WITH metadata from ar-service
+    await generateMultiTargetViewer(arProjectId, sortedItems, storageDir, compileResult.metadata);
 
     // Generate QR code - use env tunnel if provided
     const TUNNEL_URL = (process.env.TUNNEL_URL || '').trim();
@@ -748,11 +901,42 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
     }
 
     // Update project status using RAW query (no new connection from pool)
+    // CRITICAL: Also save metadata from ar-service (photoAspectRatio, dimensions, etc.)
+    const metadata = compileResult.metadata || {};
+    const photoWidth = metadata.photoWidth || null;
+    const photoHeight = metadata.photoHeight || null;
+    const photoAspectRatio = metadata.photoAspectRatio || (photoWidth && photoHeight ? (photoWidth / photoHeight).toFixed(3) : null);
+    
+    console.log(`[AR Compiler Multi] Saving metadata: photo ${photoWidth}×${photoHeight}, AR=${photoAspectRatio}`);
+    
     const client = await pool.connect();
     try {
       await client.query(
-        `UPDATE ar_projects SET status = $1, view_url = $2, viewer_html_url = $3, qr_code_url = $4, compilation_finished_at = $5, compilation_time_ms = $6, updated_at = $7 WHERE id = $8`,
-        ['ready', viewUrl, `/api/ar/storage/${arProjectId}/index.html`, `/api/ar/storage/${arProjectId}/qr-code.png`, new Date(), Date.now() - startTime, new Date(), arProjectId]
+        `UPDATE ar_projects SET 
+          status = $1, 
+          view_url = $2, 
+          viewer_html_url = $3, 
+          qr_code_url = $4, 
+          compilation_finished_at = $5, 
+          compilation_time_ms = $6,
+          photo_width = $7,
+          photo_height = $8,
+          photo_aspect_ratio = $9,
+          updated_at = $10 
+        WHERE id = $11`,
+        [
+          'ready', 
+          viewUrl, 
+          `/api/ar/storage/${arProjectId}/index.html`, 
+          `/api/ar/storage/${arProjectId}/qr-code.png`, 
+          new Date(), 
+          Date.now() - startTime,
+          photoWidth,
+          photoHeight,
+          photoAspectRatio,
+          new Date(), 
+          arProjectId
+        ]
       );
     } finally {
       client.release();

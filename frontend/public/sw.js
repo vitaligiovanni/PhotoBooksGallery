@@ -9,13 +9,13 @@
  * Strategy: Network First with Cache Fallback
  */
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v1.0.1';
 const CACHE_NAME = `photobooksgallery-${CACHE_VERSION}`;
 
 // Static assets to cache immediately on install
 const PRECACHE_URLS = [
   '/',
-  '/index.html',
+  // Note: index.html is handled with network-first strategy instead of precache
   '/manifest.json',
   '/icons/icon-192x192.png',
   '/icons/icon-512x512.png',
@@ -135,6 +135,39 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Strategy 4: Everything else - Network First with Cache Fallback
+  // Special handling for navigation and index.html - always try fresh network first
+  if (request.mode === 'navigate' || url.pathname === '/' || url.pathname === '/index.html') {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put('/index.html', responseClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match('/index.html') || caches.match('/'))
+    );
+    return;
+  }
+
+  // Handle asset chunks (.js/.css) with network-first but avoid stale cache being served
+  if (url.pathname.startsWith('/dist/assets/') && (url.pathname.endsWith('.js') || url.pathname.endsWith('.css'))) {
+    event.respondWith(
+      fetch(request, { cache: 'no-store' })
+        .then((response) => {
+          if (response && response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(request, responseClone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Default fallback for everything else
   event.respondWith(
     fetch(request)
       .then((response) => {

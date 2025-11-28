@@ -57,14 +57,15 @@ export default function AdminARListPage() {
     refetchInterval: 7000, // refresh every 7s
   });
 
-  // Extend demo expiration mutation
+  // Управление продлением срока: настраиваемые часы (1-24)
+  const [extendHoursMap, setExtendHoursMap] = useState<Record<string, number>>({});
   const extendDemoMutation = useMutation({
-    mutationFn: async (arId: string) => {
+    mutationFn: async ({ arId, hours }: { arId: string; hours: number }) => {
       const res = await fetch(`/api/ar/${arId}/extend-demo`, {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hours: 24 }),
+        body: JSON.stringify({ hours }),
       });
       if (!res.ok) throw new Error(await res.text());
       return res.json();
@@ -72,7 +73,7 @@ export default function AdminARListPage() {
     onSuccess: () => {
       toast({
         title: 'Срок продлён',
-        description: 'Демо-проект продлён на 24 часа',
+        description: 'Настройки срока применены',
       });
       queryClient.invalidateQueries({ queryKey: ['/api/ar/all'] });
     },
@@ -226,17 +227,28 @@ export default function AdminARListPage() {
                     </div>
 
                     <div className="flex gap-2">
-                      {project.isDemo && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-orange-300 text-orange-700 hover:bg-orange-50"
-                          onClick={() => extendDemoMutation.mutate(project.id)}
-                          disabled={extendDemoMutation.isPending}
-                        >
-                          <Plus className="h-4 w-4 mr-1" /> +24ч
-                        </Button>
-                      )}
+                          {project.isDemo && (
+                            <div className="flex items-center gap-2">
+                              <select
+                                className="border rounded px-2 py-1 text-sm"
+                                value={extendHoursMap[project.id] ?? 24}
+                                onChange={(e)=> setExtendHoursMap(prev=>({ ...prev, [project.id]: Number(e.target.value) }))}
+                              >
+                                {Array.from({length:24}, (_,i)=>i+1).map(h => (
+                                  <option key={h} value={h}>{h} ч</option>
+                                ))}
+                              </select>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                                onClick={() => extendDemoMutation.mutate({ arId: project.id, hours: extendHoursMap[project.id] ?? 24 })}
+                                disabled={extendDemoMutation.isPending}
+                              >
+                                <Plus className="h-4 w-4 mr-1" /> Продлить
+                              </Button>
+                            </div>
+                          )}
                       
                       {(project.viewerHtmlUrl || project.viewUrl) && (
                         <Button

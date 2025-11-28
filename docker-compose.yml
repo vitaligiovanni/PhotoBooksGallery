@@ -58,6 +58,7 @@ services:
     environment:
       <<: *default-env
       PORT: 5000
+      AR_DATABASE_URL: postgresql://photobooks:SecurePassword2025@ar-db:5432/ar_db
       DB_HOST: ar-db
       DB_PORT: 5432
       DB_NAME: ar_db
@@ -66,6 +67,8 @@ services:
       BACKEND_WEBHOOK_URL: http://backend:5002/api/ar/webhook
       STORAGE_PATH: /app/storage
       MAX_WORKERS: 2
+      AR_STORAGE_PATH: /app/objects/ar-storage
+      SHARED_UPLOADS_PATH: /app/objects/uploads
     depends_on:
       ar-db:
         condition: service_healthy
@@ -101,7 +104,7 @@ services:
     working_dir: /workspace/backend
     environment:
       <<: *default-env
-      DATABASE_URL: postgresql://photobooks:Manana08012023@db:5432/${POSTGRES_DB:-photobooks}
+      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
     depends_on:
       db:
         condition: service_healthy
@@ -119,7 +122,8 @@ services:
       # Local filesystem storage only
       NODE_ENV: development
       PORT: 5002
-      DATABASE_URL: postgresql://photobooks:Manana08012023@db:5432/${POSTGRES_DB:-photobooks}
+      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+      AR_SERVICE_URL: http://ar-service:5000
       DOMAIN: ${DOMAIN:-localhost}
       FRONTEND_URL: ${FRONTEND_URL:-http://frontend}
       # Public API URL used for generating presigned links; baseUrl derived by stripping /api
@@ -188,6 +192,9 @@ services:
         condition: service_healthy
     ports:
       - "8080:80"
+    volumes:
+      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
     logging:
       driver: "json-file"
       options:

@@ -28,14 +28,15 @@ export default function LivingPhotos() {
   const lang = (i18n.language === 'ru' || i18n.language === 'hy' || i18n.language === 'en') ? i18n.language as 'ru'|'hy'|'en' : 'ru';
   const tAR = (key: string) => getARTranslation(lang, `ar.${key}`);
 
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [video, setVideo] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [projectName, setProjectName] = useState<string>('');
+  const [photos, setPhotos] = useState<File[]>([]);
+  const [videos, setVideos] = useState<File[]>([]);
+  const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
+  const [videoPreviews, setVideoPreviews] = useState<string[]>([]);
   const [demoProjectId, setDemoProjectId] = useState<string | null>(null);
   
-  const photoInputRef = useRef<HTMLInputElement>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
+  const photosInputRef = useRef<HTMLInputElement>(null);
+  const videosInputRef = useRef<HTMLInputElement>(null);
 
   // Polling for demo AR status
   const { data: arStatus } = useQuery<ARProject>({
@@ -56,43 +57,104 @@ export default function LivingPhotos() {
 
   // File handlers
   const handlePhotoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
-    if (file.size > 10 * 1024 * 1024) {
-      alert(tAR('errorPhotoSize'));
+    // Проверка размера каждого файла
+    const validFiles = files.filter(file => {
+      if (file.size > 10 * 1024 * 1024) {
+        alert(`${file.name}: ${tAR('errorPhotoSize')}`);
+        return false;
+      }
+      return true;
+    });
+    
+    if (validFiles.length === 0) return;
+    
+    // Максимум 10 фотографий
+    if (validFiles.length > 10) {
+      alert('Максимум 10 фотографий для AR-маркеров');
       return;
     }
     
-    setPhoto(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPhotoPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    setPhotos(validFiles);
+    
+    // Создать превью для всех фотографий
+    const previews: string[] = [];
+    validFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        previews[index] = reader.result as string;
+        if (previews.filter(Boolean).length === validFiles.length) {
+          setPhotoPreviews([...previews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   }, [lang]);
 
   const handleVideoChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
     
-    if (file.size > 100 * 1024 * 1024) {
-      alert(tAR('errorVideoSize'));
+    // Проверка размера каждого файла
+    const validFiles = files.filter(file => {
+      if (file.size > 100 * 1024 * 1024) {
+        alert(`${file.name}: ${tAR('errorVideoSize')}`);
+        return false;
+      }
+      return true;
+    });
+    
+    if (validFiles.length === 0) return;
+    
+    // Максимум 10 видео
+    if (validFiles.length > 10) {
+      alert('Максимум 10 видео');
       return;
     }
     
-    setVideo(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setVideoPreview(reader.result as string);
-    reader.readAsDataURL(file);
+    setVideos(validFiles);
+    
+    // Создать превью для всех видео
+    const previews: string[] = [];
+    validFiles.forEach((file, index) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        previews[index] = reader.result as string;
+        if (previews.filter(Boolean).length === validFiles.length) {
+          setVideoPreviews([...previews]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
   }, [lang]);
 
   // Create demo AR mutation
   const createDemoMutation = useMutation({
     mutationFn: async () => {
-      if (!photo || !video) throw new Error('Files required');
+      if (photos.length === 0 || videos.length === 0) {
+        throw new Error('Files required');
+      }
+      
+      if (photos.length !== videos.length) {
+        throw new Error(`Нужно ${photos.length} видео (по одному для каждой фотографии)`);
+      }
       
       const formData = new FormData();
-      formData.append('photo', photo);
-      formData.append('video', video);
+      if (projectName && projectName.trim()) {
+        formData.append('projectName', projectName.trim());
+      }
+      
+      // Добавить все фотографии
+      photos.forEach((photo) => {
+        formData.append('photos', photo);
+      });
+      
+      // Добавить все видео
+      videos.forEach((video) => {
+        formData.append('videos', video);
+      });
 
       const response = await fetch('/api/ar/create-demo', {
         method: 'POST',
@@ -108,15 +170,24 @@ export default function LivingPhotos() {
       return response.json();
     },
     onSuccess: (data) => {
-      setDemoProjectId(data.data.arId);
+      // AR service теперь возвращает массив projectIds
+      const projectIds = data.data.projectIds || [data.data.arId];
+      console.log(`✅ Created ${projectIds.length} AR project(s):`, projectIds);
+      
+      // Показать первый проект (можно расширить для показа всех)
+      setDemoProjectId(projectIds[0]);
+      
+      // Опционально: сохранить все ID в state для множественного отображения
+      // setAllProjectIds(projectIds);
     },
   });
 
   const handleReset = () => {
-    setPhoto(null);
-    setVideo(null);
-    setPhotoPreview(null);
-    setVideoPreview(null);
+    setProjectName('');
+    setPhotos([]);
+    setVideos([]);
+    setPhotoPreviews([]);
+    setVideoPreviews([]);
     setDemoProjectId(null);
     createDemoMutation.reset();
   };
@@ -421,34 +492,51 @@ export default function LivingPhotos() {
               </CardHeader>
 
               <CardContent className="space-y-6">
-                {/* Photo upload */}
+                {/* Project name */}
+                <div className="space-y-2">
+                  <label className="block text-lg font-semibold">Название проекта (необязательно)</label>
+                  <input
+                    value={projectName}
+                    onChange={(e)=>setProjectName(e.target.value)}
+                    placeholder="Например: Свадебный альбом Анны"
+                    className="w-full border rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-purple-500"
+                  />
+                  <p className="text-xs text-muted-foreground">Это имя увидит администратор в CRM (демо-раздел).</p>
+                </div>
+                {/* Photos upload (multiple) */}
                 <div className="space-y-3">
                   <label className="block text-lg font-semibold flex items-center gap-2">
                     <Camera className="h-5 w-5 text-primary" />
-                    {tAR('uploadPhoto')}
+                    {tAR('uploadPhoto')} {photos.length > 0 && `(${photos.length}/10)`}
                   </label>
-                  <p className="text-sm text-muted-foreground">{tAR('photoRequirements')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {tAR('photoRequirements')}
+                    <br />
+                    <span className="text-purple-600 font-medium">Можно загрузить до 10 фотографий для мультимаркерного AR!</span>
+                  </p>
                   
                   <AnimatePresence mode="wait">
-                    {!photoPreview ? (
+                    {photoPreviews.length === 0 ? (
                       <motion.div
                         key="dropzone"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={() => photoInputRef.current?.click()}
+                        onClick={() => photosInputRef.current?.click()}
                         className="relative h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5 border-muted-foreground/30"
                       >
                         <input
-                          ref={photoInputRef}
+                          ref={photosInputRef}
                           type="file"
                           accept="image/*"
+                          multiple
                           onChange={handlePhotoChange}
                           className="hidden"
                         />
                         <Upload className="h-12 w-12 mb-3 text-muted-foreground" />
                         <p className="text-lg font-medium">{tAR('dragDropPhoto')}</p>
                         <p className="text-sm text-muted-foreground mt-1">{tAR('orClickToSelect')}</p>
+                        <p className="text-xs text-purple-600 mt-2 font-medium">Выберите несколько фото (до 10)</p>
                       </motion.div>
                     ) : (
                       <motion.div
@@ -456,54 +544,83 @@ export default function LivingPhotos() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative group"
+                        className="space-y-3"
                       >
-                        <img src={photoPreview} alt="Photo preview" className="w-full max-h-64 object-contain rounded-xl border-2 border-green-500" />
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {photoPreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <img 
+                                src={preview} 
+                                alt={`Photo ${index + 1}`} 
+                                className="w-full h-32 object-cover rounded-lg border-2 border-green-500" 
+                              />
+                              <div className="absolute top-1 right-1 bg-green-500 text-white text-xs px-2 py-1 rounded">
+                                #{index + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                         <Button
-                          size="icon"
-                          variant="destructive"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          variant="outline"
+                          className="w-full"
                           onClick={() => {
-                            setPhoto(null);
-                            setPhotoPreview(null);
-                            if (photoInputRef.current) photoInputRef.current.value = '';
+                            setPhotos([]);
+                            setPhotoPreviews([]);
+                            if (photosInputRef.current) photosInputRef.current.value = '';
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-4 w-4 mr-2" />
+                          Удалить все фото
                         </Button>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
-                {/* Video upload */}
+                {/* Videos upload (multiple - one per photo) */}
                 <div className="space-y-3">
                   <label className="block text-lg font-semibold flex items-center gap-2">
                     <Video className="h-5 w-5 text-primary" />
-                    {tAR('uploadVideo')}
+                    {tAR('uploadVideo')} {videos.length > 0 && `(${videos.length}/${photos.length})`}
                   </label>
-                  <p className="text-sm text-muted-foreground">{tAR('videoRequirements')}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {tAR('videoRequirements')}
+                    {photos.length > 0 && (
+                      <>
+                        <br />
+                        <span className="text-pink-600 font-medium">
+                          Загрузите {photos.length} видео (по одному для каждой фотографии)
+                        </span>
+                      </>
+                    )}
+                  </p>
                   
                   <AnimatePresence mode="wait">
-                    {!videoPreview ? (
+                    {videoPreviews.length === 0 ? (
                       <motion.div
                         key="dropzone"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        onClick={() => videoInputRef.current?.click()}
+                        onClick={() => videosInputRef.current?.click()}
                         className="relative h-48 border-2 border-dashed rounded-xl flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:border-primary hover:bg-primary/5 border-muted-foreground/30"
                       >
                         <input
-                          ref={videoInputRef}
+                          ref={videosInputRef}
                           type="file"
                           accept="video/*"
+                          multiple
                           onChange={handleVideoChange}
                           className="hidden"
                         />
                         <Upload className="h-12 w-12 mb-3 text-muted-foreground" />
                         <p className="text-lg font-medium">{tAR('dragDropVideo')}</p>
                         <p className="text-sm text-muted-foreground mt-1">{tAR('orClickToSelect')}</p>
+                        {photos.length > 0 && (
+                          <p className="text-xs text-pink-600 mt-2 font-medium">
+                            Выберите {photos.length} видео (столько же, сколько фото)
+                          </p>
+                        )}
                       </motion.div>
                     ) : (
                       <motion.div
@@ -511,30 +628,78 @@ export default function LivingPhotos() {
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.9 }}
-                        className="relative group"
+                        className="space-y-3"
                       >
-                        <video src={videoPreview} controls className="w-full max-h-64 rounded-xl border-2 border-green-500" />
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                          {videoPreviews.map((preview, index) => (
+                            <div key={index} className="relative group">
+                              <video 
+                                src={preview} 
+                                className="w-full h-32 object-cover rounded-lg border-2 border-pink-500" 
+                              />
+                              <div className="absolute top-1 right-1 bg-pink-500 text-white text-xs px-2 py-1 rounded">
+                                Video #{index + 1}
+                              </div>
+                              <div className="absolute bottom-1 left-1 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                                → Photo #{index + 1}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
                         <Button
-                          size="icon"
-                          variant="destructive"
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          variant="outline"
+                          className="w-full"
                           onClick={() => {
-                            setVideo(null);
-                            setVideoPreview(null);
-                            if (videoInputRef.current) videoInputRef.current.value = '';
+                            setVideos([]);
+                            setVideoPreviews([]);
+                            if (videosInputRef.current) videosInputRef.current.value = '';
                           }}
                         >
-                          <X className="h-4 w-4" />
+                          <X className="h-4 w-4 mr-2" />
+                          Удалить все видео
                         </Button>
                       </motion.div>
                     )}
                   </AnimatePresence>
                 </div>
 
+                {/* Photo-Video Mapping Preview */}
+                {photos.length > 0 && videos.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-4 rounded-xl border-2 border-purple-200 dark:border-purple-700"
+                  >
+                    <h4 className="font-semibold mb-3 flex items-center gap-2">
+                      <Sparkles className="h-5 w-5 text-purple-600" />
+                      Связки фото → видео
+                    </h4>
+                    <div className="grid gap-2">
+                      {Array.from({ length: Math.max(photos.length, videos.length) }).map((_, index) => (
+                        <div key={index} className="flex items-center gap-2 text-sm">
+                          <div className={`px-3 py-1 rounded ${index < photos.length ? 'bg-green-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                            Photo #{index + 1}
+                          </div>
+                          <span className="text-2xl">→</span>
+                          <div className={`px-3 py-1 rounded ${index < videos.length ? 'bg-pink-500 text-white' : 'bg-gray-300 text-gray-600'}`}>
+                            Video #{index + 1}
+                          </div>
+                          {index < photos.length && index < videos.length && (
+                            <CheckCircle className="h-5 w-5 text-green-600 ml-auto" />
+                          )}
+                          {(index >= photos.length || index >= videos.length) && (
+                            <XCircle className="h-5 w-5 text-red-500 ml-auto" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
                 {/* Submit button */}
                 <Button
                   onClick={() => createDemoMutation.mutate()}
-                  disabled={!photo || !video || createDemoMutation.isPending}
+                  disabled={photos.length === 0 || videos.length === 0 || photos.length !== videos.length || createDemoMutation.isPending}
                   size="lg"
                   className="w-full text-lg h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
@@ -543,9 +708,13 @@ export default function LivingPhotos() {
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {tAR('uploading')}
                     </>
+                  ) : photos.length !== videos.length ? (
+                    <>
+                      ⚠️ Нужно {photos.length} видео (сейчас: {videos.length})
+                    </>
                   ) : (
                     <>
-                      ✨ {lang === 'ru' ? 'Создать демо (24 часа)' : lang === 'en' ? 'Create Demo (24h)' : 'Ստեղծել դեմո (24ժ)'}
+                      ✨ {lang === 'ru' ? `Создать AR с ${photos.length} сцен${photos.length > 1 ? 'ами' : 'ой'} (24 часа)` : lang === 'en' ? `Create AR with ${photos.length} scene${photos.length > 1 ? 's' : ''} (24h)` : `Ստեղծել AR ${photos.length} տեսարաններով (24ժ)`}
                     </>
                   )}
                 </Button>

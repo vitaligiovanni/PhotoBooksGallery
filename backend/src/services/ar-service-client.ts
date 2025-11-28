@@ -9,11 +9,16 @@ const AR_SERVICE_URL = process.env.AR_SERVICE_URL || 'http://localhost:5000';
 
 interface CompileRequest {
   userId: string;
-  photoUrl: string; // /objects/uploads/photo.jpg
-  videoUrl?: string;
+  photoUrl?: string; // Одно фото (legacy)
+  photoUrls?: string[]; // Множественные фото для multi-target AR
+  videoUrl?: string; // Одно видео (legacy)
+  videoUrls?: string[]; // Множественные видео (по одному на фото)
   maskUrl?: string;
+  maskUrls?: string[]; // Multi-target custom masks
+  shapeType?: 'circle' | 'oval' | 'square' | 'rect' | 'custom'; // Mask shape for auto-generation
   orderId?: string;
   isDemo?: boolean;
+  projectId?: string; // For recompilation of existing project
   config?: {
     fitMode?: 'contain' | 'cover' | 'fill' | 'exact';
     zoom?: number;
@@ -25,6 +30,7 @@ interface CompileRequest {
     videoPosition?: { x: number; y: number; z: number };
     videoRotation?: { x: number; y: number; z: number };
     videoScale?: { width: number; height: number };
+    shapeType?: 'circle' | 'oval' | 'square' | 'rect' | 'custom';
   };
 }
 
@@ -41,9 +47,12 @@ interface StatusResponse {
   projectId: string;
   status: 'pending' | 'processing' | 'ready' | 'error';
   progress?: number;
+  photoUrl?: string;
+  videoUrl?: string;
   viewUrl?: string;
   qrCodeUrl?: string;
   markerMindUrl?: string;
+  viewerHtmlUrl?: string;
   compilationTimeMs?: number;
   errorMessage?: string;
   createdAt: string;
@@ -57,8 +66,10 @@ interface StatusResponse {
  * Returns immediately (202 Accepted), compilation happens in background
  */
 export async function requestARCompilation(request: CompileRequest): Promise<CompileResponse> {
+  const photos = request.photoUrls || (request.photoUrl ? [request.photoUrl] : []);
+  const videos = request.videoUrls || (request.videoUrl ? [request.videoUrl] : []);
   console.log(`[AR Service Client] 📤 Sending compilation request to ${AR_SERVICE_URL}/compile`);
-  console.log(`[AR Service Client] User: ${request.userId}, Photo: ${request.photoUrl}, Video: ${request.videoUrl || 'NONE'}`);
+  console.log(`[AR Service Client] User: ${request.userId}, Photos: ${photos.length}, Videos: ${videos.length}`);
   
   const response = await fetch(`${AR_SERVICE_URL}/compile`, {
     method: 'POST',
@@ -70,7 +81,7 @@ export async function requestARCompilation(request: CompileRequest): Promise<Com
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    const error = await response.json().catch(() => ({ error: 'Unknown error' })) as any;
     throw new Error(`AR Service error: ${error.error || response.statusText}`);
   }
 
@@ -91,7 +102,7 @@ export async function getARStatus(projectId: string): Promise<StatusResponse> {
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+    const error = await response.json().catch(() => ({ error: 'Unknown error' })) as any;
     console.error(`[AR Service Client] ❌ Status check failed (${response.status}):`, error);
     throw new Error(`AR Service error (${response.status}): ${error.error || response.statusText}`);
   }

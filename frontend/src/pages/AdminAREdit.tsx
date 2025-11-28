@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, RefreshCcw, Save, Image as ImageIcon, Wand2, Video as VideoIcon, Eye, Upload, Play, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Maximize2, Target, Layers } from 'lucide-react';
+import { Loader2, RefreshCcw, Save, Image as ImageIcon, Wand2, Video as VideoIcon, Eye, Upload, Play, ArrowUp, ArrowDown, ArrowLeft, ArrowRight, Maximize2, Target, Layers, Trash2 } from 'lucide-react';
 import CalibrationSandbox from '@/components/ar/CalibrationSandbox';
 import { useLocation } from 'wouter';
 import ARProjectItemsList from '@/components/ar/ARProjectItemsList';
@@ -107,11 +107,13 @@ export default function AdminAREditPage() {
   // Local editable state
   const [pos, setPos] = useState({ x: 0, y: 0, z: 0 });
   const [rot, setRot] = useState({ x: 0, y: 0, z: 0 });
-  const [scale, setScale] = useState<{ width: number; height: number } | null>(null);
+  // scale state REMOVED - backend calculates planeScale from photoAspectRatio automatically
   const [fitMode, setFitMode] = useState<'contain'|'cover'|'stretch'>('cover');
   const [autoPlay, setAutoPlay] = useState(true);
   const [loop, setLoop] = useState(true);
   const [maskFile, setMaskFile] = useState<File | null>(null);
+  const [shapeType, setShapeType] = useState<'circle' | 'oval' | 'square' | 'rect' | 'custom' | null>(null);
+  const [maskPreview, setMaskPreview] = useState<string | null>(null);
   const [zoom, setZoom] = useState<number>(1.0);
   const [offsetX, setOffsetX] = useState<number>(0);
   const [offsetY, setOffsetY] = useState<number>(0);
@@ -126,7 +128,7 @@ export default function AdminAREditPage() {
       const cfg = project.config as any;
       if (cfg.videoPosition) setPos(cfg.videoPosition);
       if (cfg.videoRotation) setRot(cfg.videoRotation);
-      if (cfg.videoScale) setScale(cfg.videoScale);
+      // videoScale removed - no longer needed
       if (cfg.fitMode) setFitMode(cfg.fitMode);
       if (cfg.autoPlay !== undefined) setAutoPlay(cfg.autoPlay);
       if (cfg.loop !== undefined) setLoop(cfg.loop);
@@ -145,7 +147,7 @@ export default function AdminAREditPage() {
       const body = {
         videoPosition: pos,
         videoRotation: rot,
-        videoScale: scale || undefined,
+        // videoScale removed - backend calculates from photoAspectRatio
         cropRegion: cropRegion || undefined,
         fitMode,
         autoPlay,
@@ -153,7 +155,8 @@ export default function AdminAREditPage() {
         zoom,
         offsetX,
         offsetY,
-        aspectLocked
+        aspectLocked,
+        shapeType: shapeType && shapeType !== 'custom' ? shapeType : undefined // Send auto-generated shape
       };
       const res = await fetch(`/api/ar/${arId}/config`, {
         method: 'PATCH',
@@ -177,14 +180,14 @@ export default function AdminAREditPage() {
       type: 'ar-calibration',
       payload: {
         position: pos,
-        rotation: rot,
-        scale: scale || { width: 1, height: 0.75 }
+        rotation: rot
+        // scale removed - viewer uses photoAspectRatio from backend
       }
     };
     try {
       iframeRef.contentWindow.postMessage(payload, '*');
     } catch {}
-  }, [pos, rot, scale, iframeRef]);
+  }, [pos, rot, iframeRef]); // Removed scale from dependencies
 
   const uploadMaskMutation = useMutation({
     mutationFn: async () => {
@@ -220,6 +223,25 @@ export default function AdminAREditPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ar/status', arId] });
+      setTimeout(() => setIframeKey(k => k + 1), 500);
+    }
+  });
+
+  const deleteMaskMutation = useMutation({
+    mutationFn: async () => {
+      if (!arId) throw new Error('No id');
+      const res = await fetch(`/api/ar/${arId}/mask`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/ar/status', arId] });
+      setShapeType(null); // Reset shape selection
+      setMaskFile(null); // Clear local file
+      setMaskPreview(null); // Clear preview
       setTimeout(() => setIframeKey(k => k + 1), 500);
     }
   });
@@ -395,14 +417,7 @@ export default function AdminAREditPage() {
                       ))}
                     </div>
                   </div>
-                  <div>
-                    <h3 className="font-semibold flex items-center gap-2"><VideoIcon className="h-4 w-4" /> Масштаб (опц.)</h3>
-                    <div className="grid grid-cols-2 gap-2 mt-2">
-                      <Input type="number" step="0.01" value={scale?.width ?? ''} placeholder="width" onChange={e => setScale(s => ({ ...(s||{width:1,height:1}), width: parseFloat(e.target.value) }))} />
-                      <Input type="number" step="0.01" value={scale?.height ?? ''} placeholder="height" onChange={e => setScale(s => ({ ...(s||{width:1,height:1}), height: parseFloat(e.target.value) }))} />
-                    </div>
-                    <Button variant="ghost" size="sm" className="mt-2" onClick={() => setScale(null)}>Сбросить масштаб</Button>
-                  </div>
+                  {/* Scale section REMOVED - backend automatically calculates from photoAspectRatio */}
                   <div>
                     <h3 className="font-semibold">Fit Mode</h3>
                     <select className="w-full border rounded px-2 py-1 text-sm" value={fitMode} onChange={e => setFitMode(e.target.value as any)}>
@@ -421,7 +436,89 @@ export default function AdminAREditPage() {
                   </div>
                   <Separator />
                   <div>
-                    <h3 className="font-semibold flex items-center gap-2"><ImageIcon className="h-4 w-4" /> Маска (PNG/WebP)</h3>
+                    <h3 className="font-semibold flex items-center gap-2 mb-3"><ImageIcon className="h-4 w-4" /> Маска для видео</h3>
+                    
+                    {/* Shape Type Selector */}
+                    <div className="space-y-3 mb-4">
+                      <div className="text-sm font-medium text-muted-foreground">Выберите форму маски:</div>
+                      <div className="grid grid-cols-5 gap-2">
+                        <Button
+                          size="sm"
+                          variant={shapeType === 'circle' ? 'default' : 'outline'}
+                          className="h-16 flex flex-col items-center justify-center gap-1"
+                          onClick={() => {
+                            setShapeType('circle');
+                            setMaskFile(null);
+                            setMaskPreview(null);
+                          }}
+                        >
+                          <span className="text-2xl">⭕</span>
+                          <span className="text-xs">Круг</span>
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant={shapeType === 'oval' ? 'default' : 'outline'}
+                          className="h-16 flex flex-col items-center justify-center gap-1"
+                          onClick={() => {
+                            setShapeType('oval');
+                            setMaskFile(null);
+                            setMaskPreview(null);
+                          }}
+                        >
+                          <span className="text-2xl">🥚</span>
+                          <span className="text-xs">Овал</span>
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant={shapeType === 'square' ? 'default' : 'outline'}
+                          className="h-16 flex flex-col items-center justify-center gap-1"
+                          onClick={() => {
+                            setShapeType('square');
+                            setMaskFile(null);
+                            setMaskPreview(null);
+                          }}
+                        >
+                          <span className="text-2xl">◻️</span>
+                          <span className="text-xs">Квадрат</span>
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant={shapeType === 'rect' ? 'default' : 'outline'}
+                          className="h-16 flex flex-col items-center justify-center gap-1"
+                          onClick={() => {
+                            setShapeType('rect');
+                            setMaskFile(null);
+                            setMaskPreview(null);
+                          }}
+                        >
+                          <span className="text-2xl">▭</span>
+                          <span className="text-xs">Прямоуг.</span>
+                        </Button>
+                        
+                        <Button
+                          size="sm"
+                          variant={shapeType === 'custom' ? 'default' : 'outline'}
+                          className="h-16 flex flex-col items-center justify-center gap-1"
+                          onClick={() => setShapeType('custom')}
+                        >
+                          <span className="text-2xl">🎭</span>
+                          <span className="text-xs">Своя</span>
+                        </Button>
+                      </div>
+                      
+                      {shapeType && shapeType !== 'custom' && (
+                        <Alert>
+                          <AlertDescription className="text-xs">
+                            Маска "{shapeType}" будет сгенерирована автоматически при компиляции
+                          </AlertDescription>
+                        </Alert>
+                      )}
+                    </div>
+                    
+                    {/* Current Mask Preview */}
                     {project.maskUrl && (
                       <div className="mb-3">
                         <div className="relative rounded border overflow-hidden max-w-xs" style={{
@@ -430,26 +527,55 @@ export default function AdminAREditPage() {
                         }}>
                           <img src={project.maskUrl} alt="mask" className="w-full" />
                         </div>
-                        <div className="text-xs text-muted-foreground mt-1">Текущая маска</div>
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="mt-2"
-                          disabled={convertMaskMutation.isPending}
-                          onClick={() => convertMaskMutation.mutate()}
-                        >
-                          {convertMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Wand2 className="h-4 w-4 mr-1" />}
-                          Конвертировать (центр → прозрачность)
-                        </Button>
+                        <div className="text-xs text-muted-foreground mt-1">Текущая маска в проекте</div>
                       </div>
                     )}
-                    <input type="file" accept="image/png,image/webp" onChange={e => setMaskFile(e.target.files?.[0] || null)} />
-                    <div className="flex gap-2 mt-2">
-                      <Button disabled={!maskFile || uploadMaskMutation.isPending} onClick={() => uploadMaskMutation.mutate()} size="sm" variant="secondary">
-                        {uploadMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />} Загрузить маску
-                      </Button>
-                      {maskFile && <Button size="sm" variant="ghost" onClick={() => setMaskFile(null)}>Отменить</Button>}
-                    </div>
+                    
+                    {/* Custom Mask Upload (only show if custom selected) */}
+                    {shapeType === 'custom' && (
+                      <div className="space-y-2 mt-3 p-3 border rounded-lg bg-muted/50">
+                        <div className="text-sm font-medium">Загрузите свою маску (PNG/WebP с прозрачностью)</div>
+                        <input 
+                          type="file" 
+                          accept="image/png,image/webp" 
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              setMaskFile(file);
+                              setMaskPreview(URL.createObjectURL(file));
+                            }
+                          }} 
+                        />
+                        {maskPreview && (
+                          <div className="mt-2">
+                            <div className="relative rounded border overflow-hidden max-w-[200px]" style={{
+                              backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, white 0% 50%)',
+                              backgroundSize: '20px 20px'
+                            }}>
+                              <img src={maskPreview} alt="Preview" className="w-full" />
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">Превью загруженной маски</div>
+                          </div>
+                        )}
+                        <div className="flex gap-2 mt-2">
+                          <Button disabled={!maskFile || uploadMaskMutation.isPending} onClick={() => uploadMaskMutation.mutate()} size="sm" variant="secondary">
+                            {uploadMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />} Загрузить маску
+                          </Button>
+                          {maskFile && <Button size="sm" variant="ghost" onClick={() => {
+                            setMaskFile(null);
+                            setMaskPreview(null);
+                          }}>Отменить</Button>}
+                          <Button 
+                            disabled={deleteMaskMutation.isPending} 
+                            onClick={() => deleteMaskMutation.mutate()} 
+                            size="sm" 
+                            variant="destructive"
+                          >
+                            {deleteMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />} Удалить маску
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <Separator />
                   {/* Legacy single-photo save. For multi-target projects we force per-item config editing */}
@@ -500,15 +626,15 @@ export default function AdminAREditPage() {
                   <div className="mt-4">
                     <h4 className="font-medium mb-2">Калибровочный sandbox</h4>
                     <CalibrationSandbox
-                      photoAspectRatio={(project.photoWidth && project.photoHeight) ? (project.photoHeight / project.photoWidth) : 0.75}
+                      photoAspectRatio={(project.photoWidth && project.photoHeight) ? (project.photoHeight / project.photoWidth) : 4/3}
                       videoAspectRatio={(project.videoWidth && project.videoHeight) ? (project.videoWidth / project.videoHeight) : 16/9}
-                      videoScale={scale}
+                      videoScale={null}
                       position={pos}
                       rotation={rot}
                       markerImageUrl={project.photoUrl || undefined}
                       videoUrl={project.videoUrl || undefined}
                       onChange={(u: any) => {
-                        if (u.videoScale) setScale(u.videoScale);
+                        // videoScale removed - not needed anymore
                         if (u.cropRegion) setCropRegion(u.cropRegion);
                         if (u.position) setPos(u.position);
                         if (typeof u.rotationZ === 'number') setRot(r => ({ ...r, z: u.rotationZ! }));

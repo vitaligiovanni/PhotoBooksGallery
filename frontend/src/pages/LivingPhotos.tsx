@@ -492,16 +492,25 @@ export default function LivingPhotos() {
               </CardHeader>
 
               <CardContent className="space-y-6">
-                {/* Project name */}
+                {/* Project name - ОБЯЗАТЕЛЬНОЕ ПОЛЕ */}
                 <div className="space-y-2">
-                  <label className="block text-lg font-semibold">Название проекта (необязательно)</label>
+                  <label className="block text-lg font-semibold flex items-center gap-2">
+                    <span className="text-red-500">*</span>
+                    Название проекта
+                  </label>
                   <input
                     value={projectName}
                     onChange={(e)=>setProjectName(e.target.value)}
                     placeholder="Например: Свадебный альбом Анны"
-                    className="w-full border rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    required
+                    minLength={3}
+                    maxLength={100}
+                    className="w-full border rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
                   />
-                  <p className="text-xs text-muted-foreground">Это имя увидит администратор в CRM (демо-раздел).</p>
+                  {projectName.trim().length > 0 && projectName.trim().length < 3 && (
+                    <p className="text-xs text-red-500">Минимум 3 символа</p>
+                  )}
+                  <p className="text-xs text-muted-foreground">Это имя поможет вам и администратору идентифицировать проект в CRM.</p>
                 </div>
                 {/* Photos upload (multiple) */}
                 <div className="space-y-3">
@@ -699,7 +708,7 @@ export default function LivingPhotos() {
                 {/* Submit button */}
                 <Button
                   onClick={() => createDemoMutation.mutate()}
-                  disabled={photos.length === 0 || videos.length === 0 || photos.length !== videos.length || createDemoMutation.isPending}
+                  disabled={projectName.trim().length < 3 || photos.length === 0 || videos.length === 0 || photos.length !== videos.length || createDemoMutation.isPending}
                   size="lg"
                   className="w-full text-lg h-14 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
                 >
@@ -707,6 +716,10 @@ export default function LivingPhotos() {
                     <>
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                       {tAR('uploading')}
+                    </>
+                  ) : projectName.trim().length < 3 ? (
+                    <>
+                      ⚠️ Укажите название проекта (мин. 3 символа)
                     </>
                   ) : photos.length !== videos.length ? (
                     <>

@@ -28,6 +28,15 @@ jobs:
           ls -lh deploy.tar.gz
           echo "Archive size: $(du -h deploy.tar.gz | cut -f1)"
       
+      - name: 🧹 Cleanup server (free disk space)
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+        run: |
+          # Копируем скрипт очистки и выполняем его
+          scp -o StrictHostKeyChecking=no cleanup-server.sh ${SERVER_USER}@${SERVER_HOST}:/tmp/
+          ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} "chmod +x /tmp/cleanup-server.sh && bash /tmp/cleanup-server.sh && rm /tmp/cleanup-server.sh"
+      
       - name: 📁 Ensure server directory exists
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}

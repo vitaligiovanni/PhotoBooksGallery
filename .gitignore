@@ -82,3 +82,7 @@ production-*.sql
 full-backup.*
 backup-*.sql
 restore-*.sql
+
+# Private files with secrets
+.PRIVATE-*
+*-PRIVATE.*

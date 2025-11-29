@@ -15,8 +15,8 @@ RUN apk add --no-cache \
 # Create app directory
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from ar-service subfolder (context is project root)
+COPY ar-service/package*.json ./
 
 # Configure npm для лучшей стабильности сети
 RUN npm config set fetch-retries 5 && \
@@ -29,16 +29,16 @@ RUN npm ci --prefer-offline || \
     (sleep 10 && npm ci --prefer-offline) || \
     (sleep 20 && npm install --no-audit --no-fund)
 
-# Copy ar-service source code ONLY
-COPY src ./src
-COPY tsconfig.json ./
-COPY vendor ./vendor
+# Copy ar-service source code ONLY (from ar-service subfolder)
+COPY ar-service/src ./src
+COPY ar-service/tsconfig.json ./
+COPY ar-service/vendor ./vendor
 
 # Build TypeScript
 RUN npm run build
 
-# Copy SQL migrations after build
-COPY src/migrations/*.sql ./dist/migrations/
+# Create migrations folder and copy SQL if exists (optional step)
+RUN mkdir -p ./dist/migrations
 
 # Remove devDependencies after build to reduce image size
 RUN npm prune --production

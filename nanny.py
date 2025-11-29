@@ -6,23 +6,32 @@ from datetime import datetime
 import customtkinter as ctk
 from tkinter import messagebox, scrolledtext
 import tkinter as tk
+from tkinter import ttk
 
-# ─────── НАСТРОЙКИ (поменяй только здесь) ───────
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN", "8443450642:AAGzmXXTJGlzOWS2oLWNwvEZ8rJTBcT0xjs")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "959125046")
+# ─────── НАСТРОЙКИ (переменные только из окружения) ───────
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 PROJECT_NAME = os.path.basename(os.getcwd())
-# ────────────────────────────────────────────────
+# Если токенов нет — уведомим и отключим отправку
+if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+    print("[SECURITY] Telegram секреты не заданы. Создайте .env и перезапустите. Сообщения отправляться не будут.")
+# ───────────────────────────────────────────────────────────
 
 def send_telegram(text):
+    if not TELEGRAM_TOKEN or not TELEGRAM_CHAT_ID:
+        return  # защита: не отправляем если секреты отсутствуют
     try:
-        requests.get(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
-                     params={"chat_id": TELEGRAM_CHAT_ID, "text": f"Проект «{PROJECT_NAME}»\n\n{text}"}, timeout=5)
-    except:
+        requests.get(
+            f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+            params={"chat_id": TELEGRAM_CHAT_ID, "text": f"Проект «{PROJECT_NAME}»\n\n{text}"},
+            timeout=5
+        )
+    except Exception:
         pass
 
-def run(cmd, check=False):
+def run(cmd, check=False, timeout=30):
     try:
-        result = subprocess.run(cmd, shell=True, text=True, capture_output=True, timeout=30)
+        result = subprocess.run(cmd, shell=True, text=True, capture_output=True, timeout=timeout)
         if check and result.returncode != 0:
             raise Exception(f"Command failed: {result.stderr}")
         return result.stdout.strip()
@@ -110,27 +119,83 @@ def full_deploy():
         return
     
     if messagebox.askyesno("Деплой на сервер", "🚀 Выкатываем всё на БОЕВОЙ сервер?\n\nЭто обновит сайт photobooksgallery.am"):
-        send_telegram("🚀 Запускаю деплой на боевой сервер...")
-        
-        # Merge dev → main
-        run("git checkout main")
-        merge_result = run("git merge dev")
-        
-        if "conflict" in merge_result.lower():
-            messagebox.showerror("Ошибка", "Конфликт при merge!\nОбратись за помощью.")
+        # Модальное окно прогресса
+        progress_dialog = ctk.CTkToplevel(app)
+        progress_dialog.title("🚀 Деплой — прогресс")
+        progress_dialog.geometry("600x360")
+        progress_dialog.grab_set()
+
+        ctk.CTkLabel(progress_dialog, text="Деплой на боевой сервер", font=("Arial", 16, "bold")).pack(pady=8)
+        step_label = ctk.CTkLabel(progress_dialog, text="Подготовка…", font=("Arial", 12))
+        step_label.pack(pady=4)
+
+        # Индикатор прогресса: полоска + процент
+        bar_frame = ctk.CTkFrame(progress_dialog)
+        bar_frame.pack(pady=6, padx=16, fill="x")
+        progress_bar = ttk.Progressbar(bar_frame, mode="determinate")
+        progress_bar.pack(fill="x", padx=6, pady=6)
+        percent_label = ctk.CTkLabel(bar_frame, text="0%", font=("Arial", 11))
+        percent_label.pack()
+
+        # Лог операций
+        log_box = scrolledtext.ScrolledText(progress_dialog, width=70, height=12, font=("Consolas", 10))
+        log_box.pack(padx=16, pady=8, fill="both", expand=True)
+
+        def set_progress(p, text=None):
+            value = max(0, min(100, int(p)))
+            progress_bar['value'] = value
+            percent_label.configure(text=f"{value}%")
+            if text:
+                step_label.configure(text=text)
+            progress_dialog.update_idletasks()
+
+        def log(msg):
+            ts = datetime.now().strftime('%H:%M:%S')
+            log_box.insert('end', f"[{ts}] {msg}\n")
+            log_box.see('end')
+
+        # Ход деплоя
+        try:
+            send_telegram("🚀 Запускаю деплой на боевой сервер…")
+            set_progress(5, "Переключаюсь на ветку main…")
+            log("git checkout main")
+            run("git checkout main")
+
+            set_progress(20, "Обновляю main из dev (merge)…")
+            log("git merge dev")
+            merge_result = run("git merge dev")
+            if "conflict" in merge_result.lower():
+                log("❌ Конфликт при merge")
+                messagebox.showerror("Ошибка", "Конфликт при merge!\nНужна ручная помощь.")
+                run("git checkout dev")
+                progress_dialog.destroy()
+                return
+
+            set_progress(40, "Отправляю в production…")
+            log("git push production main")
+            push_result = run("git push production main", check=False, timeout=600)
+            if push_result.startswith("Error"):
+                log("❌ Ошибка push: " + push_result)
+                send_telegram(f"❌ Ошибка деплоя: {push_result}")
+                messagebox.showerror("Ошибка", f"Деплой не удался:\n{push_result}")
+                run("git checkout dev")
+                progress_dialog.destroy()
+                return
+
+            set_progress(80, "Возвращаюсь на dev…")
+            log("git checkout dev")
             run("git checkout dev")
-            return
-        
-        # Push to production
-        push_result = run("git push production main", check=False)
-        run("git checkout dev")  # Возврат на dev
-        
-        if "Error" not in push_result:
-            send_telegram("✅ ДЕПЛОЙ ЗАВЕРШЁН!\nСайт обновлён")
-            messagebox.showinfo("Готово", "Деплой прошёл успешно!\n\nПроверь сайт через 1-2 минуты")
-        else:
-            send_telegram(f"❌ Ошибка деплоя:\n{push_result}")
-            messagebox.showerror("Ошибка", f"Деплой не удался:\n{push_result}")
+
+            set_progress(100, "Готово! Деплой завершён")
+            log("✅ Деплой завершён успешно")
+            send_telegram("✅ ДЕПЛОЙ ЗАВЕРШЁН! Сайт обновлён")
+            messagebox.showinfo("Готово", "Деплой прошёл успешно!\nПроверь сайт через 1–2 минуты")
+        finally:
+            # Закрыть окно прогресса после завершения/ошибки
+            try:
+                progress_dialog.destroy()
+            except:
+                pass
 
 def rollback_deploy():
     if messagebox.askyesno("Откат", "⚠️ Откатить сайт к предыдущей версии?\n\nЭто вернёт последний стабильный коммит."):

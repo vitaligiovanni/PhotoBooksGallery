@@ -66,7 +66,9 @@ RUN npm install --omit=dev --prefer-offline --no-audit --no-fund || \
 # Copy built app and necessary runtime files
 COPY --from=builder /workspace/backend/dist ./dist
 COPY --from=builder /workspace/backend/.env* ./
-COPY --from=builder /workspace/backend/public ./public
+
+# Copy public folder if exists (optional)
+RUN mkdir -p public
 
 # Copy shared compiled code to node_modules/@shared for runtime resolution
 RUN mkdir -p node_modules/@shared

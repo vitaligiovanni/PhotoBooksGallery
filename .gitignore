@@ -86,3 +86,6 @@ restore-*.sql
 # Private files with secrets
 .PRIVATE-*
 *-PRIVATE.*
+# NFT marker creator tools (vendor)
+backend/tools/nft-marker-creator/
+tools/nft-marker-creator/

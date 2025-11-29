@@ -1,14 +1,14 @@
 x-env: &default-env
-  NODE_ENV: development
+  NODE_ENV: production
 
 services:
   db:
     image: postgres:15-alpine
     container_name: photobooks_db
     environment:
-      POSTGRES_DB: ${POSTGRES_DB:-photobooks}
+      POSTGRES_DB: ${POSTGRES_DB:-photobooks_db}
       POSTGRES_USER: photobooks
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
     ports:
       - "5433:5432"
     volumes:
@@ -32,7 +32,7 @@ services:
     environment:
       POSTGRES_DB: ar_db
       POSTGRES_USER: photobooks
-      POSTGRES_PASSWORD: SecurePassword2025
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
     ports:
       - "5434:5432"
     volumes:
@@ -58,12 +58,12 @@ services:
     environment:
       <<: *default-env
       PORT: 5000
-      AR_DATABASE_URL: postgresql://photobooks:SecurePassword2025@ar-db:5432/ar_db
+      AR_DATABASE_URL: ${AR_DATABASE_URL:-postgresql://photobooks:${POSTGRES_PASSWORD:-Manana08012023}@ar-db:5432/ar_db}
       DB_HOST: ar-db
       DB_PORT: 5432
       DB_NAME: ar_db
       DB_USER: photobooks
-      DB_PASSWORD: SecurePassword2025
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
       BACKEND_WEBHOOK_URL: http://backend:5002/api/ar/webhook
       STORAGE_PATH: /app/storage
       MAX_WORKERS: 2
@@ -104,7 +104,7 @@ services:
     working_dir: /workspace/backend
     environment:
       <<: *default-env
-      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://photobooks:${POSTGRES_PASSWORD:-Manana08012023}@db:5432/${POSTGRES_DB:-photobooks_db}}
     depends_on:
       db:
         condition: service_healthy
@@ -120,9 +120,9 @@ services:
     environment:
       <<: *default-env
       # Local filesystem storage only
-      NODE_ENV: development
+      NODE_ENV: production
       PORT: 5002
-      DATABASE_URL: postgresql://photobooks:${POSTGRES_PASSWORD:-changeme}@db:5432/${POSTGRES_DB:-photobooks}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://photobooks:${POSTGRES_PASSWORD:-Manana08012023}@db:5432/${POSTGRES_DB:-photobooks_db}}
       AR_SERVICE_URL: http://ar-service:5000
       DOMAIN: ${DOMAIN:-localhost}
       FRONTEND_URL: ${FRONTEND_URL:-http://frontend}
@@ -185,16 +185,14 @@ services:
       context: .
       dockerfile: ./frontend/Dockerfile
       args:
-        - VITE_API_URL=http://localhost:8080
+        - VITE_API_URL=https://photobooksgallery.am
     container_name: photobooks_frontend
     depends_on:
       backend:
         condition: service_healthy
     ports:
       - "8080:80"
-    volumes:
-      - ./frontend/dist:/usr/share/nginx/html:ro
-      - ./frontend/nginx.conf:/etc/nginx/nginx.conf:ro
+    # В продакшене используем собранный образ без локальных volume-монтажей
     logging:
       driver: "json-file"
       options:
@@ -218,8 +216,8 @@ services:
     environment:
       PGHOST: db
       PGUSER: photobooks
-      PGPASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      PGDATABASE: photobooks
+      PGPASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
+      PGDATABASE: ${POSTGRES_DB:-photobooks_db}
     volumes:
       - ./uploads:/uploads:ro
       - ./backups:/backups
@@ -234,19 +232,20 @@ services:
 
   # Weekly docker prune via container (optional). Requires docker socket.
   # Alternatively, set up host cron (documented in DEPLOYMENT.md).
-  pruner:
-    image: docker:25-cli
-    container_name: photobooks_pruner
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./scripts:/scripts:ro
-    entrypoint: ["/bin/sh", "/scripts/pruner.sh"]
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
+  # pruner отключён: на сервере нет скрипта /scripts/pruner.sh и он перезапускается бесконечно
+  # pruner:
+  #   image: docker:25-cli
+  #   container_name: photobooks_pruner
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #     - ./scripts:/scripts:ro
+  #   entrypoint: ["/bin/sh", "/scripts/pruner.sh"]
+  #   restart: unless-stopped
+  #   logging:
+  #     driver: "json-file"
+  #     options:
+  #       max-size: "10m"
+  #       max-file: "3"
 
 volumes:
   postgres_data:

@@ -47,53 +47,33 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
-            set -e
-            cd ${{ secrets.SERVER_PATH }}
-            
-            # Распаковываем
-            tar xzf deploy.tar.gz
-            rm deploy.tar.gz
-            
-            # Создаём .env если его нет
-            if [ ! -f .env ]; then
-              cat > .env << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} "cd ${SERVER_PATH} && \
+            tar xzf deploy.tar.gz && \
+            rm deploy.tar.gz && \
+            cat > .env << 'EOF'
           POSTGRES_DB=photobooks_db
           POSTGRES_USER=photobooks
-          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
-          DATABASE_URL=postgresql://photobooks:${{ secrets.POSTGRES_PASSWORD }}@db:5432/photobooks_db
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          DATABASE_URL=postgresql://photobooks:${POSTGRES_PASSWORD}@db:5432/photobooks_db
           
-          AR_POSTGRES_PASSWORD=${{ secrets.AR_POSTGRES_PASSWORD }}
-          AR_DATABASE_URL=postgresql://photobooks:${{ secrets.AR_POSTGRES_PASSWORD }}@ar-db:5432/ar_db
+          AR_POSTGRES_PASSWORD=${AR_POSTGRES_PASSWORD}
+          AR_DATABASE_URL=postgresql://photobooks:${AR_POSTGRES_PASSWORD}@ar-db:5432/ar_db
           
           DOMAIN=photobooksgallery.am
           FRONTEND_URL=https://photobooksgallery.am
           API_URL=https://photobooksgallery.am
           ALLOWED_ORIGINS=https://photobooksgallery.am
           
-          TELEGRAM_TOKEN=${{ secrets.TELEGRAM_TOKEN }}
-          TELEGRAM_CHAT_ID=${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+          TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
           EOF
-            fi
-            
-            # Останавливаем старые контейнеры
-            docker compose down
-            
-            # Собираем новые образы
-            docker compose build --no-cache
-            
-            # Запускаем
-            docker compose up -d
-            
-            # Проверяем здоровье
-            sleep 10
-            docker compose ps
-            
-            # Очищаем старые образы
-            docker image prune -af
-            
-            echo "✅ Deployment completed successfully!"
-          ENDSSH
+          docker compose down && \
+          docker compose build --no-cache && \
+          docker compose up -d && \
+          sleep 10 && \
+          docker compose ps && \
+          docker image prune -af && \
+          echo '✅ Deployment completed successfully!'"
       
       - name: 📱 Notify Telegram
         if: always()

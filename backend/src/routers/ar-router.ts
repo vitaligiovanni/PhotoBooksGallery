@@ -773,6 +773,8 @@ export function createARRouter(): Router {
 
       let maskFileName: string | undefined;
       
+      console.log(`[AR Config] DEBUG: shapeType="${shapeType}", will generate mask: ${!!(shapeType && shapeType !== 'custom')}`);
+      
       // If shapeType is provided, generate mask locally (no full recompilation needed)
       if (shapeType && shapeType !== 'custom') {
         console.log(`[AR Config] 🎭 Generating ${shapeType} mask locally...`);
@@ -782,7 +784,7 @@ export function createARRouter(): Router {
         
         try {
           // Load template from ar-mask-templates
-          const templatePath = path.join(process.cwd(), '..', 'ar-mask-templates', `${shapeType}.png`);
+          const templatePath = path.join(process.cwd(), 'objects', 'ar-mask-templates', `${shapeType}.png`);
           
           // Check if template exists
           try {
@@ -818,6 +820,7 @@ export function createARRouter(): Router {
           } as any).where(eq(arProjects.id, id));
           
           maskFileName = 'mask-0.png';
+          console.log(`[AR Config] DEBUG: maskFileName set to "${maskFileName}"`);
         } catch (maskError: any) {
           console.error('[AR Config] ❌ Failed to generate mask:', maskError);
           return res.status(500).json({ 

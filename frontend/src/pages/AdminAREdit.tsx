@@ -600,7 +600,7 @@ export default function AdminAREditPage() {
                     <iframe
                       key={iframeKey}
                       className="w-full aspect-video border rounded"
-                      src={project.viewerHtmlUrl}
+                      src={`${project.viewerHtmlUrl}?v=${iframeKey}`}
                       ref={setIframeRef}
                       onLoad={(e) => {
                         try {

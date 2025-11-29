@@ -82,19 +82,24 @@ self.addEventListener('fetch', (event) => {
   }
 
   // Strategy 2: AR assets (.mind, .mp4, .png in ar-storage) - Cache First
+  // EXCEPTION: HTML files with ?v= parameter should always fetch fresh (cache-busting)
   if (url.pathname.includes('/ar-storage/') || 
       url.pathname.endsWith('.mind') || 
       url.pathname.includes('/objects/ar-uploads/')) {
+    
+    // Skip cache for index.html with version parameter (cache-busting)
+    const isVersionedHtml = url.pathname.endsWith('index.html') && url.searchParams.has('v');
+    
     event.respondWith(
       caches.match(request).then((cachedResponse) => {
-        if (cachedResponse) {
+        if (cachedResponse && !isVersionedHtml) {
           console.log('[SW] Serving AR asset from cache:', url.pathname);
           return cachedResponse;
         }
         
         return fetch(request).then((response) => {
-          // Cache AR assets for offline use
-          if (response && response.status === 200) {
+          // Cache AR assets for offline use (but not versioned HTML)
+          if (response && response.status === 200 && !isVersionedHtml) {
             const responseClone = response.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(request, responseClone);

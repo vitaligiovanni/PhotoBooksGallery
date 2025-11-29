@@ -162,22 +162,26 @@ async function generateMultiTargetViewer(
     
     console.log(`[Multi Viewer] Item ${idx}: scale=${scale.width}×${scale.height.toFixed(3)}`);
 
+    // If mask exists, apply alphaMap directly to the video material
+    const material = maskFileName
+      ? `material="src:#ar-video-${idx}; alphaMap:#ar-mask-${idx}; shader:standard; roughness:1; metalness:0; transparent:true; opacity:0"`
+      : `material="transparent: true; opacity: 0"`;
+
     return `
     <a-entity mindar-image-target="targetIndex: ${idx}">
-      <a-video
+      <a-plane
         id="ar-plane-${idx}"
-        src="#ar-video-${idx}"
         position="${pos.x} ${pos.y} ${pos.z}"
         rotation="${rot.x} ${rot.y} ${rot.z}"
         width="${scale.width}"
         height="${scale.height}"
-        material="transparent: true; opacity: 0"
+        ${material}
         visible="false"
         class="clickable"
         data-auto-play="${autoPlay}"
         animation__fadein="property: material.opacity; from: 0; to: 1; dur: 800; easing: easeInOutQuad; startEvents: video-ready-${idx}"
-      ></a-video>
-      ${maskFileName ? `<a-image id="ar-mask-image-${idx}" src="#ar-mask-${idx}" position="${pos.x} ${pos.y} ${pos.z + 0.002}" rotation="${rot.x} ${rot.y} ${rot.z}" width="${scale.width}" height="${scale.height}" material="transparent: true; alphaTest: 0.001"></a-image>` : ''}
+      ></a-plane>
+      <a-video id="ar-video-el-${idx}" src="#ar-video-${idx}" autoplay muted playsinline style="display:none"></a-video>
     </a-entity>`;
   }).join('\n');
 
@@ -542,7 +546,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 ${maskFileName ? `<img id="mask" src="./${maskFileName}?t=${Date.now()}" crossorigin="anonymous">` : ''}
 </a-assets>
 <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
-<a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>
+<a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double${maskFileName ? ';alphaMap:#mask' : ''}" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>
 </a-scene>
 <script>
 console.log('[AR] Page loaded');

@@ -121,13 +121,30 @@ jobs:
         run: |
           STATUS="${{ job.status }}"
           if [ "$STATUS" = "success" ]; then
-            MESSAGE="✅ ДЕПЛОЙ УСПЕШЕН!%0A%0AКоммит: ${{ github.sha }}%0AВетка: ${{ github.ref_name }}%0AСайт: https://photobooksgallery.am"
+            TEXT="✅ ДЕПЛОЙ УСПЕШЕН!
+
+Коммит: ${{ github.sha }}
+Ветка: ${{ github.ref_name }}
+Сайт: https://photobooksgallery.am"
           else
-            MESSAGE="❌ ДЕПЛОЙ ПРОВАЛИЛСЯ!%0A%0AКоммит: ${{ github.sha }}%0AВетка: ${{ github.ref_name }}%0AПроверьте GitHub Actions"
+            TEXT="❌ ДЕПЛОЙ ПРОВАЛИЛСЯ!
+
+Коммит: ${{ github.sha }}
+Ветка: ${{ github.ref_name }}
+Проверьте GitHub Actions"
           fi
           
-          curl -s "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${MESSAGE}" > /dev/null
-          curl -s -G \
-            --data-urlencode "chat_id=${TELEGRAM_CHAT_ID}" \
-            --data-urlencode "text=${MESSAGE}" \
-            "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" || echo "⚠️ Telegram send failed (curl exit $?)"
+          echo "📱 Отправка в Telegram (status=$STATUS)..."
+          
+          # JSON POST с jq для корректного экранирования
+          RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": $(echo "$TEXT" | jq -Rs .)}")
+          
+          if echo "$RESPONSE" | grep -q '"ok":true'; then
+            echo "✅ Уведомление отправлено"
+          else
+            echo "❌ Ошибка Telegram API:"
+            echo "$RESPONSE"
+            exit 1
+          fi

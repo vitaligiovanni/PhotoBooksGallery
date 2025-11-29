@@ -22,25 +22,8 @@ jobs:
       
       - name: 📦 Create deployment archive
         run: |
-          # Создаём архив, исключая ненужные файлы
-          tar czf deploy.tar.gz \
-            --exclude='./deploy.tar.gz' \
-            --exclude='./node_modules' \
-            --exclude='./.git' \
-            --exclude='./.env' \
-            --exclude='./.env.*' \
-            --exclude='./dist' \
-            --exclude='./uploads/*' \
-            --exclude='./objects/*' \
-            --exclude='./backups/*' \
-            --exclude='*.log' \
-            --exclude='*.dump' \
-            --exclude='*.sql' \
-            --exclude='.DS_Store' \
-            --exclude='./backend/node_modules' \
-            --exclude='./frontend/node_modules' \
-            --exclude='./ar-service/node_modules' \
-            .
+          # Используем git archive для чистого архива из git
+          git archive --format=tar.gz -o deploy.tar.gz HEAD
       
       - name: 🚚 Upload to server
         env:

@@ -32,7 +32,6 @@ RUN npm ci --prefer-offline || \
 # Copy ar-service source code ONLY (from ar-service subfolder)
 COPY ar-service/src ./src
 COPY ar-service/tsconfig.json ./
-COPY ar-service/vendor ./vendor
 
 # Build TypeScript
 RUN npm run build

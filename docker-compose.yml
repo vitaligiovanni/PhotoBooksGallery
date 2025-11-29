@@ -7,8 +7,8 @@ services:
     container_name: photobooks_db
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-photobooks_db}
-      POSTGRES_USER: photobooks
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
+      POSTGRES_USER: ${POSTGRES_USER:-photobooks}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD not set in .env}
     ports:
       - "5433:5432"
     volumes:
@@ -30,9 +30,9 @@ services:
     image: postgres:15-alpine
     container_name: photobooks-ar-db
     environment:
-      POSTGRES_DB: ar_db
-      POSTGRES_USER: photobooks
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
+      POSTGRES_DB: ${AR_POSTGRES_DB:-ar_db}
+      POSTGRES_USER: ${AR_POSTGRES_USER:-photobooks}
+      POSTGRES_PASSWORD: ${AR_POSTGRES_PASSWORD:?AR_POSTGRES_PASSWORD not set in .env}
     ports:
       - "5434:5432"
     volumes:
@@ -58,12 +58,12 @@ services:
     environment:
       <<: *default-env
       PORT: 5000
-      AR_DATABASE_URL: ${AR_DATABASE_URL:-postgresql://photobooks:${POSTGRES_PASSWORD:-Manana08012023}@ar-db:5432/ar_db}
+      AR_DATABASE_URL: ${AR_DATABASE_URL:?AR_DATABASE_URL not set in .env}
       DB_HOST: ar-db
       DB_PORT: 5432
       DB_NAME: ar_db
       DB_USER: photobooks
-      DB_PASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
+      DB_PASSWORD: ${AR_POSTGRES_PASSWORD:?AR_POSTGRES_PASSWORD not set in .env}
       BACKEND_WEBHOOK_URL: http://backend:5002/api/ar/webhook
       STORAGE_PATH: /app/storage
       MAX_WORKERS: 2
@@ -104,7 +104,7 @@ services:
     working_dir: /workspace/backend
     environment:
       <<: *default-env
-      DATABASE_URL: ${DATABASE_URL:-postgresql://photobooks:${POSTGRES_PASSWORD:-Manana08012023}@db:5432/${POSTGRES_DB:-photobooks_db}}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL not set in .env}
     depends_on:
       db:
         condition: service_healthy
@@ -122,7 +122,7 @@ services:
       # Local filesystem storage only
       NODE_ENV: production
       PORT: 5002
-      DATABASE_URL: ${DATABASE_URL:-postgresql://photobooks:${POSTGRES_PASSWORD:-Manana08012023}@db:5432/${POSTGRES_DB:-photobooks_db}}
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL not set in .env}
       AR_SERVICE_URL: http://ar-service:5000
       DOMAIN: ${DOMAIN:-localhost}
       FRONTEND_URL: ${FRONTEND_URL:-http://frontend}
@@ -216,7 +216,7 @@ services:
     environment:
       PGHOST: db
       PGUSER: photobooks
-      PGPASSWORD: ${POSTGRES_PASSWORD:-Manana08012023}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD not set in .env}
       PGDATABASE: ${POSTGRES_DB:-photobooks_db}
     volumes:
       - ./uploads:/uploads:ro

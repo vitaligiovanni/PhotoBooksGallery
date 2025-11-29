@@ -1,0 +1,71 @@
+# Git attributes для оптимизации деплоя
+# Файлы с атрибутом export-ignore не попадут в git archive
+
+# Database backups
+*.dump export-ignore
+full-backup.dump export-ignore
+production-backup.dump export-ignore
+production-data-dump.sql export-ignore
+production-data-utf8.sql export-ignore
+plain-backup.sql export-ignore
+restore-basic-data.sql export-ignore
+restore-data-correct.sql export-ignore
+cleanup-failed-ar-projects.sql export-ignore
+
+# Test scripts
+test-mask-generation.js export-ignore
+test-multi-target.mjs export-ignore
+test-multi-target.ps1 export-ignore
+test-video-resize-logic.mjs export-ignore
+
+# Migration scripts (already applied)
+migrate-ar-integration.ps1 export-ignore
+migrate-ar-projects.mjs export-ignore
+migrate-ar-safe.ps1 export-ignore
+migrate-ar-simple.ps1 export-ignore
+
+# Dev scripts
+start-ar-service.ps1 export-ignore
+start-full-stack.ps1 export-ignore
+backup-db.ps1 export-ignore
+check-db-connection.ps1 export-ignore
+auto-deploy.ps1 export-ignore
+deploy-now.ps1 export-ignore
+
+# Dev documentation
+AR_*.md export-ignore
+DOCKER_BUILD_FIX.md export-ignore
+LIVING_PHOTOS_DEMO_IMPLEMENTATION.md export-ignore
+MULTI_TARGET_*.md export-ignore
+PERFORMANCE_OPTIMIZATION_PLAN.md export-ignore
+SQUARE_MARKER_MODE.md export-ignore
+TEST_MULTI_TARGET.md export-ignore
+README-BACKUP.txt export-ignore
+ВАЖНО-DATABASE-BACKUP.md export-ignore
+ИНСТРУКЦИЯ-ДЛЯ-ЧАЙНИКОВ.md export-ignore
+
+# Dev docker compose
+docker-compose.ar-microservice.yml export-ignore
+
+# Test output
+test-masks-output/ export-ignore
+
+# Backend test scripts
+backend/categories_latest.json export-ignore
+backend/categories.json export-ignore
+backend/check-*.ts export-ignore
+backend/check-*.js export-ignore
+backend/run-create-users.js export-ignore
+backend/test-*.mjs export-ignore
+backend/update-*.ts export-ignore
+
+# Frontend test files
+frontend/test.txt export-ignore
+frontend/PHOTOBOOK_IMPROVEMENTS.md export-ignore
+
+# Git and CI files (не нужны внутри архива)
+.git export-ignore
+.github export-ignore
+.gitignore export-ignore
+.gitattributes export-ignore
+.cleanuplist export-ignore

@@ -69,3 +69,26 @@ tsconfig.json
 .eslintrc*
 .prettierrc*
 jest.config*
+
+# Database backups (large files)
+*.dump
+*.sql
+!backend/migrations/*.sql
+!ar-service/migrations/*.sql
+
+# Test scripts and dev tools
+test-*.js
+test-*.mjs
+test-*.ps1
+migrate-*.ps1
+migrate-*.mjs
+start-*.ps1
+backup-*.ps1
+check-*.ps1
+auto-deploy.ps1
+deploy-now.ps1
+.cleanuplist
+
+# Test output
+test-masks-output/
+ar-mask-templates/

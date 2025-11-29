@@ -1,0 +1,79 @@
+# Список файлов и директорий для удаления из production деплоя
+# Большие бэкапы баз данных
+full-backup.dump
+production-backup.dump
+production-data-dump.sql
+production-data-utf8.sql
+plain-backup.sql
+restore-basic-data.sql
+restore-data-correct.sql
+cleanup-failed-ar-projects.sql
+
+# Временные тестовые скрипты
+test-mask-generation.js
+test-multi-target.mjs
+test-multi-target.ps1
+test-video-resize-logic.mjs
+
+# Скрипты миграции (уже выполнены)
+migrate-ar-integration.ps1
+migrate-ar-projects.mjs
+migrate-ar-safe.ps1
+migrate-ar-simple.ps1
+
+# Локальные служебные скрипты
+start-ar-service.ps1
+start-full-stack.ps1
+backup-db.ps1
+check-db-connection.ps1
+auto-deploy.ps1
+deploy-now.ps1
+
+# Markdown документация разработки (оставим только README)
+AR_DB_CONNECTION_FIX.md
+AR_DB_POOL_FINAL_FIX.md
+AR_ERRORS_FIXED.md
+AR_MASK_SYSTEM_GUIDE.md
+AR_MICROSERVICE_DEPLOYMENT.md
+AR_MICROSERVICE_SUMMARY.md
+AR_QUICK_REF.md
+AR_RECOVERY_SUCCESS.md
+AR_SERVICE_COMPLETE_SPECIFICATION.md
+AR_TECHNICAL_DEEP_DIVE.md
+AR_UX_IMPROVEMENT_PLAN.md
+AR_VIDEO_PROCESSING_SOLUTION.md
+DOCKER_BUILD_FIX.md
+LIVING_PHOTOS_DEMO_IMPLEMENTATION.md
+MULTI_TARGET_ACTIVATION_LOG.md
+MULTI_TARGET_AR_FIX.md
+PERFORMANCE_OPTIMIZATION_PLAN.md
+SQUARE_MARKER_MODE.md
+TEST_MULTI_TARGET.md
+README-BACKUP.txt
+ВАЖНО-DATABASE-BACKUP.md
+ИНСТРУКЦИЯ-ДЛЯ-ЧАЙНИКОВ.md
+
+# Docker compose для разработки (используем основной)
+docker-compose.ar-microservice.yml
+
+# Временные выходные данные
+test-masks-output/
+
+# Backend тестовые скрипты
+backend/categories_latest.json
+backend/categories.json
+backend/check-api-categories.ts
+backend/check-categories.ts
+backend/check-parent-ids.ts
+backend/check-sort-order.ts
+backend/check-uncategorized.js
+backend/run-create-users.js
+backend/test-mind-compiler.mjs
+backend/test-web-compiler.mjs
+backend/test-web-simple.mjs
+backend/update-category-orders.ts
+backend/update-orders.ts
+
+# Frontend тестовые файлы
+frontend/test.txt
+frontend/PHOTOBOOK_IMPROVEMENTS.md

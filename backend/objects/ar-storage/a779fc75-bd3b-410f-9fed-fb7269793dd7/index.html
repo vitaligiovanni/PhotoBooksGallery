@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>PhotoBooks Gallery AR - a779fc75-bd3b-410f-9fed-fb7269793dd7 (1 photos)</title>
+<script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+<style>
+body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
+.arjs-loader{position:fixed;inset:0;background:#ffffff;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#333;z-index:9999;transition:opacity .6s;font-family:system-ui,-apple-system,sans-serif}
+.arjs-loader.hidden{opacity:0;pointer-events:none}
+.loading-text{font-size:20px;font-weight:600;color:#667eea;text-align:center;padding:0 20px}
+#instructions{position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.75);color:#fff;padding:16px 32px;border-radius:40px;font-size:16px;font-weight:600;z-index:100}
+#marker-counter{position:fixed;top:20px;right:20px;background:rgba(0,0,0,0.75);color:#fff;padding:12px 20px;border-radius:20px;font-size:18px;font-weight:600;z-index:101}
+</style>
+</head>
+<body>
+<div class="arjs-loader" id="loading">
+  <div style="font-size:64px;margin-bottom:20px">📸🎭</div>
+  <div class="loading-text">Загрузка AR с 1 фотографиями + маски...</div>
+</div>
+<div id="instructions">Наведите на любую фотографию из альбома</div>
+<div id="marker-counter">Найдено: <span id="found-count">0</span>/1</div>
+
+<a-scene embedded 
+  mindar-image="imageTargetSrc:./marker.mind?t=1764355964667;maxTrack:1;filterMinCF:0.0001;filterBeta:0.003;warmupTolerance:5;missTolerance:10" 
+  color-space="sRGB" 
+  renderer="colorManagement:true;antialias:true;alpha:true" 
+  vr-mode-ui="enabled:false" 
+  device-orientation-permission-ui="enabled:false">
+  
+  <a-assets timeout="30000">
+    <video id="vid0" src="./video-0.mp4?t=1764355964667" preload="auto" loop muted playsinline crossorigin="anonymous"></video>
+    <img id="mask0" src="./mask-0.png?t=1764355964667" crossorigin="anonymous">
+  </a-assets>
+  
+  <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
+  
+  
+<a-entity mindar-image-target="targetIndex:0">
+  <a-plane id="plane0" 
+    rotation="0 0 0" 
+    width="1" 
+    height="1.499267935578331" 
+    position="0 0 0" 
+    material="src:#vid0;alphaMap:#mask0;shader:standard;transparent:true;opacity:0;side:double;roughness:1;metalness:0" 
+    visible="false" 
+    animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid0;easing:easeInOutQuad">
+  </a-plane>
+</a-entity>
+  
+</a-scene>
+
+<script>
+console.log('[AR Multi-Target] 1 markers loaded');
+const loading = document.getElementById('loading');
+const foundCount = document.getElementById('found-count');
+const markerStates = Array(1).fill(false);
+let foundMarkers = 0;
+
+// Setup all videos, planes and masks
+
+const video0 = document.getElementById('vid0');
+const plane0 = document.getElementById('plane0');
+const target0 = document.querySelectorAll('[mindar-image-target]')[0];
+const maskImg0 = document.getElementById('mask0');
+
+video0.load();
+video0.addEventListener('canplay', () => console.log('[AR] Video 0 ready'));
+
+
+// Apply mask to material after image loads
+let mask0Applied = false;
+function applyMask0() {
+  if (mask0Applied) return;
+  const mesh = plane0.getObject3D('mesh');
+  if (mesh && mesh.material && maskImg0.complete) {
+    console.log('[AR] 🎭 Applying alphaMap to marker 0...');
+    const texture = new THREE.Texture(maskImg0);
+    texture.needsUpdate = true;
+    mesh.material.alphaMap = texture;
+    mesh.material.transparent = true;
+    mesh.material.side = THREE.DoubleSide;
+    mesh.material.needsUpdate = true;
+    mask0Applied = true;
+    console.log('[AR] ✅ AlphaMap applied to marker 0');
+  }
+}
+
+maskImg0.addEventListener('load', () => {
+  console.log('[AR] ✅ Mask 0 loaded');
+  applyMask0();
+});
+
+// Retry mask application when plane loads
+plane0.addEventListener('loaded', () => {
+  setTimeout(() => applyMask0(), 100);
+});
+
+
+target0.addEventListener('targetFound', () => {
+  console.log('[AR] ✓ Marker 0 found!');
+  if (!markerStates[0]) {
+    markerStates[0] = true;
+    foundMarkers++;
+    foundCount.textContent = foundMarkers;
+  }
+  video0.currentTime = 0;
+  video0.muted = true;
+  video0.play().then(() => {
+    plane0.setAttribute('visible', 'true');
+    plane0.emit('showvid0');
+    setTimeout(() => video0.muted = false, 800);
+  });
+});
+
+target0.addEventListener('targetLost', () => {
+  console.log('[AR] Marker 0 lost');
+  plane0.setAttribute('visible', 'false');
+  video0.pause();
+  video0.currentTime = 0;
+});
+
+
+const scene = document.querySelector('a-scene');
+scene.addEventListener('arReady', () => {
+  console.log('[AR] MindAR ready with 1 markers');
+  setTimeout(() => loading.classList.add('hidden'), 300);
+});
+scene.addEventListener('arError', (e) => {
+  console.error('[AR] Error:', e);
+  loading.innerHTML = '<h2>Ошибка камеры</h2>';
+});
+</script>
+</body>
+</html>

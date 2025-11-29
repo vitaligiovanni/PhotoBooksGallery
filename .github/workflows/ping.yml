@@ -1,0 +1,11 @@
+name: ✅ Ping Test
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Echo date
+        run: echo "Ping test run at $(date)"

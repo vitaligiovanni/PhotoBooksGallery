@@ -22,8 +22,11 @@ jobs:
       
       - name: 📦 Create deployment archive
         run: |
-          # Используем git archive для чистого архива из git
+          echo "Creating archive with git archive..."
           git archive --format=tar.gz -o deploy.tar.gz HEAD
+          echo "Archive created successfully!"
+          ls -lh deploy.tar.gz
+          echo "Archive size: $(du -h deploy.tar.gz | cut -f1)"
       
       - name: 🚚 Upload to server
         env:

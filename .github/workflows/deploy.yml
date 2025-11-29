@@ -28,6 +28,14 @@ jobs:
           ls -lh deploy.tar.gz
           echo "Archive size: $(du -h deploy.tar.gz | cut -f1)"
       
+      - name: 📁 Ensure server directory exists
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PATH: ${{ secrets.SERVER_PATH }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${SERVER_USER}@${SERVER_HOST} "mkdir -p ${SERVER_PATH} && chmod 755 ${SERVER_PATH}"
+      
       - name: 🚚 Upload to server
         env:
           SERVER_HOST: ${{ secrets.SERVER_HOST }}

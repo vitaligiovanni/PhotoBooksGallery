@@ -99,11 +99,10 @@ jobs:
             "cd ${SERVER_PATH} && \
             echo '--- Archive extract ---' && \
             tar xzf deploy.tar.gz && rm deploy.tar.gz && \
-            echo '--- Pre-clean containers ---' && \
-            docker compose down -v --remove-orphans || true && \
-            docker rm -f photobooks-ar-db photobooks_db photobooks-backend photobooks-ar-service photobooks-frontend photobooks-migrator 2>/dev/null || true && \
-            echo '--- Build images (fresh) ---' && \
-            docker compose build --no-cache && \
+            echo '--- Stop containers (PRESERVE VOLUMES!) ---' && \
+            docker compose down --remove-orphans || true && \
+            echo '--- Build images ---' && \
+            docker compose build && \
             echo '--- Start stack ---' && \
             docker compose up -d && \
             echo '--- Wait for services ---' && \

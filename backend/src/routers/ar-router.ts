@@ -1566,10 +1566,10 @@ export function createARRouter(): Router {
    * Supports multiple photos for multi-target AR
    * Each photo can have its own video
    * No product linkage, no pricing — just demo
+   * PUBLIC ENDPOINT - No authentication required for demo
    */
   router.post(
     '/create-demo',
-    requireAuth,
     upload.fields([
       { name: 'photos', maxCount: 10 }, // До 10 фотографий
       { name: 'videos', maxCount: 10 }, // До 10 видео (по одному на фото)
@@ -1577,7 +1577,7 @@ export function createARRouter(): Router {
     async (req: Request, res: Response) => {
       try {
         const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-        const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id || 'local-admin';
+        const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id || 'demo-guest';
 
         // Validate files
         if (!files.photos || files.photos.length === 0) {

@@ -106,7 +106,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     '/admin',         // ВРЕМЕННО для отладки CRM панели
     '/upload/admin',  // ВРЕМЕННО для управления загрузками
     '/users',         // ВРЕМЕННО для списка пользователей
-    '/local-upload'   // Загрузка файлов через formidable
+    '/local-upload',  // Загрузка файлов через formidable
+    '/ar/create-demo' // AR demo endpoint (публичный для пользователей без регистрации)
   ];
   
   // Публичные endpoints с методами POST/PUT/DELETE (для клиентов без авторизации)

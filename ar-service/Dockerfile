@@ -40,14 +40,17 @@ COPY ar-service/tsconfig.json ./
 # Build TypeScript
 RUN npm run build
 
-# Ensure native modules (canvas) are built against current Node AFTER build
-RUN npm rebuild canvas --verbose
-
 # Create migrations folder and copy SQL if exists (optional step)
 RUN mkdir -p ./dist/migrations
 
 # Remove devDependencies after build to reduce image size
 RUN npm prune --production
+
+# CRITICAL: Rebuild canvas AFTER prune to ensure it's compiled for production runtime
+# This must be last to prevent any npm operations from invalidating the build
+RUN npm rebuild canvas --verbose && \
+    ls -lh /app/node_modules/canvas/build/Release/canvas.node && \
+    node -e "const Canvas = require('canvas'); console.log('✅ Canvas loaded successfully')"
 
 # Create storage directories
 RUN mkdir -p /app/storage/ar-storage /app/storage/uploads

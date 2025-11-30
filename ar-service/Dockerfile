@@ -33,15 +33,15 @@ RUN npm ci --prefer-offline || \
     (sleep 10 && npm ci --prefer-offline) || \
     (sleep 20 && npm install --no-audit --no-fund)
 
-# Ensure native modules (canvas) are built against current Node
-RUN npm rebuild canvas || true
-
 # Copy ar-service source code ONLY (from ar-service subfolder)
 COPY ar-service/src ./src
 COPY ar-service/tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build
+
+# Ensure native modules (canvas) are built against current Node AFTER build
+RUN npm rebuild canvas --verbose
 
 # Create migrations folder and copy SQL if exists (optional step)
 RUN mkdir -p ./dist/migrations

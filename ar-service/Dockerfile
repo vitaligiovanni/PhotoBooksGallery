@@ -6,10 +6,14 @@ RUN apk add --no-cache \
     python3 \
     make \
     g++ \
+    pkgconfig \
     cairo-dev \
-    jpeg-dev \
     pango-dev \
+    jpeg-dev \
     giflib-dev \
+    libpng-dev \
+    freetype-dev \
+    pixman \
     ffmpeg
 
 # Create app directory
@@ -28,6 +32,9 @@ RUN npm config set fetch-retries 5 && \
 RUN npm ci --prefer-offline || \
     (sleep 10 && npm ci --prefer-offline) || \
     (sleep 20 && npm install --no-audit --no-fund)
+
+# Ensure native modules (canvas) are built against current Node
+RUN npm rebuild canvas || true
 
 # Copy ar-service source code ONLY (from ar-service subfolder)
 COPY ar-service/src ./src

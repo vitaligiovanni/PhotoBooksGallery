@@ -214,7 +214,8 @@ export function createARRouter(): Router {
    * GET /api/ar/status/:id
    * Получить статус AR проекта - проксирует запрос в AR microservice
    */
-  router.get('/status/:id', requireAuth, async (req: Request, res: Response) => {
+  // PUBLIC: статус демо-проектов должен быть доступен без токена
+  router.get('/status/:id', async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;

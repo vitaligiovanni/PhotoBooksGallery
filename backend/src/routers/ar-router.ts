@@ -1653,10 +1653,12 @@ export function createARRouter(): Router {
         console.log(`[AR Router] ✅ AR microservice created multi-target project: ${projectId} (${markersCount} markers)`);
 
         // IMPORTANT: Save ONE project record with markersCount
+        // Use 'demo' as fallback userId for FK constraint (demo user must exist in users table)
+        const dbUserId = userId === 'demo-guest' ? 'demo' : userId;
         try {
           await db.insert(arProjects).values({
             id: projectId,
-            userId,
+            userId: dbUserId,
             photoUrl: photoUrls[0], // First photo as representative
             videoUrl: videoUrls[0], // First video as representative
             status: 'pending',
@@ -1667,8 +1669,9 @@ export function createARRouter(): Router {
           
           console.log(`[AR Router] ✅ Multi-target project saved to Backend DB: ${projectId} (${markersCount} markers)`);
         } catch (dbError: any) {
-          console.warn('[AR Router] ⚠️ Failed to save project to Backend DB:', dbError.message);
-          // Non-critical: AR service will still compile, but won't appear in /api/ar/all list
+          console.error('[AR Router] ❌ Failed to save project to Backend DB:', dbError.message, dbError.detail || '');
+          // Critical fix: Log full error for debugging FK constraint issues
+          console.error('[AR Router] Full error:', JSON.stringify({ code: dbError.code, constraint: dbError.constraint, detail: dbError.detail }));
         }
 
         res.status(201).json({

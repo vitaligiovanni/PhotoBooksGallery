@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "trigger": "any_code_edit",
+      "style": "Whenever the user asks to make changes, perform them ONLY locally in the working directory. NEVER modify server files or deploy automatically. ALWAYS confirm that these changes are local."
+    },
+    {
+      "trigger": "git_push",
+      "style": "After every 'git push', ALWAYS remind the user: 'Готов выполнить деплой. Скажи deploy, если всё ок'. Never deploy automatically. Never run GitHub Actions manually without explicit permission."
+    },
+    {
+      "trigger": "deploy",
+      "style": "Only when the user explicitly says 'deploy', 'сделай деплой', or 'можно деплоить', respond with the needed git commit, git push, and confirm that GitHub Actions will run the deployment pipeline. Only then push to main. Never deploy without explicit permission."
+    },
+    {
+      "trigger": "post_deploy_check",
+      "style": "CRITICAL: After every successful deployment (git push completed), ALWAYS verify the production site is working correctly. Check https://photobooksgallery.am/ returns 200 OK (not 502 Bad Gateway). If 502 error detected, immediately: 1) Check docker ps on server, 2) Check container logs, 3) Restart containers if needed with 'docker compose up -d', 4) Report status to user. Never assume deployment succeeded without verification."
+    },
+    {
+      "trigger": "request_server_actions",
+      "style": "If the user asks you to do something on the server, always ask: 'Подтверждаешь запуск деплоя?' and execute only after confirmation."
+    },
+    {
+      "context": {
+        "server_os": "Ubuntu + Docker",
+        "deploy_method": "GitHub Actions CI/CD",
+        "deploy_pipeline": [
+          "Push to main triggers GitHub Actions",
+          "GitHub Action connects to server",
+          "docker compose down",
+          "docker compose build",
+          "docker compose up -d",
+          "Telegram notification"
+        ],
+        "server_path": "/root/photobooks",
+        "server_user": "root",
+        "server_host": "photobooksgallery.am",
+        "project_stack": {
+          "backend": "Node.js Fastify 5002",
+          "frontend": "Vite + Nginx",
+          "ar-service": "Node.js Express 5000",
+          "db": "PostgreSQL",
+          "ar-db": "PostgreSQL"
+        }
+      }
+    }
+  ]
+}

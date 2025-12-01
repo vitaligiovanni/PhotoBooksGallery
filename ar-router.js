@@ -1,0 +1,1649 @@
+"use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.createARRouter = createARRouter;
+const express_1 = require("express");
+const multer_1 = __importDefault(require("multer"));
+const fs_1 = __importDefault(require("fs"));
+const path_1 = __importDefault(require("path"));
+const promises_1 = __importDefault(require("fs/promises"));
+const sharp_1 = __importDefault(require("sharp"));
+const db_1 = require("../db");
+const schema_1 = require("@shared/schema");
+const drizzle_orm_1 = require("drizzle-orm");
+const ar_compiler_1 = require("../services/ar-compiler");
+const ar_service_client_1 = require("../services/ar-service-client");
+const middleware_1 = require("./middleware");
+// Ensure temp upload directory exists to prevent ENOENT errors from multer
+// process.cwd() уже указывает на backend/ директорию
+const tempUploadDir = path_1.default.join(process.cwd(), 'objects', 'temp-uploads');
+try {
+    fs_1.default.mkdirSync(tempUploadDir, { recursive: true });
+}
+catch (e) {
+    console.warn('[AR Router] Failed to ensure temp upload dir:', e);
+}
+const upload = (0, multer_1.default)({
+    dest: tempUploadDir,
+    limits: {
+        fileSize: 100 * 1024 * 1024, // 100MB max
+    },
+    fileFilter: (_req, file, cb) => {
+        const allowedPhotoTypes = ['image/jpeg', 'image/png', 'image/webp'];
+        const allowedVideoTypes = ['video/mp4', 'video/quicktime', 'video/x-msvideo'];
+        const allowedMaskTypes = ['image/png', 'image/webp']; // ✅ Маски - PNG/WebP
+        // Поддержка как photo/photos, так и video/videos, и mask
+        if ((file.fieldname === 'photo' || file.fieldname === 'photos') && allowedPhotoTypes.includes(file.mimetype)) {
+            cb(null, true);
+        }
+        else if ((file.fieldname === 'video' || file.fieldname === 'videos') && allowedVideoTypes.includes(file.mimetype)) {
+            cb(null, true);
+        }
+        else if (file.fieldname === 'mask' && allowedMaskTypes.includes(file.mimetype)) {
+            cb(null, true); // ✅ Разрешаем маски!
+        }
+        else {
+            cb(new Error(`Invalid file type for ${file.fieldname}: ${file.mimetype}`));
+        }
+    },
+});
+function createARRouter() {
+    const router = (0, express_1.Router)();
+    // Use strict JWT in production, relaxed mockAuth in dev to simplify local testing
+    const requireAuth = process.env.NODE_ENV === 'production' ? middleware_1.jwtAuth : middleware_1.mockAuth;
+    /**
+     * POST /api/ar/create-automatic
+     * DEPRECATED: Используйте /api/ar/create-demo вместо этого
+     * Старый компилятор отключён, все запросы идут через AR микросервис
+     */
+    router.post('/create-automatic', requireAuth, upload.fields([
+        { name: 'photo', maxCount: 1 },
+        { name: 'video', maxCount: 1 },
+    ]), async (req, res) => {
+        // Старый компилятор отключён - перенаправляем на новый эндпоинт
+        return res.status(410).json({
+            error: 'This endpoint is deprecated',
+            message: 'Please use /api/ar/create-demo instead. Old AR compiler is disabled.',
+            newEndpoint: '/api/ar/create-demo',
+        });
+        /* СТАРЫЙ КОД ОТКЛЮЧЁН
+        // Весь старый код закомментирован - используйте AR микросервис
+        */
+    });
+    // СТАРЫЙ КОД /create-automatic ЗАКОММЕНТИРОВАН НИЖЕ
+    /*
+    router.post(
+      '/create-automatic-OLD-DISABLED',
+      requireAuth,
+      upload.fields([
+        { name: 'photo', maxCount: 1 },
+        { name: 'video', maxCount: 1 },
+      ]),
+      async (req: Request, res: Response) => {
+        try {
+          console.log('[AR Router] Debug req.user keys:', Object.keys((req as any).user || {}));
+          console.log('[AR Router] Debug req.user:', (req as any).user);
+          const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+          let userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;
+          if (!userId) {
+            console.warn('[AR Router] No userId on request, resolving fallback admin user...');
+            // Try to find any admin user
+            try {
+              // dynamic import to reuse shared users table type
+              const { users } = await import('@shared/schema');
+              const admins = await db.select().from(users).where(eq(users.role, 'admin')).limit(1);
+              if (admins.length > 0) {
+                userId = (admins as any)[0].id;
+                console.warn(`[AR Router] Using existing user ${userId}`);
+              } else {
+                const newUser = await storage.upsertUser({
+                  id: 'local-admin',
+                  email: 'admin@local.test',
+                  firstName: 'Админ',
+                  lastName: 'Локальный',
+                  profileImageUrl: null,
+                  role: 'admin'
+                });
+                userId = newUser.id;
+                console.warn(`[AR Router] Created and using user ${userId}`);
+              }
+            } catch (e) {
+              console.warn('[AR Router] Fallback user resolution failed:', e);
+              userId = 'local-admin';
+            }
+          }
+          const { orderId, config, fitMode, forceSquare } = req.body;
+  
+          // Validate files
+          if (!files.photo || !files.video) {
+            return res.status(400).json({
+              error: 'Both photo and video are required',
+            });
+          }
+  
+          const photoFile = files.photo[0];
+          const videoFile = files.video[0];
+  
+          // Validate file sizes
+          if (photoFile.size > 10 * 1024 * 1024) {
+            return res.status(400).json({
+              error: 'Photo size must be less than 10MB',
+            });
+          }
+  
+          if (videoFile.size > 100 * 1024 * 1024) {
+            return res.status(400).json({
+              error: 'Video size must be less than 100MB',
+            });
+          }
+  
+          // Move files to permanent storage
+          const timestamp = Date.now();
+          const photoExt = path.extname(photoFile.originalname);
+          const videoExt = path.extname(videoFile.originalname);
+  
+    // process.cwd() уже указывает на backend/
+    const uploadDir = path.join(process.cwd(), 'objects', 'ar-uploads');
+          await fs.mkdir(uploadDir, { recursive: true });
+  
+          const photoFileName = `photo-${timestamp}-${Math.random().toString(36).substring(7)}${photoExt}`;
+          const videoFileName = `video-${timestamp}-${Math.random().toString(36).substring(7)}${videoExt}`;
+  
+          const photoPath = path.join(uploadDir, photoFileName);
+          const videoPath = path.join(uploadDir, videoFileName);
+  
+          await fs.rename(photoFile.path, photoPath);
+          await fs.rename(videoFile.path, videoPath);
+  
+          // Parse config if provided
+          let parsedConfig = null;
+          if (config) {
+            try {
+              parsedConfig = typeof config === 'string' ? JSON.parse(config) : config;
+            } catch (e) {
+              console.warn('[AR Router] Failed to parse config:', e);
+            }
+          }
+  
+          // Apply fitMode and forceSquare if provided
+          if (fitMode || forceSquare === 'true') {
+            parsedConfig = parsedConfig || {};
+            if (fitMode) {
+              parsedConfig.fitMode = fitMode;
+            }
+            if (forceSquare === 'true') {
+              parsedConfig.fitMode = 'cover'; // Force cover mode for square markers
+              parsedConfig.forceSquare = true;
+              console.log('[AR Router] Square marker mode enabled - forcing cover fitMode');
+            }
+          }
+  
+          // Create AR project in database
+          const insertValues = {
+            userId: String(userId),
+            orderId: orderId || null,
+            photoUrl: `objects/ar-uploads/${photoFileName}`,
+            videoUrl: `objects/ar-uploads/${videoFileName}`,
+            status: 'pending',
+            config: (parsedConfig as any) ?? null,
+          } as any;
+          const [arProject] = await db
+            .insert(arProjects)
+            .values(insertValues as any)
+            .returning();
+  
+          console.log(`[AR Router] Created AR project ${arProject.id} for user ${userId}`);
+  
+          // СТАРЫЙ КОД ЗАКОММЕНТИРОВАН
+          // compileARProject(arProject.id).catch((error) => {
+          //   console.error(`[AR Router] Background compilation failed for ${arProject.id}:`, error);
+          // });
+        } catch (error: any) {
+          console.error('[AR Router] Error in old create-automatic endpoint:', error);
+        }
+      }
+    );
+    */ // КОНЕЦ СТАРОГО КОДА
+    /**
+     * GET /api/ar/status/:id
+     * Получить статус AR проекта - проксирует запрос в AR microservice
+     */
+    // PUBLIC: статус демо-проектов должен быть доступен без токена
+    router.get('/status/:id', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const userId = req.user?.claims?.sub || req.user?.userData?.id || req.user?.id;
+            const userRole = req.user?.role || req.user?.userData?.role;
+            console.log(`[AR Router] 🔍 Proxying status check for project ${id} to AR microservice...`);
+            // Proxy request to AR microservice
+            const microserviceStatus = await (0, ar_service_client_1.getARStatus)(id);
+            console.log(`[AR Router] ✅ AR microservice returned status: ${microserviceStatus.status}, progress: ${microserviceStatus.progress}%`);
+            // Sync Backend DB with AR microservice status (eventual consistency)
+            try {
+                const [existing] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+                if (existing) {
+                    // Update existing project
+                    await db_1.db.update(schema_1.arProjects).set({
+                        status: microserviceStatus.status,
+                        photoUrl: microserviceStatus.photoUrl || existing.photoUrl || null,
+                        videoUrl: microserviceStatus.videoUrl || existing.videoUrl || null,
+                        viewUrl: microserviceStatus.viewUrl || null,
+                        qrCodeUrl: microserviceStatus.qrCodeUrl || null,
+                        markerMindUrl: microserviceStatus.markerMindUrl || null,
+                        viewerHtmlUrl: microserviceStatus.viewerHtmlUrl || (microserviceStatus.viewUrl ? `/objects/ar-storage/${id}/index.html` : null),
+                        compilationTimeMs: microserviceStatus.compilationTimeMs || null,
+                        errorMessage: microserviceStatus.errorMessage || null,
+                        updatedAt: new Date(),
+                    }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+                    console.log('[AR Router] ✅ Synced Backend DB with microservice status');
+                }
+                else {
+                    console.warn('[AR Router] ⚠️ Project not in Backend DB, will be invisible in /api/ar/all');
+                }
+            }
+            catch (syncError) {
+                console.warn('[AR Router] ⚠️ Failed to sync Backend DB:', syncError.message);
+            }
+            // Return microservice response directly
+            res.json({
+                message: 'AR project status',
+                data: {
+                    id: microserviceStatus.projectId,
+                    status: microserviceStatus.status,
+                    progress: microserviceStatus.progress,
+                    photoUrl: microserviceStatus.photoUrl,
+                    videoUrl: microserviceStatus.videoUrl,
+                    viewUrl: microserviceStatus.viewUrl,
+                    qrCodeUrl: microserviceStatus.qrCodeUrl,
+                    markerMindUrl: microserviceStatus.markerMindUrl,
+                    viewerHtmlUrl: microserviceStatus.viewerHtmlUrl,
+                    compilationTimeMs: microserviceStatus.compilationTimeMs,
+                    errorMessage: microserviceStatus.errorMessage,
+                    isDemo: microserviceStatus.isDemo,
+                    expiresAt: microserviceStatus.expiresAt,
+                    createdAt: microserviceStatus.createdAt,
+                    updatedAt: microserviceStatus.updatedAt,
+                },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] ❌ Error proxying status check:', error);
+            // Check if it's a 404 from microservice
+            if (error.message?.includes('not found') || error.message?.includes('404')) {
+                return res.status(404).json({
+                    error: 'AR project not found',
+                    details: error.message,
+                });
+            }
+            res.status(500).json({
+                error: 'Failed to get AR status',
+                details: error.message,
+            });
+        }
+    });
+    /**
+     * GET /api/ar/my-projects
+     * Получить все AR проекты текущего пользователя
+     */
+    router.get('/my-projects', requireAuth, async (req, res) => {
+        try {
+            const userId = req.user?.id;
+            const userProjects = await db_1.db
+                .select()
+                .from(schema_1.arProjects)
+                .where((0, drizzle_orm_1.eq)(schema_1.arProjects.userId, userId))
+                .orderBy((0, drizzle_orm_1.desc)(schema_1.arProjects.createdAt));
+            res.json({
+                message: 'User AR projects',
+                data: userProjects.map((project) => ({
+                    id: project.id,
+                    status: project.status,
+                    viewUrl: project.viewUrl,
+                    qrCodeUrl: project.qrCodeUrl,
+                    orderId: project.orderId,
+                    markerQuality: project.markerQuality,
+                    createdAt: project.createdAt,
+                })),
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Error getting user AR projects:', error);
+            res.status(500).json({
+                error: 'Failed to get AR projects',
+                details: error.message,
+            });
+        }
+    });
+    /**
+     * GET /api/ar/pending
+     * Получить все проекты в статусе pending/processing (для admin)
+     */
+    router.get('/pending', requireAuth, async (req, res) => {
+        try {
+            const userRole = req.user?.role || req.user?.userData?.role;
+            if (process.env.NODE_ENV === 'production' && userRole !== 'admin') {
+                return res.status(403).json({
+                    error: 'Admin access required',
+                });
+            }
+            const pendingProjects = await db_1.db
+                .select()
+                .from(schema_1.arProjects)
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.arProjects.status, 'pending')))
+                .orderBy((0, drizzle_orm_1.desc)(schema_1.arProjects.createdAt))
+                .limit(50);
+            res.json({
+                message: 'Pending AR projects',
+                data: pendingProjects,
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Error getting pending AR projects:', error);
+            res.status(500).json({
+                error: 'Failed to get pending projects',
+                details: error.message,
+            });
+        }
+    });
+    /**
+     * GET /api/ar/all
+     * Полный список AR проектов для админ-панели (все статусы кроме потенциально удалённых)
+     * Возвращает последние 200 записей в порядке создания (DESC)
+     * В production доступ только для admin; в dev разрешено для mockAuth (упрощение локальной разработки)
+     */
+    router.get('/all', requireAuth, async (req, res) => {
+        try {
+            const userRole = req.user?.role || req.user?.userData?.role;
+            if (process.env.NODE_ENV === 'production' && userRole !== 'admin') {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+            // Получаем последние проекты (архив тоже показываем, но можно отфильтровать на клиенте)
+            const projects = await db_1.db
+                .select()
+                .from(schema_1.arProjects)
+                .orderBy((0, drizzle_orm_1.desc)(schema_1.arProjects.createdAt))
+                .limit(200);
+            // Приводим к компактному формату для списка
+            const mapped = projects.map(p => ({
+                id: p.id,
+                status: p.status,
+                viewUrl: p.viewUrl,
+                viewerHtmlUrl: p.viewerHtmlUrl || null,
+                orderId: p.orderId,
+                markerQuality: p.markerQuality,
+                createdAt: p.createdAt,
+                fitMode: p.fitMode,
+                config: p.config || null,
+                errorMessage: p.errorMessage || null,
+                isDemo: p.isDemo || false,
+                expiresAt: p.expiresAt || null,
+            }));
+            res.json({
+                message: 'All AR projects',
+                data: mapped,
+                meta: {
+                    count: mapped.length,
+                    statuses: mapped.reduce((acc, pr) => { acc[pr.status] = (acc[pr.status] || 0) + 1; return acc; }, {})
+                }
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Error getting all AR projects:', error);
+            res.status(500).json({ error: 'Failed to get all projects', details: error.message });
+        }
+// Вставить этот код после router.get('/all', ...) и перед router.post('/:id/mask', ...)
+
+    /**
+     * GET /api/ar/all-public
+     * Публичный список только DEMO-проектов (без авторизации) для упрощённого управления
+     * Возвращает последние 200 демо-проектов
+     */
+    router.get('/all-public', async (_req, res) => {
+        try {
+            const projects = await db_1.db
+                .select()
+                .from(schema_1.arProjects)
+                .orderBy((0, drizzle_orm_1.desc)(schema_1.arProjects.createdAt))
+                .limit(200);
+            // Только демо-проекты
+            const demos = projects.filter(p => p.isDemo === true);
+            const mapped = demos.map(p => ({
+                id: p.id,
+                status: p.status,
+                viewUrl: p.viewUrl,
+                viewerHtmlUrl: p.viewerHtmlUrl || null,
+                orderId: p.orderId,
+                createdAt: p.createdAt,
+                isDemo: true,
+                expiresAt: p.expiresAt || null,
+                errorMessage: p.errorMessage || null,
+            }));
+            res.json({
+                message: 'Public demo AR projects',
+                data: mapped,
+                meta: { count: mapped.length }
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] all-public error:', error);
+            res.status(500).json({ error: 'Failed to get public demo projects', details: error.message });
+        }
+    });
+    });
+    /**
+     * POST /api/ar/:id/mask (admin only)
+     * Загрузить/обновить маску и регенерировать viewer
+     */
+    router.post('/:id/mask', requireAuth, upload.single('mask'), async (req, res) => {
+        try {
+            const userRole = req.user?.role || req.user?.userData?.role;
+            if (process.env.NODE_ENV === 'production' && userRole !== 'admin') {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+            const { id } = req.params;
+            const file = req.file;
+            if (!file) {
+                return res.status(400).json({ error: 'Mask file (png/webp) is required under field name "mask"' });
+            }
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+            if (!project)
+                return res.status(404).json({ error: 'AR project not found' });
+            if (project.status !== 'ready' && project.status !== 'processing' && project.status !== 'pending') {
+                return res.status(400).json({ error: `Project status ${project.status} is not eligible for mask update` });
+            }
+            const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+            const viewerHtmlPath = path_1.default.join(storageDir, 'index.html');
+            // Check for video file (multi-target: video-0.mp4, legacy: video.mp4)
+            let videoFileName = 'video.mp4';
+            const video0Path = path_1.default.join(storageDir, 'video-0.mp4');
+            const videoPath = path_1.default.join(storageDir, 'video.mp4');
+            try {
+                await promises_1.default.access(video0Path);
+                videoFileName = 'video-0.mp4';
+            }
+            catch {
+                try {
+                    await promises_1.default.access(videoPath);
+                }
+                catch {
+                    return res.status(409).json({ error: 'Video not prepared yet. Compile project first.' });
+                }
+            }
+            await promises_1.default.mkdir(storageDir, { recursive: true });
+            const ext = path_1.default.extname(file.originalname).toLowerCase();
+            const maskFileName = `mask${ext || '.png'}`;
+            const dest = path_1.default.join(storageDir, maskFileName);
+            await promises_1.default.rename(file.path, dest);
+            // probe mask dimensions for UI
+            let maskMeta = {};
+            try {
+                const m = await (0, sharp_1.default)(dest).metadata();
+                maskMeta = { width: m.width, height: m.height };
+            }
+            catch { }
+            // update DB with mask url and size
+            await db_1.db.update(schema_1.arProjects).set({
+                maskUrl: `/api/ar/storage/${id}/${maskFileName}`,
+                maskWidth: (maskMeta.width ?? null),
+                maskHeight: (maskMeta.height ?? null),
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+            // regenerate viewer HTML keeping same config
+            const markerName = 'marker';
+            // CRITICAL: Use photo aspect ratio for scale (NOT old scaleWidth/scaleHeight from DB!)
+            const photoAR = Number(project.photoAspectRatio) ||
+                (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+            const videoScale = { width: 1.0, height: 1.0 / photoAR };
+            console.log(`[AR Mask Upload] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
+            await (0, ar_compiler_1.generateARViewer)({
+                arId: id,
+                markerBaseName: markerName,
+                videoFileName, // Use detected filename (video.mp4 or video-0.mp4)
+                maskFileName,
+                videoPosition: project.config?.videoPosition,
+                videoRotation: project.config?.videoRotation,
+                videoScale,
+                autoPlay: project.config?.autoPlay ?? true,
+                loop: project.config?.loop ?? true,
+            }, viewerHtmlPath);
+            res.json({
+                message: 'Mask updated and viewer regenerated',
+                data: {
+                    id,
+                    viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+                    maskUrl: `/api/ar/storage/${id}/${maskFileName}`,
+                    maskWidth: maskMeta.width ?? null,
+                    maskHeight: maskMeta.height ?? null,
+                }
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Failed to upload/regenerate mask:', error);
+            res.status(500).json({ error: 'Failed to update mask', details: error.message });
+        }
+    });
+    /**
+     * DELETE /api/ar/:id/mask (admin only)
+     * Удалить пользовательскую маску и регенерировать viewer без маски
+     */
+    router.delete('/:id/mask', requireAuth, async (req, res) => {
+        try {
+            const userRole = req.user?.role || req.user?.userData?.role;
+            if (process.env.NODE_ENV === 'production' && userRole !== 'admin') {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+            const { id } = req.params;
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+            if (!project)
+                return res.status(404).json({ error: 'AR project not found' });
+            const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+            const viewerHtmlPath = path_1.default.join(storageDir, 'index.html');
+            // Find and delete existing mask files
+            const possibleMasks = ['mask.png', 'mask.webp', 'mask.gif', 'mask-0.png', 'mask-0.webp'];
+            for (const maskFile of possibleMasks) {
+                const maskPath = path_1.default.join(storageDir, maskFile);
+                try {
+                    await promises_1.default.unlink(maskPath);
+                    console.log(`[AR Mask Delete] Removed ${maskFile}`);
+                }
+                catch {
+                    // File doesn't exist, skip
+                }
+            }
+            // Update DB - remove mask reference
+            await db_1.db.update(schema_1.arProjects).set({
+                maskUrl: null,
+                maskWidth: null,
+                maskHeight: null,
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+            // Regenerate viewer HTML without mask
+            const markerName = 'marker';
+            let videoFileName = 'video.mp4';
+            const video0Path = path_1.default.join(storageDir, 'video-0.mp4');
+            try {
+                await promises_1.default.access(video0Path);
+                videoFileName = 'video-0.mp4';
+            }
+            catch { }
+            const photoAR = Number(project.photoAspectRatio) ||
+                (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+            const videoScale = { width: 1.0, height: 1.0 / photoAR };
+            await (0, ar_compiler_1.generateARViewer)({
+                arId: id,
+                markerBaseName: markerName,
+                videoFileName,
+                maskFileName: undefined, // NO MASK
+                videoPosition: project.config?.videoPosition,
+                videoRotation: project.config?.videoRotation,
+                videoScale,
+                autoPlay: project.config?.autoPlay ?? true,
+                loop: project.config?.loop ?? true,
+            }, viewerHtmlPath);
+            res.json({
+                message: 'Mask removed and viewer regenerated',
+                data: {
+                    id,
+                    viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+                }
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Failed to delete mask:', error);
+            res.status(500).json({ error: 'Failed to delete mask', details: error.message });
+        }
+    });
+    /**
+     * POST /api/ar/:id/convert-mask (admin only)
+     * Конвертировать маску: сделать центр прозрачным (если белый/светлый)
+     * Создаёт новый файл converted-mask.png
+     */
+    router.post('/:id/convert-mask', requireAuth, async (req, res) => {
+        try {
+            const userRole = req.user?.role;
+            if (userRole !== 'admin') {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+            const { id } = req.params;
+            const { threshold = 240 } = req.body; // порог яркости для определения "белого" (0-255)
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+            if (!project)
+                return res.status(404).json({ error: 'AR project not found' });
+            if (!project.maskUrl) {
+                return res.status(400).json({ error: 'No mask uploaded yet' });
+            }
+            const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+            const maskPath = path_1.default.join(storageDir, path_1.default.basename(project.maskUrl));
+            try {
+                await promises_1.default.access(maskPath);
+            }
+            catch {
+                return res.status(404).json({ error: 'Mask file not found on disk' });
+            }
+            // Конвертация: делаем белые пиксели прозрачными
+            const convertedFileName = 'converted-mask.png';
+            const convertedPath = path_1.default.join(storageDir, convertedFileName);
+            const image = (0, sharp_1.default)(maskPath);
+            const { width, height, channels } = await image.metadata();
+            if (!width || !height) {
+                return res.status(500).json({ error: 'Cannot read mask dimensions' });
+            }
+            // Получаем raw buffer
+            const rawBuffer = await image
+                .ensureAlpha()
+                .raw()
+                .toBuffer();
+            // Обрабатываем пиксели: если RGB все > threshold, делаем alpha=0
+            const pixelCount = width * height;
+            const channelsPerPixel = 4; // RGBA
+            for (let i = 0; i < pixelCount; i++) {
+                const offset = i * channelsPerPixel;
+                const r = rawBuffer[offset];
+                const g = rawBuffer[offset + 1];
+                const b = rawBuffer[offset + 2];
+                // Если пиксель светлый (белый/серый), делаем прозрачным
+                if (r >= threshold && g >= threshold && b >= threshold) {
+                    rawBuffer[offset + 3] = 0; // alpha = 0
+                }
+            }
+            // Сохраняем обработанное изображение
+            await (0, sharp_1.default)(rawBuffer, {
+                raw: {
+                    width,
+                    height,
+                    channels: channelsPerPixel,
+                },
+            })
+                .png()
+                .toFile(convertedPath);
+            // Обновляем БД
+            const convertedMaskUrl = `/api/ar/storage/${id}/${convertedFileName}`;
+            await db_1.db.update(schema_1.arProjects).set({
+                maskUrl: convertedMaskUrl,
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+            // Регенерируем viewer с новой маской
+            const viewerHtmlPath = path_1.default.join(storageDir, 'index.html');
+            const markerName = 'marker';
+            const existingConfig = project.config || {};
+            // CRITICAL: Use photo aspect ratio for scale (NOT old scaleWidth/scaleHeight!)
+            const photoAR = Number(project.photoAspectRatio) ||
+                (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+            const videoScale = { width: 1.0, height: 1.0 / photoAR };
+            console.log(`[AR Convert Mask] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
+            await (0, ar_compiler_1.generateARViewer)({
+                arId: id,
+                markerBaseName: markerName,
+                videoFileName: 'video.mp4',
+                maskFileName: convertedFileName,
+                videoPosition: existingConfig.videoPosition,
+                videoRotation: existingConfig.videoRotation,
+                videoScale,
+                autoPlay: existingConfig.autoPlay ?? true,
+                loop: existingConfig.loop ?? true,
+            }, viewerHtmlPath);
+            res.json({
+                message: 'Mask converted successfully',
+                data: {
+                    id,
+                    convertedMaskUrl,
+                    viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+                }
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Failed to convert mask:', error);
+            res.status(500).json({ error: 'Failed to convert mask', details: error.message });
+        }
+    });
+    /**
+     * PATCH /api/ar/:id/config (admin only)
+     * Обновить конфигурацию AR проекта и регенерировать viewer
+     * Body: { videoPosition?, videoRotation?, videoScale?, cropRegion?, fitMode?, autoPlay?, loop? }
+     */
+    router.patch('/:id/config', requireAuth, async (req, res) => {
+        try {
+            const userRole = req.user?.role || req.user?.userData?.role;
+            if (process.env.NODE_ENV === 'production' && userRole !== 'admin') {
+                return res.status(403).json({ error: 'Admin access required' });
+            }
+            const { id } = req.params;
+            const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked, shapeType } = req.body;
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+            if (!project)
+                return res.status(404).json({ error: 'AR project not found' });
+            // Check if this is a multi-target project (has items)
+            const items = await db_1.db.select().from(schema_1.arProjectItems).where((0, drizzle_orm_1.eq)(schema_1.arProjectItems.projectId, id));
+            if (items.length > 0) {
+                return res.status(400).json({
+                    error: 'This is a multi-target project. Use /api/ar/:projectId/items/:itemId endpoint to update item configs.',
+                    itemsCount: items.length
+                });
+            }
+            // For legacy single-photo projects, allow config update even in pending status
+            if (project.status !== 'ready' && project.status !== 'pending') {
+                return res.status(400).json({ error: `Cannot update config for project in ${project.status} status` });
+            }
+            // Merge new config with existing
+            const existingConfig = project.config || {};
+            const updatedConfig = {
+                ...existingConfig,
+                ...(videoPosition && { videoPosition }),
+                ...(videoRotation && { videoRotation }),
+                ...(videoScale && { videoScale }),
+                ...(cropRegion && { cropRegion }),
+                ...(fitMode && { fitMode }),
+                ...(autoPlay !== undefined && { autoPlay }),
+                ...(loop !== undefined && { loop }),
+                ...(zoom !== undefined && { zoom }), // Ручной зум (0.5-2.0)
+                ...(offsetX !== undefined && { offsetX }), // Смещение по X (−0.5 до +0.5)
+                ...(offsetY !== undefined && { offsetY }), // Смещение по Y (−0.5 до +0.5)
+                ...(aspectLocked !== undefined && { aspectLocked }), // Блокировка пропорций
+                ...(shapeType && { shapeType }), // Mask shape: circle, oval, square, rect, custom
+            };
+            // Update DB
+            await db_1.db.update(schema_1.arProjects).set({
+                config: updatedConfig,
+                isCalibrated: true,
+                ...(videoPosition && {
+                    calibratedPosX: String(videoPosition.x),
+                    calibratedPosY: String(videoPosition.y),
+                    calibratedPosZ: String(videoPosition.z),
+                }),
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+            let maskFileName;
+            console.log(`[AR Config] DEBUG: shapeType="${shapeType}", will generate mask: ${!!(shapeType && shapeType !== 'custom')}`);
+            // If shapeType is provided, generate mask locally (no full recompilation needed)
+            if (shapeType && shapeType !== 'custom') {
+                console.log(`[AR Config] 🎭 Generating ${shapeType} mask locally...`);
+                const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+                const maskDestPath = path_1.default.join(storageDir, 'mask-0.png');
+                try {
+                    // Load template from ar-mask-templates
+                    const templatePath = path_1.default.join(process.cwd(), 'objects', 'ar-mask-templates', `${shapeType}.png`);
+                    // Check if template exists
+                    try {
+                        await promises_1.default.access(templatePath);
+                    }
+                    catch {
+                        console.error(`[AR Config] ❌ Mask template not found: ${templatePath}`);
+                        return res.status(500).json({
+                            error: `Mask template "${shapeType}.png" not found in ar-mask-templates/`
+                        });
+                    }
+                    // Get photo dimensions for mask sizing
+                    const photoWidth = Number(project.photoWidth) || 1024;
+                    const photoHeight = Number(project.photoHeight) || 1024;
+                    console.log(`[AR Config] Generating mask at ${photoWidth}×${photoHeight}px (matches photo)`);
+                    // Resize template with 'contain' to preserve shape (circle stays circle!)
+                    await (0, sharp_1.default)(templatePath)
+                        .resize(photoWidth, photoHeight, {
+                        fit: 'contain', // ✅ Preserves circle/oval shape!
+                        background: { r: 0, g: 0, b: 0, alpha: 0 }
+                    })
+                        .png()
+                        .toFile(maskDestPath);
+                    console.log(`[AR Config] ✅ Mask generated with corrected alpha: ${maskDestPath}`);
+                    // Update DB with mask URL
+                    await db_1.db.update(schema_1.arProjects).set({
+                        maskUrl: `/objects/ar-storage/${id}/mask-0.png`,
+                        updatedAt: new Date(),
+                    }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+                    maskFileName = 'mask-0.png';
+                    console.log(`[AR Config] DEBUG: maskFileName set to "${maskFileName}"`);
+                }
+                catch (maskError) {
+                    console.error('[AR Config] ❌ Failed to generate mask:', maskError);
+                    return res.status(500).json({
+                        error: 'Failed to generate mask',
+                        details: maskError.message
+                    });
+                }
+            }
+            const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+            // Determine correct video filename (multi-target uses video-0.mp4, legacy uses video.mp4)
+            let videoFileName = 'video.mp4';
+            const video0Path = path_1.default.join(storageDir, 'video-0.mp4');
+            const videoPath = path_1.default.join(storageDir, 'video.mp4');
+            try {
+                await promises_1.default.access(video0Path);
+                videoFileName = 'video-0.mp4'; // Multi-target project
+                console.log('[AR Config] Multi-target project detected, using video-0.mp4');
+            }
+            catch {
+                try {
+                    await promises_1.default.access(videoPath);
+                    console.log('[AR Config] Legacy project detected, using video.mp4');
+                }
+                catch {
+                    console.error('[AR Config] ❌ No video file found in storage!');
+                    return res.status(500).json({ error: 'Video file not found in storage' });
+                }
+            }
+            // If cropRegion is provided, crop the video
+            if (cropRegion && cropRegion.x !== undefined && cropRegion.y !== undefined &&
+                cropRegion.width && cropRegion.height) {
+                console.log(`[AR Config] Cropping video with region:`, cropRegion);
+                const originalVideoPath = path_1.default.join(storageDir, videoFileName);
+                const croppedVideoName = videoFileName.replace('.mp4', '-cropped.mp4');
+                const croppedVideoPath = path_1.default.join(storageDir, croppedVideoName);
+                try {
+                    const { cropVideoByRegion } = await Promise.resolve().then(() => __importStar(require('../services/media-metadata')));
+                    await cropVideoByRegion(originalVideoPath, croppedVideoPath, cropRegion);
+                    videoFileName = croppedVideoName;
+                    console.log(`[AR Config] Video cropped successfully: ${croppedVideoPath}`);
+                }
+                catch (cropError) {
+                    console.error('[AR Config] Failed to crop video:', cropError);
+                    // Continue with original video if crop fails
+                    videoFileName = 'video.mp4';
+                }
+            }
+            // Regenerate viewer with cropped video and mask (if generated above)
+            const viewerHtmlPath = path_1.default.join(storageDir, 'index.html');
+            const markerName = 'marker';
+            // If mask wasn't generated above, check if one already exists
+            if (!maskFileName && project.maskUrl) {
+                const maskPath = path_1.default.join(storageDir, path_1.default.basename(project.maskUrl));
+                try {
+                    await promises_1.default.access(maskPath);
+                    maskFileName = path_1.default.basename(maskPath);
+                }
+                catch {
+                    console.warn('[AR Config] Mask URL in DB but file not found:', maskPath);
+                }
+            }
+            // Plane scale: use cropRegion proportions if available, otherwise photo dimensions
+            let planeScale;
+            if (cropRegion && cropRegion.width && cropRegion.height) {
+                // КРИТИЧНО: cropRegion.width/height — это ДОЛИ от оригинального видео (0-1), а НЕ пропорции!
+                // Нужно получить реальные размеры видео, чтобы рассчитать правильный aspect ratio обрезанного фрагмента
+                const originalVideoPath = path_1.default.join(storageDir, videoFileName.includes('-cropped') ? videoFileName.replace('-cropped', '') : videoFileName);
+                try {
+                    const { extractVideoMetadata } = await Promise.resolve().then(() => __importStar(require('../services/media-metadata')));
+                    const videoMeta = await extractVideoMetadata(originalVideoPath);
+                    // Рассчитываем реальные размеры обрезанного фрагмента в пикселях
+                    const croppedWidthPx = cropRegion.width * videoMeta.width;
+                    const croppedHeightPx = cropRegion.height * videoMeta.height;
+                    // Реальный aspect ratio обрезанного видео
+                    const cropAspectRatio = croppedWidthPx / croppedHeightPx;
+                    planeScale = {
+                        width: 1.0,
+                        height: 1.0 / cropAspectRatio
+                    };
+                    console.log(`[AR Config] Crop region: ${cropRegion.width.toFixed(2)}×${cropRegion.height.toFixed(2)} of ${videoMeta.width}×${videoMeta.height}px video`);
+                    console.log(`[AR Config] Real cropped dimensions: ${Math.round(croppedWidthPx)}×${Math.round(croppedHeightPx)}px, AR = ${cropAspectRatio.toFixed(3)}`);
+                    console.log(`[AR Config] Plane scale: ${planeScale.width} × ${planeScale.height.toFixed(3)}`);
+                }
+                catch (metaError) {
+                    console.warn('[AR Config] Failed to extract video metadata for crop calculation, using fallback:', metaError.message);
+                    // Fallback: используем cropRegion как пропорции (неправильно, но лучше чем ничего)
+                    const cropAspectRatio = cropRegion.width / cropRegion.height;
+                    planeScale = {
+                        width: 1.0,
+                        height: 1.0 / cropAspectRatio
+                    };
+                }
+            }
+            else {
+                // Use photo aspect ratio for plane scale
+                // Video has been resized to match photo dimensions in AR compiler
+                // So plane should match photo AR, not force 1:1
+                const photoAR = Number(project.photoAspectRatio) || (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
+                planeScale = {
+                    width: 1.0,
+                    height: 1.0 / photoAR
+                };
+                console.log(`[AR Config] Using photo AR=${photoAR.toFixed(3)}, plane=${planeScale.width}×${planeScale.height.toFixed(3)}`);
+            }
+            // Generate viewer HTML with correct video filename (video.mp4 or video-0.mp4)
+            console.log(`[AR Config] Generating viewer with video: ${videoFileName}, mask: ${maskFileName || 'none'}`);
+            await (0, ar_compiler_1.generateARViewer)({
+                arId: id,
+                markerBaseName: markerName,
+                videoFileName,
+                maskFileName,
+                videoPosition: updatedConfig.videoPosition,
+                videoRotation: updatedConfig.videoRotation,
+                videoScale: planeScale,
+                autoPlay: updatedConfig.autoPlay ?? true,
+                loop: updatedConfig.loop ?? true,
+            }, viewerHtmlPath);
+            res.json({
+                message: 'AR config updated and viewer regenerated',
+                data: {
+                    id,
+                    config: updatedConfig,
+                    videoFileName,
+                    planeScale,
+                    viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+                }
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Failed to update AR config:', error);
+            res.status(500).json({ error: 'Failed to update config', details: error.message });
+        }
+    });
+    /**
+     * DELETE /api/ar/:id
+     * Удалить AR проект
+     */
+    router.delete('/:id', requireAuth, async (req, res) => {
+        try {
+            const { id } = req.params;
+            const userId = req.user?.id;
+            const userRole = req.user?.role;
+            // Get project
+            const [arProject] = await db_1.db
+                .select()
+                .from(schema_1.arProjects)
+                .where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id))
+                .limit(1);
+            if (!arProject) {
+                return res.status(404).json({
+                    error: 'AR project not found',
+                });
+            }
+            // Check permission (owner or admin)
+            if (arProject.userId !== userId && userRole !== 'admin') {
+                return res.status(403).json({
+                    error: 'Permission denied',
+                });
+            }
+            // Delete files
+            try {
+                const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+                await promises_1.default.rm(storageDir, { recursive: true, force: true });
+            }
+            catch (error) {
+                console.warn(`[AR Router] Failed to delete storage for ${id}:`, error);
+            }
+            // Delete from database
+            await db_1.db.delete(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+            res.json({
+                message: 'AR project deleted',
+                data: { id },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Error deleting AR project:', error);
+            res.status(500).json({
+                error: 'Failed to delete AR project',
+                details: error.message,
+            });
+        }
+    });
+    /**
+     * POST /api/ar/:projectId/recompile
+     * Перекомпилировать проект (для multi-target или legacy)
+
+    /**
+     * DELETE /api/ar/:id/delete-demo
+     * Публичное удаление DEMO-проекта без авторизации (только demo)
+     */
+    router.delete('/:id/delete-demo', async (req, res) => {
+        try {
+            const { id } = req.params;
+            const [arProject] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+            if (!arProject) return res.status(404).json({ error: 'AR project not found' });
+            if (!arProject.isDemo) return res.status(403).json({ error: 'Only demo projects can be deleted publicly' });
+            // Delete files
+            try {
+                const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', id);
+                await promises_1.default.rm(storageDir, { recursive: true, force: true });
+            }
+            catch { }
+            // Delete from database
+            await db_1.db.delete(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id));
+            res.json({ message: 'Demo AR project deleted', data: { id } });
+        }
+        catch (error) {
+            console.error('[AR Router] Public delete demo error:', error);
+            res.status(500).json({ error: 'Failed to delete demo project', details: error.message });
+        }
+    });
+     */
+    router.post('/:projectId/recompile', requireAuth, async (req, res) => {
+        try {
+            const { projectId } = req.params;
+            const userId = req.user?.id;
+            const userRole = req.user?.role || req.user?.userData?.role;
+            // Verify project exists and user has access
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId)).limit(1);
+            if (!project) {
+                return res.status(404).json({ error: 'Project not found' });
+            }
+            if (userRole !== 'admin' && project.userId !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            // Start compilation in background
+            console.log(`[AR Router] Manual recompilation triggered for project ${projectId}`);
+            (0, ar_compiler_1.compileARProject)(projectId).catch((error) => {
+                console.error(`[AR Router] Recompilation failed for ${projectId}:`, error);
+            });
+            res.json({
+                message: 'Recompilation started',
+                data: { projectId, status: 'pending' },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] Error triggering recompilation:', error);
+            res.status(500).json({ error: 'Failed to trigger recompilation', details: error.message });
+        }
+    });
+    /**
+     * GET /api/ar/:projectId/items
+     * Получить все items (живые фото) в проекте
+     */
+    router.get('/:projectId/items', requireAuth, async (req, res) => {
+        try {
+            const { projectId } = req.params;
+            const userId = req.user?.id;
+            const userRole = req.user?.role || req.user?.userData?.role;
+            // Verify project exists and user has access
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId)).limit(1);
+            if (!project) {
+                return res.status(404).json({ error: 'Project not found' });
+            }
+            if (userRole !== 'admin' && project.userId !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            const items = await db_1.db
+                .select()
+                .from(schema_1.arProjectItems)
+                .where((0, drizzle_orm_1.eq)(schema_1.arProjectItems.projectId, projectId))
+                .orderBy(schema_1.arProjectItems.targetIndex);
+            res.json({
+                message: 'Project items',
+                data: items,
+            });
+        }
+        catch (error) {
+            console.error('[AR Items] Error fetching items:', error);
+            res.status(500).json({ error: 'Failed to fetch items', details: error.message });
+        }
+    });
+    /**
+     * POST /api/ar/:projectId/items
+     * Добавить новый item (живое фото) в проект
+     * Limit: max 100 items per project
+     */
+    router.post('/:projectId/items', requireAuth, upload.fields([
+        { name: 'photo', maxCount: 1 },
+        { name: 'video', maxCount: 1 },
+    ]), async (req, res) => {
+        try {
+            const { projectId } = req.params;
+            const userId = req.user?.id;
+            const userRole = req.user?.role || req.user?.userData?.role;
+            const { name, config } = req.body;
+            // Verify project exists and user has access
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId)).limit(1);
+            if (!project) {
+                return res.status(404).json({ error: 'Project not found' });
+            }
+            if (userRole !== 'admin' && project.userId !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            // Check item count limit (100 max)
+            const existingItems = await db_1.db.select().from(schema_1.arProjectItems).where((0, drizzle_orm_1.eq)(schema_1.arProjectItems.projectId, projectId));
+            if (existingItems.length >= 100) {
+                return res.status(400).json({ error: 'Maximum 100 items per project' });
+            }
+            // Validate files
+            const files = req.files;
+            if (!files.photo || !files.video) {
+                return res.status(400).json({ error: 'Both photo and video are required' });
+            }
+            const photoFile = files.photo[0];
+            const videoFile = files.video[0];
+            // Move files to permanent storage under project subfolder
+            const timestamp = Date.now();
+            const photoExt = path_1.default.extname(photoFile.originalname);
+            const videoExt = path_1.default.extname(videoFile.originalname);
+            const uploadDir = path_1.default.join(process.cwd(), 'objects', 'ar-uploads', projectId);
+            await promises_1.default.mkdir(uploadDir, { recursive: true });
+            const photoFileName = `photo-${timestamp}-${Math.random().toString(36).substring(7)}${photoExt}`;
+            const videoFileName = `video-${timestamp}-${Math.random().toString(36).substring(7)}${videoExt}`;
+            const photoPath = path_1.default.join(uploadDir, photoFileName);
+            const videoPath = path_1.default.join(uploadDir, videoFileName);
+            await promises_1.default.rename(photoFile.path, photoPath);
+            await promises_1.default.rename(videoFile.path, videoPath);
+            // Determine next targetIndex
+            const nextIndex = existingItems.length > 0
+                ? Math.max(...existingItems.map(i => i.targetIndex ?? 0)) + 1
+                : 0;
+            // Parse config if provided
+            let parsedConfig = null;
+            if (config) {
+                try {
+                    parsedConfig = typeof config === 'string' ? JSON.parse(config) : config;
+                }
+                catch (e) {
+                    console.warn('[AR Items] Failed to parse config:', e);
+                }
+            }
+            // Insert item
+            const [newItem] = await db_1.db
+                .insert(schema_1.arProjectItems)
+                .values({
+                projectId,
+                targetIndex: nextIndex,
+                name: name || `Живое фото ${nextIndex + 1}`,
+                photoUrl: `objects/ar-uploads/${projectId}/${photoFileName}`,
+                videoUrl: `objects/ar-uploads/${projectId}/${videoFileName}`,
+                config: parsedConfig,
+            })
+                .returning();
+            // Update project status to pending for recompilation
+            await db_1.db.update(schema_1.arProjects).set({
+                status: 'pending',
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId));
+            // Start compilation in background
+            console.log(`[AR Items] Starting compilation for project ${projectId} after adding item ${newItem.id}`);
+            (0, ar_compiler_1.compileARProject)(projectId).catch((error) => {
+                console.error(`[AR Items] Background compilation failed for ${projectId}:`, error);
+            });
+            res.status(201).json({
+                message: 'Item added successfully, compilation started',
+                data: newItem,
+            });
+        }
+        catch (error) {
+            console.error('[AR Items] Error adding item:', error);
+            res.status(500).json({ error: 'Failed to add item', details: error.message });
+        }
+    });
+    /**
+     * PATCH /api/ar/:projectId/items/:itemId
+     * Обновить конфигурацию item (позиция, масштаб, название)
+     */
+    router.patch('/:projectId/items/:itemId', requireAuth, async (req, res) => {
+        try {
+            const { projectId, itemId } = req.params;
+            const userId = req.user?.id;
+            const userRole = req.user?.role || req.user?.userData?.role;
+            const { name, config, videoPosition, videoRotation, videoScale, fitMode, autoPlay, loop } = req.body;
+            // Verify project access
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId)).limit(1);
+            if (!project) {
+                return res.status(404).json({ error: 'Project not found' });
+            }
+            if (userRole !== 'admin' && project.userId !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            // Verify item exists
+            const [item] = await db_1.db.select().from(schema_1.arProjectItems).where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.arProjectItems.id, itemId), (0, drizzle_orm_1.eq)(schema_1.arProjectItems.projectId, projectId))).limit(1);
+            if (!item) {
+                return res.status(404).json({ error: 'Item not found' });
+            }
+            // Merge config
+            const existingConfig = item.config || {};
+            const updatedConfig = {
+                ...existingConfig,
+                ...(videoPosition && { videoPosition }),
+                ...(videoRotation && { videoRotation }),
+                ...(videoScale && { videoScale }),
+                ...(fitMode && { fitMode }),
+                ...(autoPlay !== undefined && { autoPlay }),
+                ...(loop !== undefined && { loop }),
+            };
+            // Update item
+            await db_1.db.update(schema_1.arProjectItems).set({
+                ...(name && { name }),
+                config: updatedConfig,
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjectItems.id, itemId));
+            res.json({
+                message: 'Item updated',
+                data: { id: itemId, config: updatedConfig },
+            });
+        }
+        catch (error) {
+            console.error('[AR Items] Error updating item:', error);
+            res.status(500).json({ error: 'Failed to update item', details: error.message });
+        }
+    });
+    /**
+     * DELETE /api/ar/:projectId/items/:itemId
+     * Удалить item из проекта
+     */
+    router.delete('/:projectId/items/:itemId', requireAuth, async (req, res) => {
+        try {
+            const { projectId, itemId } = req.params;
+            const userId = req.user?.id;
+            const userRole = req.user?.role || req.user?.userData?.role;
+            // Verify project access
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId)).limit(1);
+            if (!project) {
+                return res.status(404).json({ error: 'Project not found' });
+            }
+            if (userRole !== 'admin' && project.userId !== userId) {
+                return res.status(403).json({ error: 'Access denied' });
+            }
+            // Verify item exists
+            const [item] = await db_1.db.select().from(schema_1.arProjectItems).where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.arProjectItems.id, itemId), (0, drizzle_orm_1.eq)(schema_1.arProjectItems.projectId, projectId))).limit(1);
+            if (!item) {
+                return res.status(404).json({ error: 'Item not found' });
+            }
+            // Delete files
+            try {
+                const photoPath = path_1.default.join(process.cwd(), item.photoUrl);
+                const videoPath = path_1.default.join(process.cwd(), item.videoUrl);
+                await promises_1.default.unlink(photoPath).catch(() => { });
+                await promises_1.default.unlink(videoPath).catch(() => { });
+                if (item.maskUrl) {
+                    const maskPath = path_1.default.join(process.cwd(), item.maskUrl);
+                    await promises_1.default.unlink(maskPath).catch(() => { });
+                }
+            }
+            catch (e) {
+                console.warn('[AR Items] Failed to delete item files:', e);
+            }
+            // Delete item
+            await db_1.db.delete(schema_1.arProjectItems).where((0, drizzle_orm_1.eq)(schema_1.arProjectItems.id, itemId));
+            // Mark project for recompilation
+            await db_1.db.update(schema_1.arProjects).set({
+                status: 'pending',
+                updatedAt: new Date(),
+            }).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, projectId));
+            res.json({
+                message: 'Item deleted',
+                data: { id: itemId },
+            });
+        }
+        catch (error) {
+            console.error('[AR Items] Error deleting item:', error);
+            res.status(500).json({ error: 'Failed to delete item', details: error.message });
+        }
+    });
+    /**
+     * Static file serving for AR storage
+     * This should be mounted as /api/ar-storage in main server
+     * Cache-busting headers added to force mobile reload on config changes
+     */
+    router.use('/storage', (req, res, next) => {
+        // Extract AR project ID from path
+        const match = req.path.match(/^\/([a-f0-9-]+)\//);
+        if (!match) {
+            return res.status(404).json({ error: 'Invalid AR storage path' });
+        }
+        // Force no-cache for HTML viewers to ensure mobile gets latest config
+        if (req.path.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+            res.setHeader('Pragma', 'no-cache');
+            res.setHeader('Expires', '0');
+        }
+        next();
+    }, (req, res) => {
+        const filePath = path_1.default.join(process.cwd(), 'objects', 'ar-storage', req.path);
+        res.sendFile(filePath);
+    });
+    /**
+     * GET /ar/view/:id
+     * Редирект на AR viewer HTML (для QR кодов и ngrok ссылок)
+     */
+    router.get('/view/:id', (req, res) => {
+        const { id } = req.params;
+        // FIXED: /objects/ar-storage/ (NOT /api/ar/storage/)
+        res.redirect(`/objects/ar-storage/${id}/index.html`);
+    });
+    // ============================================================
+    // NEW: Product Integration Endpoints (Nov 22, 2025)
+    // ============================================================
+    /**
+     * POST /api/ar/create-with-product
+     * Create AR project linked to a product (for cart integration)
+     * Body: { productId: string } + multipart files (photo, video)
+     */
+    router.post('/create-with-product', requireAuth, upload.fields([
+        { name: 'photo', maxCount: 1 },
+        { name: 'video', maxCount: 1 },
+    ]), async (req, res) => {
+        try {
+            const files = req.files;
+            const userId = req.user?.claims?.sub || req.user?.userData?.id || req.user?.id || 'local-admin';
+            const { productId, arPrice } = req.body;
+            // Validate files
+            if (!files.photo || !files.video) {
+                return res.status(400).json({ error: 'Both photo and video are required' });
+            }
+            // Validate product exists
+            if (productId) {
+                const { products } = await Promise.resolve().then(() => __importStar(require('@shared/schema')));
+                const [product] = await db_1.db.select().from(products).where((0, drizzle_orm_1.eq)(products.id, productId)).limit(1);
+                if (!product) {
+                    return res.status(404).json({ error: 'Product not found' });
+                }
+            }
+            const photoFile = files.photo[0];
+            const videoFile = files.video[0];
+            // Move files to AR storage (same as create-automatic)
+            const arId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            const storageDir = path_1.default.join(process.cwd(), 'objects', 'ar-storage', arId);
+            await promises_1.default.mkdir(storageDir, { recursive: true });
+            const photoPath = path_1.default.join(storageDir, 'photo.jpg');
+            const videoPath = path_1.default.join(storageDir, 'video.mp4');
+            await promises_1.default.copyFile(photoFile.path, photoPath);
+            await promises_1.default.copyFile(videoFile.path, videoPath);
+            await promises_1.default.unlink(photoFile.path).catch(() => { });
+            await promises_1.default.unlink(videoFile.path).catch(() => { });
+            // IMPORTANT: Store raw internal file paths (without leading /api) so compiler can access them
+            // Compiler uses path.join(process.cwd(), project.photoUrl)
+            const [arProject] = await db_1.db.insert(schema_1.arProjects).values({
+                id: arId,
+                userId,
+                productId: productId || null, // Link to product
+                arPrice: arPrice || '500.00', // Default AR price (AMD)
+                photoUrl: `objects/ar-storage/${arId}/photo.jpg`,
+                videoUrl: `objects/ar-storage/${arId}/video.mp4`,
+                status: 'pending',
+            }).returning();
+            // Trigger compilation in background (async)
+            (0, ar_compiler_1.compileARProject)(arId).catch((e) => {
+                console.error(`[AR Router] Background compilation failed for ${arId}:`, e);
+            });
+            res.status(201).json({
+                message: 'AR project created with product link',
+                data: {
+                    arId: arProject.id,
+                    productId: arProject.productId,
+                    arPrice: arProject.arPrice,
+                    status: arProject.status,
+                },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] create-with-product error:', error);
+            res.status(500).json({ error: error.message || 'Failed to create AR with product' });
+        }
+    });
+    /**
+     * GET /api/ar/pricing
+     * Get AR pricing info (for cart calculations)
+     * Query: ?productId=xxx (optional)
+     */
+    router.get('/pricing', async (req, res) => {
+        try {
+            const { productId } = req.query;
+            // Default AR pricing
+            const defaultPrice = 500; // 500 AMD
+            // If productId provided, check if there's custom pricing
+            let customPrice = null;
+            if (productId && typeof productId === 'string') {
+                const [project] = await db_1.db
+                    .select()
+                    .from(schema_1.arProjects)
+                    .where((0, drizzle_orm_1.eq)(schema_1.arProjects.productId, productId))
+                    .orderBy((0, drizzle_orm_1.desc)(schema_1.arProjects.createdAt))
+                    .limit(1);
+                if (project?.arPrice) {
+                    customPrice = parseFloat(project.arPrice);
+                }
+            }
+            res.json({
+                data: {
+                    defaultPrice,
+                    customPrice,
+                    finalPrice: customPrice || defaultPrice,
+                    currency: 'AMD',
+                    // Multi-language display
+                    display: {
+                        hy: `${customPrice || defaultPrice} ֏`,
+                        ru: `${Math.round((customPrice || defaultPrice) / 4)} ₽`,
+                        en: `$${((customPrice || defaultPrice) / 400).toFixed(2)}`,
+                    },
+                },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] pricing error:', error);
+            res.status(500).json({ error: error.message || 'Failed to get AR pricing' });
+        }
+    });
+    /**
+     * PATCH /api/ar/:id/attach-to-order
+     * Mark AR project as attached to order (for tracking)
+     * Body: { orderId: string }
+     */
+    router.patch('/:id/attach-to-order', requireAuth, async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { orderId } = req.body;
+            if (!orderId) {
+                return res.status(400).json({ error: 'orderId is required' });
+            }
+            // Update AR project
+            const [updated] = await db_1.db
+                .update(schema_1.arProjects)
+                .set({
+                orderId,
+                attachedToOrder: true,
+                updatedAt: new Date(),
+            })
+                .where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id))
+                .returning();
+            if (!updated) {
+                return res.status(404).json({ error: 'AR project not found' });
+            }
+            res.json({
+                message: 'AR project attached to order',
+                data: {
+                    arId: updated.id,
+                    orderId: updated.orderId,
+                    attachedToOrder: updated.attachedToOrder,
+                },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] attach-to-order error:', error);
+            res.status(500).json({ error: error.message || 'Failed to attach AR to order' });
+        }
+    });
+    /**
+     * GET /api/ar/by-product/:productId
+     * Get all AR projects for a specific product
+     */
+    router.get('/by-product/:productId', requireAuth, async (req, res) => {
+        try {
+            const { productId } = req.params;
+            const userId = req.user?.claims?.sub || req.user?.userData?.id || req.user?.id;
+            const projects = await db_1.db
+                .select()
+                .from(schema_1.arProjects)
+                .where((0, drizzle_orm_1.and)((0, drizzle_orm_1.eq)(schema_1.arProjects.productId, productId), (0, drizzle_orm_1.eq)(schema_1.arProjects.userId, userId)))
+                .orderBy((0, drizzle_orm_1.desc)(schema_1.arProjects.createdAt));
+            res.json({
+                data: projects,
+                count: projects.length,
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] by-product error:', error);
+            res.status(500).json({ error: error.message || 'Failed to get AR projects for product' });
+        }
+    });
+    /**
+     * POST /api/ar/create-demo
+     * Create temporary demo AR project (24h expiration)
+     * Supports multiple photos for multi-target AR
+     * Each photo can have its own video
+     * No product linkage, no pricing — just demo
+     * PUBLIC ENDPOINT - No authentication required for demo
+     */
+    router.post('/create-demo', upload.fields([
+        { name: 'photos', maxCount: 10 }, // До 10 фотографий
+        { name: 'videos', maxCount: 10 }, // До 10 видео (по одному на фото)
+    ]), async (req, res) => {
+        try {
+            const files = req.files;
+            const userId = req.user?.claims?.sub || req.user?.userData?.id || req.user?.id || 'demo-guest';
+            // Validate files
+            if (!files.photos || files.photos.length === 0) {
+                return res.status(400).json({ error: 'At least one photo is required' });
+            }
+            if (!files.videos || files.videos.length === 0) {
+                return res.status(400).json({ error: 'At least one video is required' });
+            }
+            // Проверка соответствия количества фото и видео
+            if (files.photos.length !== files.videos.length) {
+                return res.status(400).json({
+                    error: `Mismatch: ${files.photos.length} photos but ${files.videos.length} videos. Each photo needs its own video.`
+                });
+            }
+            const photoFiles = files.photos;
+            const videoFiles = files.videos;
+            // Move files to shared uploads directory (AR microservice will access them)
+            const arId = `demo-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+            const uploadsDir = path_1.default.join(process.cwd(), 'objects', 'uploads');
+            await promises_1.default.mkdir(uploadsDir, { recursive: true });
+            // Process multiple photos and videos
+            const photoUrls = [];
+            const videoUrls = [];
+            for (let i = 0; i < photoFiles.length; i++) {
+                // Copy photo
+                const photoFile = photoFiles[i];
+                const photoFilename = `${arId}-photo-${i}.jpg`;
+                const photoPath = path_1.default.join(uploadsDir, photoFilename);
+                await promises_1.default.copyFile(photoFile.path, photoPath);
+                await promises_1.default.unlink(photoFile.path).catch(() => { });
+                photoUrls.push(`/objects/uploads/${photoFilename}`);
+                // Copy corresponding video
+                const videoFile = videoFiles[i];
+                const videoFilename = `${arId}-video-${i}.mp4`;
+                const videoPath = path_1.default.join(uploadsDir, videoFilename);
+                await promises_1.default.copyFile(videoFile.path, videoPath);
+                await promises_1.default.unlink(videoFile.path).catch(() => { });
+                videoUrls.push(`/objects/uploads/${videoFilename}`);
+            }
+            console.log('[AR Router] ✅ Files copied to shared uploads:', {
+                photos: photoUrls.length,
+                videos: videoUrls.length
+            });
+            // Calculate expiration (24 hours from now)
+            const expiresAt = new Date();
+            expiresAt.setHours(expiresAt.getHours() + 24);
+            // Send compilation request to AR microservice with multiple photos and videos
+            console.log(`[AR Router] 📤 Sending ${photoUrls.length} photo(s) + ${videoUrls.length} video(s) to AR microservice...`);
+            const compileResult = await (0, ar_service_client_1.requestARCompilation)({
+                userId,
+                photoUrls: photoUrls, // Массив фотографий
+                videoUrls: videoUrls, // Массив видео (по одному на фото)
+                isDemo: true,
+            });
+            // FIXED: ar-service returns ONE projectId for multi-target (multiple markers in ONE project)
+            const projectId = compileResult.projectId;
+            const markersCount = compileResult.markersCount || photoUrls.length;
+            console.log(`[AR Router] ✅ AR microservice created multi-target project: ${projectId} (${markersCount} markers)`);
+            // IMPORTANT: Save ONE project record with markersCount
+            try {
+                await db_1.db.insert(schema_1.arProjects).values({
+                    id: projectId,
+                    userId,
+                    photoUrl: photoUrls[0], // First photo as representative
+                    videoUrl: videoUrls[0], // First video as representative
+                    status: 'pending',
+                    isDemo: true,
+                    expiresAt: expiresAt,
+                    config: { markersCount }, // Store markers count in config
+                });
+                console.log(`[AR Router] ✅ Multi-target project saved to Backend DB: ${projectId} (${markersCount} markers)`);
+            }
+            catch (dbError) {
+                console.warn('[AR Router] ⚠️ Failed to save project to Backend DB:', dbError.message);
+                // Non-critical: AR service will still compile, but won't appear in /api/ar/all list
+            }
+            res.status(201).json({
+                message: `Multi-target AR project with ${markersCount} markers created (expires in 24 hours)`,
+                data: {
+                    arId: projectId, // Single project ID
+                    projectId, // Same as arId
+                    status: compileResult.status,
+                    markersCount,
+                    expiresAt: expiresAt,
+                    isDemo: true,
+                    estimatedTimeSeconds: compileResult.estimatedTimeSeconds,
+                    statusUrl: `/api/ar/status/${projectId}`,
+                    viewUrl: compileResult.viewUrl,
+                },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] create-demo error:', error);
+            res.status(500).json({ error: error.message || 'Failed to create demo AR' });
+        }
+    });
+    /**
+     * PATCH /api/ar/:id/extend-demo
+     * Extend demo project expiration (admin only)
+     */
+    router.patch('/:id/extend-demo', requireAuth, async (req, res) => {
+        try {
+            const { id } = req.params;
+            const { hours = 24 } = req.body;
+            // Check if project exists and is demo
+            const [project] = await db_1.db.select().from(schema_1.arProjects).where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id)).limit(1);
+            if (!project) {
+                return res.status(404).json({ error: 'AR project not found' });
+            }
+            if (!project.isDemo) {
+                return res.status(400).json({ error: 'Cannot extend non-demo project' });
+            }
+            // Calculate new expiration
+            const currentExpires = project.expiresAt ? new Date(project.expiresAt) : new Date();
+            const newExpires = new Date(currentExpires);
+            newExpires.setHours(newExpires.getHours() + hours);
+            // Update expiration
+            const [updated] = await db_1.db
+                .update(schema_1.arProjects)
+                .set({
+                expiresAt: newExpires,
+                updatedAt: new Date(),
+            })
+                .where((0, drizzle_orm_1.eq)(schema_1.arProjects.id, id))
+                .returning();
+            res.json({
+                message: `Demo extended by ${hours} hours`,
+                data: {
+                    arId: updated.id,
+                    expiresAt: updated.expiresAt,
+                    isDemo: updated.isDemo,
+                },
+            });
+        }
+        catch (error) {
+            console.error('[AR Router] extend-demo error:', error);
+            res.status(500).json({ error: error.message || 'Failed to extend demo' });
+        }
+    });
+    return router;
+}
+//# sourceMappingURL=ar-router.js.map

@@ -1,4 +1,4 @@
-import i18n from 'i18next';
+﻿import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 
 const resources = {
@@ -286,8 +286,8 @@ const resources = {
       
             
       // Contact Info
-      phoneNumber: "+7 (999) 123-45-67",
-      emailAddress: "info@photobook.ru", 
+      phoneNumber: "+374 55 54-88-40",
+      emailAddress: "info@photobooksgallery.am", 
       workingHours: "Ежедневно 9:00-21:00",
       responseTime: "Отвечаем в течение 15 минут",
       
@@ -619,8 +619,13 @@ const resources = {
       landingPageTitle: "PhotoBooksGallery - Ֆոտոգրքեր, վինետկա, ավարտական ալբոմներ Հայաստանում",
       landingPageDescription: "Ստեղծեք եզակի ֆոտոգրքեր, վինետկա և ավարտական ալբոմներ PhotoBooksGallery-ում: Ֆոտոգիրք մեկ օրում, ժամանակակից ավարտական ալբոմներ ընդլայնված իրականությամբ: Օնլայն խմբագիր, բարձր որակի տպագրություն, արագ առաքում:",
       landingPageKeywords: "ֆոտոգրքեր, ֆոտոգիրք, վինետկա, ավարտական ալբոմներ, ֆոտոգիրք մեկ օրում, ընդլայնված իրականություն, ֆոտոհուշարձաններ, ֆոտո տպագրություն, ֆոտոշրջանակներ, նվերներ, Հայաստան, օնլայն խմբագիր, PhotoBooksGallery",
-      photobooksDescription: "Ստեղծեք եզակի ֆոտոգրքեր մասնագիտական որակով: Լայն տեսականի ձևաչափեր, նյութեր և դիզայներ:",
       
+      // Home Page SEO (HY)
+      homePageTitle: "PhotoBooksGallery - Պատվիրել ֆոտոգիրք Երևանում | Գներ և կատալոգ",
+      homePageDescription: "Պատվիրեք ֆոտոգրքեր, ավարտական ալբոմներ և ֆոտո հուշանիշներ Երևանում։ Արագ արտադրություն, առաքում ամբողջ Հայաստանի տարածքում։ Ստեղծեք եզակի նվեր։",
+      homePageKeywords: "ֆոտոգիրք Երևան, պատվիրել ֆոտոալբոմ ՀՀ, ֆոտոգրքի գին, ավարտական ալբոմ, լուսանկարների շրջանակ, նվերներ",
+      photobooksDescription: "Ստեղծեք եզակի ֆոտոգրքեր մասնագիտական որակով: Լայն տեսականի ձևաչափեր, նյութեր և դիզայներ:",
+
       // Header
       catalog: "Կատալոգ",
       editor: "Խմբագիր",
@@ -847,8 +852,8 @@ const resources = {
       vkDesc: "Համայնք և աջակցություն",
       
       // Contact Info
-      phoneNumber: "+7 (999) 123-45-67",
-      emailAddress: "info@photobook.ru", 
+      phoneNumber: "+374 55 54-88-40",
+      emailAddress: "info@photobooksgallery.am", 
       workingHours: "Ամեն օր 9:00-ից 21:00-ը",
       responseTime: "Պատասխանում ենք 15 րոպեի ընթացքում",
       
@@ -1443,8 +1448,8 @@ const resources = {
       vkDesc: "Community and support",
       
       // Contact Info
-      phoneNumber: "+7 (999) 123-45-67",
-      emailAddress: "info@photobook.ru",
+      phoneNumber: "+374 55 54-88-40",
+      emailAddress: "info@photobooksgallery.am",
       workingHours: "Daily 9:00 AM - 9:00 PM",
       responseTime: "We respond within 15 minutes",
       
@@ -1785,7 +1790,8 @@ i18n
   .init({
     resources,
     lng: initialLang,
-    fallbackLng: 'hy',
+    // Fallback to RU (then EN) when HY keys are missing
+    fallbackLng: ['ru', 'en'],
     supportedLngs: ['hy','ru','en'],
     preload: ['hy','ru','en'],
     defaultNS: 'translation',
@@ -1805,3 +1811,4 @@ i18n.on('languageChanged', (lng) => {
 });
 
 export default i18n;
+

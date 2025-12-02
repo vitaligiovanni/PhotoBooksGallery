@@ -652,29 +652,38 @@ export default function Landing() {
                 },
                 "sameAs": [
                   "https://www.facebook.com/photobooksgallery",
-                  "https://www.instagram.com/photobooksgallery"
+                  "https://instagram.com/photo_books_gallery"
+                ],
+                "contactPoint": [
+                  {
+                    "@type": "ContactPoint",
+                    "contactType": "customer support",
+                    "telephone": "+374-55-54-88-40",
+                    "availableLanguage": ["ru","hy","en"]
+                  },
+                  {
+                    "@type": "ContactPoint",
+                    "contactType": "WhatsApp",
+                    "telephone": "+374-55-54-88-40"
+                  },
+                  {
+                    "@type": "ContactPoint",
+                    "contactType": "WhatsApp",
+                    "telephone": "+374-77-54-88-40"
+                  }
                 ]
               },
               {
                 "@type": "LocalBusiness",
                 "@id": "https://photobooksgallery.am/#localbusiness",
-                "name": "PhotoBooksGallery - Фотокниги в Ереване",
+                "name": "PhotoBooksGallery - Онлайн фотосервис",
                 "image": "https://photobooksgallery.am/og-image.jpg",
                 "url": "https://photobooksgallery.am",
-                "telephone": "+374 XX XXX XXXX",
+                "telephone": "+374-55-54-88-40",
                 "priceRange": "$$",
-                "address": {
-                  "@type": "PostalAddress",
-                  "streetAddress": "Ереван",
-                  "addressLocality": "Ереван",
-                  "addressRegion": "Ереван",
-                  "postalCode": "0001",
-                  "addressCountry": "AM"
-                },
-                "geo": {
-                  "@type": "GeoCoordinates",
-                  "latitude": 40.1872,
-                  "longitude": 44.5152
+                "areaServed": {
+                  "@type": "Country",
+                  "name": "Armenia"
                 },
                 "openingHoursSpecification": [
                   {

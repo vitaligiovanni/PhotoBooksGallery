@@ -18,9 +18,12 @@ export function Footer() {
               {t('companyDescription')}
             </p>
             <div className="flex space-x-4">
-              <Instagram className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
-              <Facebook className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
-              <MessageCircle className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
+              <a href="https://instagram.com/photo_books_gallery" target="_blank" rel="noopener noreferrer">
+                <Instagram className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
+              </a>
+              <a href="https://wa.me/37455548840" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
+              </a>
             </div>
           </div>
 
@@ -52,15 +55,15 @@ export function Footer() {
             <div className="space-y-3 text-sm">
               <div className="flex items-center space-x-2">
                 <Phone className="text-primary h-4 w-4" />
-                <span className="text-background/80">+7 (495) 123-45-67</span>
+                <span className="text-background/80">+374 55 54-88-40</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Mail className="text-primary h-4 w-4" />
-                <span className="text-background/80">info@fotocraft.ru</span>
+                <span className="text-background/80">info@photobooksgallery.am</span>
               </div>
               <div className="flex items-start space-x-2">
                 <MapPin className="text-primary h-4 w-4 mt-1" />
-                <span className="text-background/80">Москва, ул. Примерная, д. 123</span>
+                <span className="text-background/80">Армения (онлайн-сервис)</span>
               </div>
             </div>
           </div>

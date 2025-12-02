@@ -22,7 +22,7 @@ const ContactSection = () => {
       key: 'whatsapp',
       icon: MessageCircle,
       color: 'bg-green-500 hover:bg-green-600',
-      link: 'https://wa.me/79991234567',
+      link: 'https://wa.me/37455548840',
       iconColor: 'text-white'
     },
     {
@@ -36,7 +36,7 @@ const ContactSection = () => {
       key: 'instagram',
       icon: Instagram,
       color: 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600',
-      link: 'https://instagram.com/photobook.ru',
+      link: 'https://instagram.com/photo_books_gallery',
       iconColor: 'text-white'
     },
     {
@@ -50,14 +50,14 @@ const ContactSection = () => {
       key: 'email',
       icon: Mail,
       color: 'bg-gray-600 hover:bg-gray-700',
-      link: 'mailto:info@photobook.ru',
+      link: 'mailto:info@photobooksgallery.am',
       iconColor: 'text-white'
     },
     {
       key: 'viber',
       icon: Phone,
       color: 'bg-purple-600 hover:bg-purple-700',
-      link: 'viber://chat?number=79991234567',
+      link: 'viber://chat?number=37455548840',
       iconColor: 'text-white'
     },
     {
@@ -240,7 +240,7 @@ const ContactSection = () => {
               {t('contactCTASubtitle')}
             </p>
             <motion.a
-              href="https://wa.me/79991234567"
+              href="https://wa.me/37455548840"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.05 }}

@@ -1,47 +1,37 @@
-# robots.txt для PhotoBooksGallery
-# Domain: photobooksgallery.am
-# Optimized for Facebook Sharing and SEO
-
-# CRITICAL: Allow Facebook crawler with no restrictions
-User-agent: facebookexternalhit
-Disallow:
-
-# Allow Twitter crawler
-User-agent: Twitterbot
-Disallow:
-
-# Allow other search engines
-User-agent: Googlebot
-Disallow: /admin/
-Disallow: /api/
-Disallow: /private/
-Crawl-delay: 1
-
-User-agent: Bingbot
-Disallow: /admin/
-Disallow: /api/
-Disallow: /private/
-Crawl-delay: 1
-
-User-agent: Yandex
-Disallow: /admin/
-Disallow: /api/
-Disallow: /private/
-Crawl-delay: 1
-
-# Default rules for all other bots
 User-agent: *
 Allow: /
 Disallow: /admin/
 Disallow: /api/
 Disallow: /private/
 Disallow: /uploads/temp/
-Disallow: /server/
-Disallow: /.local/
-Disallow: /migrations/
-Disallow: /scripts/
 
-# Explicitly allow important static resources
+# Major crawlers
+User-agent: Googlebot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+User-agent: Bingbot
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+User-agent: Yandex
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+# Social crawlers
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+# Static resources
 Allow: /assets/
 Allow: /images/
 Allow: /uploads/
@@ -50,5 +40,5 @@ Allow: /manifest.json
 Allow: /robots.txt
 Allow: /sitemap.xml
 
-# Sitemap location
+# Sitemap
 Sitemap: https://photobooksgallery.am/sitemap.xml

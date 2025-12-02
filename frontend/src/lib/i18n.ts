@@ -5,9 +5,15 @@ const resources = {
   ru: {
     translation: {
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Фотокниги, выпускные альбомы, виньетки",
-      landingPageDescription: "Создавайте уникальные фотокниги, выпускные альбомы с AR и виньетки. Онлайн редактор, премиум печать, быстрая доставка.",
-      landingPageKeywords: "фотокниги, выпускные альбомы, виньетки, фотокнига за день, фото сувениры, фотопечать, augmented reality",
+      landingPageTitle: "PhotoBooksGallery - Фотокниги, выпускные альбомы, виньетки в Ереване",
+      landingPageDescription: "Создавайте уникальные фотокниги, выпускные альбомы с AR и виньетки в Армении. Онлайн редактор, премиум печать, быстрая доставка по Еревану.",
+      landingPageKeywords: "фотокниги Ереван, выпускные альбомы Армения, виньетки, фотокнига за день, фото сувениры, фотопечать, живые фотографии, AR фото",
+      
+      // Home Page SEO
+      homePageTitle: "PhotoBooksGallery - Заказать фотокнигу в Ереване | Цены и каталог",
+      homePageDescription: "Закажите фотокниги, выпускные альбомы и фотосувениры в Ереване. Быстрое изготовление, доставка по Армении. Создайте уникальный подарок!",
+      homePageKeywords: "купить фотокнигу Ереван, заказать фотоальбом Армения, цена фотокниги, выпускной альбом, фоторамки, подарки",
+      
       photobooksDescription: "Создайте уникальные фотокниги с профессиональным качеством. Широкий выбор форматов, материалов и дизайнов.",
 
       // Header
@@ -1200,9 +1206,15 @@ const resources = {
       bulkErrorTags: "Չհաջողվեց ավելացնել հեշթեգեր",
       bulkErrorStatus: "Չհաջողվեց թարմացնել կարգավիճակները",
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Photobooks, Graduation Albums, Vignettes in Armenia",
-      landingPageDescription: "Create unique photobooks, graduation albums and vignettes at PhotoBooksGallery. Same-day photobooks, modern graduation albums with augmented reality. Online editor, high-quality printing, fast delivery in Armenia.",
-      landingPageKeywords: "photobooks, graduation albums, vignettes, same-day photobook, photo gifts, photo printing, photo frames, gifts, augmented reality, Armenia, online editor, PhotoBooksGallery",
+      landingPageTitle: "PhotoBooksGallery - Photobooks, Graduation Albums, Vignettes in Yerevan, Armenia",
+      landingPageDescription: "Create unique photobooks, graduation albums and vignettes in Armenia. Same-day photobooks, modern graduation albums with augmented reality. Online editor, high-quality printing, fast delivery in Yerevan.",
+      landingPageKeywords: "photobooks Yerevan, graduation albums Armenia, vignettes, same-day photobook, photo gifts, photo printing, living photos, AR photos",
+      
+      // Home Page SEO
+      homePageTitle: "PhotoBooksGallery - Order Photobooks in Yerevan | Prices & Catalog",
+      homePageDescription: "Order photobooks, graduation albums and photo souvenirs in Yerevan. Fast production, delivery across Armenia. Create a unique gift!",
+      homePageKeywords: "buy photobook Yerevan, order photo album Armenia, photobook price, graduation album, photo frames, gifts",
+      
       photobooksDescription: "Create unique photobooks with professional quality. Wide selection of formats, materials and designs.",
       
       // Header

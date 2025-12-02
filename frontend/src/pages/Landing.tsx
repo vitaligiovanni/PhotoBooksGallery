@@ -614,7 +614,7 @@ export default function Landing() {
         <meta property="og:url" content="https://photobooksgallery.am/" />
         <meta property="og:title" content={t('landingPageTitle')} />
         <meta property="og:description" content={t('landingPageDescription')} />
-        <meta property="og:image" content="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="og:image" content="https://photobooksgallery.am/og-image.jpg" />
         <meta property="og:site_name" content="PhotoBooksGallery" />
         
         {/* Twitter */}
@@ -622,7 +622,7 @@ export default function Landing() {
         <meta property="twitter:url" content="https://photobooksgallery.am/" />
         <meta property="twitter:title" content={t('landingPageTitle')} />
         <meta property="twitter:description" content={t('landingPageDescription')} />
-        <meta property="twitter:image" content="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="twitter:image" content="https://photobooksgallery.am/og-image.jpg" />
         <meta name="twitter:site" content="@photobooksgallery" />
         
         {/* Additional SEO */}
@@ -635,6 +635,98 @@ export default function Landing() {
         <link rel="alternate" hrefLang="hy" href="https://photobooksgallery.am/hy" />
         <link rel="alternate" hrefLang="en" href="https://photobooksgallery.am/en" />
         <link rel="alternate" hrefLang="x-default" href="https://photobooksgallery.am/" />
+        
+        {/* Schema.org LocalBusiness + Organization */}
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@graph": [
+              {
+                "@type": "Organization",
+                "@id": "https://photobooksgallery.am/#organization",
+                "name": "PhotoBooksGallery",
+                "url": "https://photobooksgallery.am",
+                "logo": {
+                  "@type": "ImageObject",
+                  "url": "https://photobooksgallery.am/logo.png"
+                },
+                "sameAs": [
+                  "https://www.facebook.com/photobooksgallery",
+                  "https://www.instagram.com/photobooksgallery"
+                ]
+              },
+              {
+                "@type": "LocalBusiness",
+                "@id": "https://photobooksgallery.am/#localbusiness",
+                "name": "PhotoBooksGallery - Фотокниги в Ереване",
+                "image": "https://photobooksgallery.am/og-image.jpg",
+                "url": "https://photobooksgallery.am",
+                "telephone": "+374 XX XXX XXXX",
+                "priceRange": "$$",
+                "address": {
+                  "@type": "PostalAddress",
+                  "streetAddress": "Ереван",
+                  "addressLocality": "Ереван",
+                  "addressRegion": "Ереван",
+                  "postalCode": "0001",
+                  "addressCountry": "AM"
+                },
+                "geo": {
+                  "@type": "GeoCoordinates",
+                  "latitude": 40.1872,
+                  "longitude": 44.5152
+                },
+                "openingHoursSpecification": [
+                  {
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                    "opens": "10:00",
+                    "closes": "19:00"
+                  },
+                  {
+                    "@type": "OpeningHoursSpecification",
+                    "dayOfWeek": "Saturday",
+                    "opens": "11:00",
+                    "closes": "17:00"
+                  }
+                ],
+                "hasOfferCatalog": {
+                  "@type": "OfferCatalog",
+                  "name": "Фотокниги и фотосувениры",
+                  "itemListElement": [
+                    {
+                      "@type": "OfferCatalog",
+                      "name": "Фотокниги"
+                    },
+                    {
+                      "@type": "OfferCatalog",
+                      "name": "Выпускные альбомы"
+                    },
+                    {
+                      "@type": "OfferCatalog",
+                      "name": "Фоторамки"
+                    },
+                    {
+                      "@type": "OfferCatalog",
+                      "name": "Живые фотографии AR"
+                    }
+                  ]
+                }
+              },
+              {
+                "@type": "WebSite",
+                "@id": "https://photobooksgallery.am/#website",
+                "url": "https://photobooksgallery.am",
+                "name": "PhotoBooksGallery",
+                "description": "Создание фотокниг и фотосувениров в Армении",
+                "publisher": {
+                  "@id": "https://photobooksgallery.am/#organization"
+                },
+                "inLanguage": ["ru", "hy", "en"]
+              }
+            ]
+          })}
+        </script>
       </Helmet>
       
       <div className="min-h-screen page-bg landing-content">

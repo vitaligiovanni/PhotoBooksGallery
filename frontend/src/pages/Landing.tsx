@@ -681,6 +681,12 @@ export default function Landing() {
                 "url": "https://photobooksgallery.am",
                 "telephone": "+374-55-54-88-40",
                 "priceRange": "$$",
+                "address": {
+                  "@type": "PostalAddress",
+                  "addressCountry": "AM",
+                  "addressLocality": "Yerevan",
+                  "addressRegion": "Yerevan"
+                },
                 "areaServed": {
                   "@type": "Country",
                   "name": "Armenia"

@@ -1,0 +1,69 @@
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [ "main" ]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-frontend.yml"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: |
+          npm ci
+
+      - name: Build + Prerender
+        working-directory: frontend
+        run: |
+          npm run build:prerender
+
+      - name: Verify prerender outputs
+        working-directory: frontend
+        run: |
+          test -f dist/index.html
+          test -f dist/ru/index.html
+          test -f dist/hy/index.html
+          test -f dist/en/index.html
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.DEPLOY_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Rsync dist to server (assets first)
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          REMOTE_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          TS=$(date +%Y%m%d%H%M%S)
+          TMP_RELEASE="$REMOTE_PATH/releases/$TS"
+          ssh $USER@$HOST "mkdir -p $REMOTE_PATH/releases $TMP_RELEASE $REMOTE_PATH/assets"
+          rsync -avz --delete frontend/dist/ $USER@$HOST:$TMP_RELEASE/
+          ssh $USER@$HOST "set -e; mkdir -p $REMOTE_PATH/assets; cp -r $TMP_RELEASE/assets/* $REMOTE_PATH/assets/ 2>/dev/null || true; cp -r $TMP_RELEASE/* $REMOTE_PATH/; cp $TMP_RELEASE/index.html $REMOTE_PATH/index.html"
+
+      - name: Post-deploy check
+        run: |
+          curl -sSfL https://photobooksgallery.am/ | head -n 50 || true
+          curl -sSfL https://photobooksgallery.am/ru/ | head -n 50 || true
+          curl -sSfL https://photobooksgallery.am/hy/ | head -n 50 || true
+          curl -sSfL https://photobooksgallery.am/en/ | head -n 50 || true

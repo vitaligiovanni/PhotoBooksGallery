@@ -1,0 +1,113 @@
+name: 🧹 Cleanup Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  cleanup:
+    name: Cleanup disk space
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+        
+      - name: 🔐 Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      
+      - name: ⚙️ Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          cat >> ~/.ssh/config << EOF
+          Host *
+            ServerAliveInterval 60
+            ServerAliveCountMax 10
+            TCPKeepAlive yes
+            StrictHostKeyChecking no
+          EOF
+      
+      - name: 🧹 Deep cleanup server
+        env:
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          SERVER_PATH: ${{ secrets.SERVER_PATH }}
+        run: |
+          echo "🧹 Starting deep server cleanup..."
+          
+          ssh ${SERVER_USER}@${SERVER_HOST} << 'ENDSSH'
+          echo "📊 Disk usage BEFORE cleanup:"
+          df -h /
+          
+          echo ""
+          echo "🛑 Stopping old containers..."
+          cd /root/photobooks 2>/dev/null || cd /var/www/photobooksgallery 2>/dev/null || true
+          docker compose down 2>/dev/null || true
+          
+          echo ""
+          echo "🗑️  Removing ALL unused Docker images..."
+          docker image prune -af
+          
+          echo ""
+          echo "🗑️  Removing unused volumes..."
+          docker volume prune -f
+          
+          echo ""
+          echo "🗑️  Removing build cache..."
+          docker builder prune -af
+          
+          echo ""
+          echo "🗑️  Removing unused networks..."
+          docker network prune -f
+          
+          echo ""
+          echo "🗑️  Docker system prune (full)..."
+          docker system prune -af --volumes
+          
+          echo ""
+          echo "🗑️  Cleaning old logs..."
+          find /var/log -type f -name "*.log" -mtime +3 -delete 2>/dev/null || true
+          find /var/log -type f -name "*.gz" -delete 2>/dev/null || true
+          truncate -s 0 /var/log/syslog 2>/dev/null || true
+          journalctl --vacuum-time=3d 2>/dev/null || true
+          
+          echo ""
+          echo "🗑️  Cleaning tmp..."
+          rm -rf /tmp/* 2>/dev/null || true
+          rm -rf /var/tmp/* 2>/dev/null || true
+          
+          echo ""
+          echo "🗑️  Cleaning apt cache..."
+          apt-get clean 2>/dev/null || true
+          apt-get autoremove -y 2>/dev/null || true
+          
+          echo ""
+          echo "📊 Disk usage AFTER cleanup:"
+          df -h /
+          
+          echo ""
+          echo "📊 Docker disk usage:"
+          docker system df
+          
+          echo ""
+          echo "✅ Cleanup complete!"
+          ENDSSH
+      
+      - name: 📱 Notify Telegram
+        if: always()
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          STATUS="${{ job.status }}"
+          if [ "$STATUS" = "success" ]; then
+            TEXT="🧹 Очистка сервера завершена успешно!"
+          else
+            TEXT="❌ Ошибка при очистке сервера"
+          fi
+          
+          curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+            -H "Content-Type: application/json" \
+            -d "{\"chat_id\": \"${TELEGRAM_CHAT_ID}\", \"text\": \"${TEXT}\"}" || true

@@ -61,6 +61,14 @@ jobs:
           rsync -avz --delete frontend/dist/ $USER@$HOST:$TMP_RELEASE/
           ssh $USER@$HOST "set -e; mkdir -p $REMOTE_PATH/assets; cp -r $TMP_RELEASE/assets/* $REMOTE_PATH/assets/ 2>/dev/null || true; cp -r $TMP_RELEASE/* $REMOTE_PATH/; cp $TMP_RELEASE/index.html $REMOTE_PATH/index.html"
 
+      - name: Verify files on server (SSH)
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+          USER: ${{ secrets.DEPLOY_USER }}
+          REMOTE_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          ssh $USER@$HOST "set -e; echo '--- LIST ---'; ls -la $REMOTE_PATH; echo '\n--- HEAD /index.html ---'; head -n 40 $REMOTE_PATH/index.html || true; echo '\n--- HEAD /ru/index.html ---'; head -n 40 $REMOTE_PATH/ru/index.html || true; echo '\n--- HEAD /hy/index.html ---'; head -n 40 $REMOTE_PATH/hy/index.html || true; echo '\n--- HEAD /en/index.html ---'; head -n 40 $REMOTE_PATH/en/index.html || true"
+
       - name: Post-deploy check
         run: |
           curl -sSfL https://photobooksgallery.am/ | head -n 50 || true

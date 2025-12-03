@@ -22,7 +22,7 @@ const ContactSection = () => {
       key: 'whatsapp',
       icon: MessageCircle,
       color: 'bg-green-500 hover:bg-green-600',
-      link: 'https://wa.me/37455548840',
+      link: 'https://wa.me/37477548840',
       iconColor: 'text-white'
     },
     {
@@ -240,7 +240,7 @@ const ContactSection = () => {
               {t('contactCTASubtitle')}
             </p>
             <motion.a
-              href="https://wa.me/37455548840"
+              href="https://wa.me/37477548840"
               target="_blank"
               rel="noopener noreferrer"
               whileHover={{ scale: 1.05 }}

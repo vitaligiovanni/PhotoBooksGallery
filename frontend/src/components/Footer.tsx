@@ -21,7 +21,7 @@ export function Footer() {
               <a href="https://instagram.com/photo_books_gallery" target="_blank" rel="noopener noreferrer">
                 <Instagram className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
               </a>
-              <a href="https://wa.me/37455548840" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/37477548840" target="_blank" rel="noopener noreferrer">
                 <MessageCircle className="text-background/60 hover:text-primary cursor-pointer transition-colors h-5 w-5" />
               </a>
             </div>

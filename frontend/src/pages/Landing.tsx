@@ -664,11 +664,6 @@ export default function Landing() {
                   {
                     "@type": "ContactPoint",
                     "contactType": "WhatsApp",
-                    "telephone": "+374-55-54-88-40"
-                  },
-                  {
-                    "@type": "ContactPoint",
-                    "contactType": "WhatsApp",
                     "telephone": "+374-77-54-88-40"
                   }
                 ]
@@ -683,9 +678,11 @@ export default function Landing() {
                 "priceRange": "$$",
                 "address": {
                   "@type": "PostalAddress",
-                  "addressCountry": "AM",
+                  "streetAddress": "Online Service",
                   "addressLocality": "Yerevan",
-                  "addressRegion": "Yerevan"
+                  "addressRegion": "Yerevan",
+                  "postalCode": "0001",
+                  "addressCountry": "AM"
                 },
                 "areaServed": {
                   "@type": "Country",

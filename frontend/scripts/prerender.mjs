@@ -12,6 +12,7 @@ const distDir = path.resolve(__dirname, '..', 'dist');
 
 const serve = serveStatic(distDir, { maxAge: 0, index: ['index.html'] });
 const server = http.createServer((req, res) => serve(req, res, finalhandler(req, res)));
+let baseUrl = '';
 
 const routes = [
   { url: '/', out: 'index.html', lang: 'x-default' },
@@ -25,7 +26,10 @@ async function ensureDir(p) {
 }
 
 async function prerender() {
-  await new Promise((resolve) => server.listen(4178, resolve));
+  await new Promise((resolve) => server.listen(0, resolve));
+  const addr = server.address();
+  const port = typeof addr === 'object' && addr ? addr.port : 0;
+  baseUrl = `http://localhost:${port}`;
   const browser = await chromium.launch();
   const page = await browser.newPage();
 
@@ -34,10 +38,17 @@ async function prerender() {
   const baseHtml = await fs.readFile(baseHtmlPath, 'utf8');
 
   for (const r of routes) {
-    const target = `http://localhost:4178${r.url}`;
+    const target = `${baseUrl}${r.url}`;
     await page.goto(target, { waitUntil: 'networkidle' });
-    // Wait for alternates or title to appear as a signal Helmet applied
-    try { await page.waitForSelector('head link[rel="alternate"]', { timeout: 5000 }); } catch {}
+    // Wait for Helmet to apply: title changes and description exists
+    try {
+      await page.waitForFunction(() => {
+        const titleOk = document.title && document.title !== 'PhotoBooksGallery';
+        const desc = document.querySelector('head meta[name="description"]');
+        const hasDesc = !!desc && !!desc.getAttribute('content');
+        return titleOk && hasDesc;
+      }, { timeout: 8000 });
+    } catch {}
     const headHtml = await page.evaluate(() => document.head.outerHTML);
 
     const merged = baseHtml

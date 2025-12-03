@@ -20,7 +20,7 @@ const About: React.FC = () => {
         <meta property="og:url" content="https://photobooksgallery.am/about" />
         <meta property="og:title" content={t('aboutPageTitle')} />
         <meta property="og:description" content={t('aboutPageDescription')} />
-        <meta property="og:image" content="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="og:image" content="https://photobooksgallery.am/og-image.jpg" />
         <meta property="og:site_name" content="PhotoBooksGallery" />
         
         {/* Twitter */}
@@ -28,19 +28,19 @@ const About: React.FC = () => {
         <meta property="twitter:url" content="https://photobooksgallery.am/about" />
         <meta property="twitter:title" content={t('aboutPageTitle')} />
         <meta property="twitter:description" content={t('aboutPageDescription')} />
-        <meta property="twitter:image" content="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="twitter:image" content="https://photobooksgallery.am/og-image.jpg" />
         <meta name="twitter:site" content="@photobooksgallery" />
         
         {/* Additional SEO */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="PhotoBooksGallery" />
-        <link rel="canonical" href="https://photobooksgallery.am/about" />
+        <link rel="canonical" href={`https://photobooksgallery.am${window.location.pathname}${window.location.search || ''}`} />
         
         {/* hreflang for multilingual support */}
-        <link rel="alternate" hrefLang="ru" href="https://photobooksgallery.am/ru/about" />
-        <link rel="alternate" hrefLang="hy" href="https://photobooksgallery.am/hy/about" />
-        <link rel="alternate" hrefLang="en" href="https://photobooksgallery.am/en/about" />
-        <link rel="alternate" hrefLang="x-default" href="https://photobooksgallery.am/about" />
+        <link rel="alternate" hrefLang="ru" href={`https://photobooksgallery.am${window.location.pathname}?lang=ru`} />
+        <link rel="alternate" hrefLang="hy" href={`https://photobooksgallery.am${window.location.pathname}?lang=hy`} />
+        <link rel="alternate" hrefLang="en" href={`https://photobooksgallery.am${window.location.pathname}?lang=en`} />
+        <link rel="alternate" hrefLang="x-default" href={`https://photobooksgallery.am${window.location.pathname}`} />
       </Helmet>
       
       <Header />

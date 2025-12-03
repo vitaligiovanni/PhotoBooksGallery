@@ -628,12 +628,12 @@ export default function Landing() {
         {/* Additional SEO */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="PhotoBooksGallery" />
-        <link rel="canonical" href="https://photobooksgallery.am/" />
+        <link rel="canonical" href={`https://photobooksgallery.am${window.location.pathname}${window.location.search || ''}`} />
         
         {/* hreflang for multilingual support */}
-        <link rel="alternate" hrefLang="ru" href="https://photobooksgallery.am/ru" />
-        <link rel="alternate" hrefLang="hy" href="https://photobooksgallery.am/hy" />
-        <link rel="alternate" hrefLang="en" href="https://photobooksgallery.am/en" />
+        <link rel="alternate" hrefLang="ru" href={`https://photobooksgallery.am${window.location.pathname}?lang=ru`} />
+        <link rel="alternate" hrefLang="hy" href={`https://photobooksgallery.am${window.location.pathname}?lang=hy`} />
+        <link rel="alternate" hrefLang="en" href={`https://photobooksgallery.am${window.location.pathname}?lang=en`} />
         <link rel="alternate" hrefLang="x-default" href="https://photobooksgallery.am/" />
         
         {/* Schema.org LocalBusiness + Organization */}
@@ -1135,7 +1135,7 @@ function DynamicAdaptiveHero({ t, scrollToEditor }: DynamicHeroProps) {
         loop
         playsInline
         preload="auto"
-        poster="/videos/photobooksgallery-hero-poster.jpg"
+        poster="/og-image.jpg"
         onError={(e) => console.warn('[HeroVideo] error loading video', e)}
         onLoadedData={() => console.log('[HeroVideo] loaded')}
       >

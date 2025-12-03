@@ -21,7 +21,7 @@ const Contacts: React.FC = () => {
         <meta property="og:url" content="https://photobooksgallery.am/contacts" />
         <meta property="og:title" content={t('contactsPageTitle')} />
         <meta property="og:description" content={t('contactsPageDescription')} />
-        <meta property="og:image" content="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="og:image" content="https://photobooksgallery.am/og-image.jpg" />
         <meta property="og:site_name" content="PhotoBooksGallery" />
         
         {/* Twitter */}
@@ -29,19 +29,19 @@ const Contacts: React.FC = () => {
         <meta property="twitter:url" content="https://photobooksgallery.am/contacts" />
         <meta property="twitter:title" content={t('contactsPageTitle')} />
         <meta property="twitter:description" content={t('contactsPageDescription')} />
-        <meta property="twitter:image" content="https://images.unsplash.com/photo-1423666639041-f56000c27a9a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=630" />
+        <meta property="twitter:image" content="https://photobooksgallery.am/og-image.jpg" />
         <meta name="twitter:site" content="@photobooksgallery" />
         
         {/* Additional SEO */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="PhotoBooksGallery" />
-        <link rel="canonical" href="https://photobooksgallery.am/contacts" />
+        <link rel="canonical" href={`https://photobooksgallery.am${window.location.pathname}${window.location.search || ''}`} />
         
         {/* hreflang for multilingual support */}
-        <link rel="alternate" hrefLang="ru" href="https://photobooksgallery.am/ru/contacts" />
-        <link rel="alternate" hrefLang="hy" href="https://photobooksgallery.am/hy/contacts" />
-        <link rel="alternate" hrefLang="en" href="https://photobooksgallery.am/en/contacts" />
-        <link rel="alternate" hrefLang="x-default" href="https://photobooksgallery.am/contacts" />
+        <link rel="alternate" hrefLang="ru" href={`https://photobooksgallery.am${window.location.pathname}?lang=ru`} />
+        <link rel="alternate" hrefLang="hy" href={`https://photobooksgallery.am${window.location.pathname}?lang=hy`} />
+        <link rel="alternate" hrefLang="en" href={`https://photobooksgallery.am${window.location.pathname}?lang=en`} />
+        <link rel="alternate" hrefLang="x-default" href={`https://photobooksgallery.am${window.location.pathname}`} />
       </Helmet>
       
       <Header />

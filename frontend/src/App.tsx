@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
 import { lazy, Suspense } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -83,6 +83,22 @@ function Router() {
   );
 }
 
+function LanguageRouter() {
+  const [location] = useLocation();
+  const match = location.match(/^\/(ru|hy|en)(?:\/(.*)|$)/);
+  const lang = match ? (match[1] as 'ru'|'hy'|'en') : null;
+  const base = lang ? `/${lang}` : '';
+  if (lang && i18n.language !== lang) {
+    // Change i18n language based on URL prefix
+    i18n.changeLanguage(lang);
+  }
+  return (
+    <WouterRouter base={base}>
+      <Router />
+    </WouterRouter>
+  );
+}
+
 function App() {
   return (
     <HelmetProvider>
@@ -92,7 +108,7 @@ function App() {
             <TooltipProvider>
               <Toaster />
               <AppLayout>
-                <Router />
+                <LanguageRouter />
                 <Suspense fallback={null}>
                   <AppPopups />
                 </Suspense>

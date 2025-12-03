@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { buildAlternateUrls } from '@/lib/localePath';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -604,7 +605,10 @@ export default function Landing() {
 
   return (
     <>
-      <Helmet>
+      <Helmet htmlAttributes={{ lang: ((): any => {
+        const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
+        return m ? m[1] : 'x-default';
+      })() }}>
         <title>{t('landingPageTitle')}</title>
         <meta name="description" content={t('landingPageDescription')} />
         <meta name="keywords" content={t('landingPageKeywords')} />
@@ -628,13 +632,19 @@ export default function Landing() {
         {/* Additional SEO */}
         <meta name="robots" content="index, follow" />
         <meta name="author" content="PhotoBooksGallery" />
-        <link rel="canonical" href={`https://photobooksgallery.am${window.location.pathname}${window.location.search || ''}`} />
-        
-        {/* hreflang for multilingual support */}
-        <link rel="alternate" hrefLang="ru" href={`https://photobooksgallery.am${window.location.pathname}?lang=ru`} />
-        <link rel="alternate" hrefLang="hy" href={`https://photobooksgallery.am${window.location.pathname}?lang=hy`} />
-        <link rel="alternate" hrefLang="en" href={`https://photobooksgallery.am${window.location.pathname}?lang=en`} />
-        <link rel="alternate" hrefLang="x-default" href="https://photobooksgallery.am/" />
+        <link rel="canonical" href={`https://photobooksgallery.am${window.location.pathname}`} />
+        {/* hreflang for multilingual support (path prefixes) */}
+        {(() => {
+          const alt = buildAlternateUrls('https://photobooksgallery.am', window.location.pathname);
+          return (
+            <>
+              <link rel="alternate" hrefLang="ru" href={alt.ru} />
+              <link rel="alternate" hrefLang="hy" href={alt.hy} />
+              <link rel="alternate" hrefLang="en" href={alt.en} />
+              <link rel="alternate" hrefLang="x-default" href={alt.xDefault} />
+            </>
+          );
+        })()}
         
         {/* Schema.org LocalBusiness + Organization */}
         <script type="application/ld+json">

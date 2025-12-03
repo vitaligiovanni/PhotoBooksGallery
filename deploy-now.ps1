@@ -20,7 +20,7 @@ function Exec($cmd) {
 # Move into frontend
 Push-Location "$PSScriptRoot\frontend"
 try {
-  Exec 'npm run build'
+  Exec 'npm run build:prerender'
 }
 finally {
   Pop-Location

@@ -45,7 +45,7 @@ const GraduationAlbums: React.FC = () => {
       })() }}>
         {(() => {
           const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
-          const currentLang = m ? m[1] : 'ru';
+          const currentLang = m ? m[1] : 'hy'; // default to HY (Armenian) - matches i18n default
           const localizedBusinessName = t('brandLocalBusinessName', { defaultValue: 'PhotoBooksGallery' });
           const localizedWebsiteDesc = t('graduationPageDescription');
           (window as any).__JSONLD_GRAD = { currentLang, localizedBusinessName, localizedWebsiteDesc };

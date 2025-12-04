@@ -611,7 +611,7 @@ export default function Landing() {
       })() }}>
         {(() => {
           const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
-          const currentLang = m ? m[1] : 'ru';
+          const currentLang = m ? m[1] : 'hy'; // default to HY (Armenian) - matches i18n default
           // Localized fields derived from i18n
           const localizedBusinessName = t('brandLocalBusinessName', { defaultValue: 'PhotoBooksGallery' });
           const localizedWebsiteDesc = t('landingPageDescription');

@@ -3,15 +3,28 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import serveStatic from 'serve-static';
-import finalhandler from 'finalhandler';
 import fs from 'fs/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const distDir = path.resolve(__dirname, '..', 'dist');
 
+// SPA fallback: serve static files, fallback to index.html for non-existing paths
 const serve = serveStatic(distDir, { maxAge: 0, index: ['index.html'] });
-const server = http.createServer((req, res) => serve(req, res, finalhandler(req, res)));
+const server = http.createServer((req, res) => {
+  serve(req, res, async () => {
+    // Fallback: serve index.html for SPA routes
+    const indexPath = path.join(distDir, 'index.html');
+    try {
+      const html = await fs.readFile(indexPath, 'utf8');
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+      res.end(html);
+    } catch (err) {
+      res.writeHead(500);
+      res.end('Internal Server Error');
+    }
+  });
+});
 let baseUrl = '';
 
 const routes = [

@@ -1418,7 +1418,8 @@ export function createARRouter(): Router {
           photoUrl: `objects/ar-storage/${arId}/photo.jpg`,
           videoUrl: `objects/ar-storage/${arId}/video.mp4`,
           status: 'pending',
-        }).returning();
+          isDemo: false, // NOT a demo project - regular AR project
+        } as any).returning();
 
         // Trigger compilation in background (async)
         compileARProject(arId).catch((e) => {

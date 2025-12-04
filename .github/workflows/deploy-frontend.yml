@@ -26,6 +26,11 @@ jobs:
         run: |
           npm ci
 
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: |
+          npx playwright install chromium
+
       - name: Build + Prerender
         working-directory: frontend
         run: |

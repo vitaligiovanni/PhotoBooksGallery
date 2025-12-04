@@ -59,6 +59,28 @@ export default function Home() {
         const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
         return m ? m[1] : 'x-default';
       })() }}>
+        {(() => {
+          const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
+          const currentLang = m ? m[1] : 'ru';
+          const localizedBusinessName = t('brandLocalBusinessName', { defaultValue: 'PhotoBooksGallery' });
+          const localizedWebsiteDesc = t('homePageDescription');
+          const offerCatalogTitle = t('offerCatalogTitle', { defaultValue: t('categoriesTitle') });
+          const offerPhotobooks = t('offerPhotobooks', { defaultValue: 'Photobooks' });
+          const offerGraduation = t('offerGraduationAlbums', { defaultValue: 'Graduation albums' });
+          const offerFrames = t('offerFrames', { defaultValue: 'Photo frames' });
+          const offerAR = t('offerARPhotos', { defaultValue: 'Living photos AR' });
+          (window as any).__JSONLD_HOME = {
+            localizedBusinessName,
+            localizedWebsiteDesc,
+            currentLang,
+            offerCatalogTitle,
+            offerPhotobooks,
+            offerGraduation,
+            offerFrames,
+            offerAR,
+          };
+          return null;
+        })()}
         <title>{t('homePageTitle')}</title>
         <meta name="description" content={t('homePageDescription')} />
         <meta name="keywords" content={t('homePageKeywords')} />
@@ -94,6 +116,61 @@ export default function Home() {
             </>
           );
         })()}
+        <script type="application/ld+json">
+          {JSON.stringify((() => {
+            const s = (window as any).__JSONLD_HOME || {};
+            const currentLang = s.currentLang || 'ru';
+            const localizedBusinessName = s.localizedBusinessName || 'PhotoBooksGallery';
+            const localizedWebsiteDesc = s.localizedWebsiteDesc || t('homePageDescription');
+            const offerCatalogTitle = s.offerCatalogTitle || t('categoriesTitle');
+            const offerPhotobooks = s.offerPhotobooks || 'Photobooks';
+            const offerGraduation = s.offerGraduation || 'Graduation albums';
+            const offerFrames = s.offerFrames || 'Photo frames';
+            const offerAR = s.offerAR || 'Living photos AR';
+            return {
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "LocalBusiness",
+                  "@id": "https://photobooksgallery.am/#localbusiness",
+                  "name": localizedBusinessName,
+                  "image": "https://photobooksgallery.am/og-image.jpg",
+                  "url": "https://photobooksgallery.am",
+                  "telephone": "+374-55-54-88-40",
+                  "priceRange": "$$",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Online Service",
+                    "addressLocality": "Yerevan",
+                    "addressRegion": "Yerevan",
+                    "postalCode": "0001",
+                    "addressCountry": "AM"
+                  },
+                  "areaServed": { "@type": "Country", "name": "Armenia" },
+                  "hasOfferCatalog": {
+                    "@type": "OfferCatalog",
+                    "name": offerCatalogTitle,
+                    "itemListElement": [
+                      { "@type": "OfferCatalog", "name": offerPhotobooks },
+                      { "@type": "OfferCatalog", "name": offerGraduation },
+                      { "@type": "OfferCatalog", "name": offerFrames },
+                      { "@type": "OfferCatalog", "name": offerAR }
+                    ]
+                  }
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://photobooksgallery.am/#website",
+                  "url": "https://photobooksgallery.am",
+                  "name": "PhotoBooksGallery",
+                  "description": localizedWebsiteDesc,
+                  "publisher": { "@id": "https://photobooksgallery.am/#organization" },
+                  "inLanguage": [currentLang]
+                }
+              ]
+            };
+          })())}
+        </script>
       </Helmet>
       
       <div className="min-h-screen page-bg">

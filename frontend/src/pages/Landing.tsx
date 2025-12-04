@@ -609,6 +609,29 @@ export default function Landing() {
         const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
         return m ? m[1] : 'x-default';
       })() }}>
+        {(() => {
+          const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
+          const currentLang = m ? m[1] : 'ru';
+          // Localized fields derived from i18n
+          const localizedBusinessName = t('brandLocalBusinessName', { defaultValue: 'PhotoBooksGallery' });
+          const localizedWebsiteDesc = t('landingPageDescription');
+          const offerCatalogTitle = t('offerCatalogTitle', { defaultValue: t('categoriesTitle') });
+          const offerPhotobooks = t('offerPhotobooks', { defaultValue: 'Photobooks' });
+          const offerGraduation = t('offerGraduationAlbums', { defaultValue: 'Graduation albums' });
+          const offerFrames = t('offerFrames', { defaultValue: 'Photo frames' });
+          const offerAR = t('offerARPhotos', { defaultValue: 'Living photos AR' });
+          (window as any).__JSONLD = {
+            localizedBusinessName,
+            localizedWebsiteDesc,
+            currentLang,
+            offerCatalogTitle,
+            offerPhotobooks,
+            offerGraduation,
+            offerFrames,
+            offerAR,
+          };
+          return null;
+        })()}
         <title>{t('landingPageTitle')}</title>
         <meta name="description" content={t('landingPageDescription')} />
         <meta name="keywords" content={t('landingPageKeywords')} />
@@ -646,108 +669,105 @@ export default function Landing() {
           );
         })()}
         
-        {/* Schema.org LocalBusiness + Organization */}
+        {/* Schema.org LocalBusiness + Organization (localized) */}
         <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@graph": [
-              {
-                "@type": "Organization",
-                "@id": "https://photobooksgallery.am/#organization",
-                "name": "PhotoBooksGallery",
-                "url": "https://photobooksgallery.am",
-                "logo": {
-                  "@type": "ImageObject",
-                  "url": "https://photobooksgallery.am/logo.png"
-                },
-                "sameAs": [
-                  "https://www.facebook.com/photobooksgallery",
-                  "https://instagram.com/photo_books_gallery"
-                ],
-                "contactPoint": [
-                  {
-                    "@type": "ContactPoint",
-                    "contactType": "customer support",
-                    "telephone": "+374-55-54-88-40",
-                    "availableLanguage": ["ru","hy","en"]
+          {JSON.stringify((() => {
+            const jsonldState = (window as any).__JSONLD || {};
+            const currentLang = jsonldState.currentLang || 'ru';
+            const localizedBusinessName = jsonldState.localizedBusinessName || 'PhotoBooksGallery';
+            const localizedWebsiteDesc = jsonldState.localizedWebsiteDesc || 'Онлайн фотосервис в Армении';
+            const offerCatalogTitle = jsonldState.offerCatalogTitle || 'Каталог предложений';
+            const offerPhotobooks = jsonldState.offerPhotobooks || 'Photobooks';
+            const offerGraduation = jsonldState.offerGraduation || 'Graduation albums';
+            const offerFrames = jsonldState.offerFrames || 'Photo frames';
+            const offerAR = jsonldState.offerAR || 'Living photos AR';
+            return {
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://photobooksgallery.am/#organization",
+                  "name": "PhotoBooksGallery",
+                  "url": "https://photobooksgallery.am",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://photobooksgallery.am/logo.png"
                   },
-                  {
-                    "@type": "ContactPoint",
-                    "contactType": "WhatsApp",
-                    "telephone": "+374-77-54-88-40"
-                  }
-                ]
-              },
-              {
-                "@type": "LocalBusiness",
-                "@id": "https://photobooksgallery.am/#localbusiness",
-                "name": "PhotoBooksGallery - Онлайн фотосервис",
-                "image": "https://photobooksgallery.am/og-image.jpg",
-                "url": "https://photobooksgallery.am",
-                "telephone": "+374-55-54-88-40",
-                "priceRange": "$$",
-                "address": {
-                  "@type": "PostalAddress",
-                  "streetAddress": "Online Service",
-                  "addressLocality": "Yerevan",
-                  "addressRegion": "Yerevan",
-                  "postalCode": "0001",
-                  "addressCountry": "AM"
-                },
-                "areaServed": {
-                  "@type": "Country",
-                  "name": "Armenia"
-                },
-                "openingHoursSpecification": [
-                  {
-                    "@type": "OpeningHoursSpecification",
-                    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-                    "opens": "10:00",
-                    "closes": "19:00"
-                  },
-                  {
-                    "@type": "OpeningHoursSpecification",
-                    "dayOfWeek": "Saturday",
-                    "opens": "11:00",
-                    "closes": "17:00"
-                  }
-                ],
-                "hasOfferCatalog": {
-                  "@type": "OfferCatalog",
-                  "name": "Фотокниги и фотосувениры",
-                  "itemListElement": [
+                  "sameAs": [
+                    "https://www.facebook.com/photobooksgallery",
+                    "https://instagram.com/photo_books_gallery"
+                  ],
+                  "contactPoint": [
                     {
-                      "@type": "OfferCatalog",
-                      "name": "Фотокниги"
+                      "@type": "ContactPoint",
+                      "contactType": "customer support",
+                      "telephone": "+374-55-54-88-40",
+                      "availableLanguage": ["ru","hy","en"]
                     },
                     {
-                      "@type": "OfferCatalog",
-                      "name": "Выпускные альбомы"
-                    },
-                    {
-                      "@type": "OfferCatalog",
-                      "name": "Фоторамки"
-                    },
-                    {
-                      "@type": "OfferCatalog",
-                      "name": "Живые фотографии AR"
+                      "@type": "ContactPoint",
+                      "contactType": "WhatsApp",
+                      "telephone": "+374-77-54-88-40"
                     }
                   ]
-                }
-              },
-              {
-                "@type": "WebSite",
-                "@id": "https://photobooksgallery.am/#website",
-                "url": "https://photobooksgallery.am",
-                "name": "PhotoBooksGallery",
-                "description": "Создание фотокниг и фотосувениров в Армении",
-                "publisher": {
-                  "@id": "https://photobooksgallery.am/#organization"
                 },
-                "inLanguage": ["ru", "hy", "en"]
-              }
-            ]
-          })}
+                {
+                  "@type": "LocalBusiness",
+                  "@id": "https://photobooksgallery.am/#localbusiness",
+                  "name": localizedBusinessName,
+                  "image": "https://photobooksgallery.am/og-image.jpg",
+                  "url": "https://photobooksgallery.am",
+                  "telephone": "+374-55-54-88-40",
+                  "priceRange": "$$",
+                  "address": {
+                    "@type": "PostalAddress",
+                    "streetAddress": "Online Service",
+                    "addressLocality": "Yerevan",
+                    "addressRegion": "Yerevan",
+                    "postalCode": "0001",
+                    "addressCountry": "AM"
+                  },
+                  "areaServed": {
+                    "@type": "Country",
+                    "name": "Armenia"
+                  },
+                  "openingHoursSpecification": [
+                    {
+                      "@type": "OpeningHoursSpecification",
+                      "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+                      "opens": "10:00",
+                      "closes": "19:00"
+                    },
+                    {
+                      "@type": "OpeningHoursSpecification",
+                      "dayOfWeek": "Saturday",
+                      "opens": "11:00",
+                      "closes": "17:00"
+                    }
+                  ],
+                  "hasOfferCatalog": {
+                    "@type": "OfferCatalog",
+                    "name": offerCatalogTitle,
+                    "itemListElement": [
+                      { "@type": "OfferCatalog", "name": offerPhotobooks },
+                      { "@type": "OfferCatalog", "name": offerGraduation },
+                      { "@type": "OfferCatalog", "name": offerFrames },
+                      { "@type": "OfferCatalog", "name": offerAR }
+                    ]
+                  }
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://photobooksgallery.am/#website",
+                  "url": "https://photobooksgallery.am",
+                  "name": "PhotoBooksGallery",
+                  "description": localizedWebsiteDesc,
+                  "publisher": { "@id": "https://photobooksgallery.am/#organization" },
+                  "inLanguage": [currentLang]
+                }
+              ]
+            };
+          })())}
         </script>
       </Helmet>
       

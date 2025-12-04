@@ -43,6 +43,14 @@ const GraduationAlbums: React.FC = () => {
         const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
         return m ? m[1] : 'x-default';
       })() }}>
+        {(() => {
+          const m = window.location.pathname.match(/^\/(ru|hy|en)(?:\/?|$)/);
+          const currentLang = m ? m[1] : 'ru';
+          const localizedBusinessName = t('brandLocalBusinessName', { defaultValue: 'PhotoBooksGallery' });
+          const localizedWebsiteDesc = t('graduationPageDescription');
+          (window as any).__JSONLD_GRAD = { currentLang, localizedBusinessName, localizedWebsiteDesc };
+          return null;
+        })()}
         <title>{t('graduationPageTitle')}</title>
         <meta name="description" content={t('graduationPageDescription')} />
         <meta name="keywords" content={t('graduationPageKeywords')} />
@@ -80,24 +88,38 @@ const GraduationAlbums: React.FC = () => {
           );
         })()}
 
-        {/* Structured Data for Graduation Albums Service */}
+        {/* Structured Data for Graduation Albums Service (localized) */}
         <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Service",
-       "name": t('graduationHeroTitle'),
-            "description": t('graduationPageDescription'),
-            "provider": {
-              "@type": "Organization",
-              "name": "PhotoBooksGallery",
-              "url": "https://photobooksgallery.am"
-            },
-            "areaServed": "Armenia",
-            "offers": {
-              "@type": "Offer",
-              "description": t('graduationHeroSubtitle')
-            }
-          })}
+          {JSON.stringify((() => {
+            const s = (window as any).__JSONLD_GRAD || {};
+            const currentLang = s.currentLang || 'ru';
+            const localizedBusinessName = s.localizedBusinessName || 'PhotoBooksGallery';
+            const localizedWebsiteDesc = s.localizedWebsiteDesc || t('graduationPageDescription');
+            return {
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Service",
+                  "name": t('graduationHeroTitle'),
+                  "description": localizedWebsiteDesc,
+                  "provider": {
+                    "@type": "Organization",
+                    "name": localizedBusinessName,
+                    "url": "https://photobooksgallery.am"
+                  },
+                  "areaServed": "Armenia",
+                  "offers": { "@type": "Offer", "description": t('graduationHeroSubtitle') }
+                },
+                {
+                  "@type": "WebPage",
+                  "@id": "https://photobooksgallery.am/graduation-albums",
+                  "name": t('graduationPageTitle'),
+                  "inLanguage": [currentLang],
+                  "isPartOf": { "@id": "https://photobooksgallery.am/#website" }
+                }
+              ]
+            };
+          })())}
         </script>
       </Helmet>
       

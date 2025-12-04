@@ -104,6 +104,10 @@
     <lastmod>2025-12-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://photobooksgallery.am/ru/category/photobooks"/>
+    <xhtml:link rel="alternate" hreflang="hy" href="https://photobooksgallery.am/hy/category/photobooks"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://photobooksgallery.am/en/category/photobooks"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://photobooksgallery.am/category/photobooks"/>
   </url>
   
   <url>
@@ -111,6 +115,10 @@
     <lastmod>2025-12-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://photobooksgallery.am/ru/category/frames"/>
+    <xhtml:link rel="alternate" hreflang="hy" href="https://photobooksgallery.am/hy/category/frames"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://photobooksgallery.am/en/category/frames"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://photobooksgallery.am/category/frames"/>
   </url>
   
   <url>
@@ -118,6 +126,10 @@
     <lastmod>2025-12-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://photobooksgallery.am/ru/category/souvenirs"/>
+    <xhtml:link rel="alternate" hreflang="hy" href="https://photobooksgallery.am/hy/category/souvenirs"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://photobooksgallery.am/en/category/souvenirs"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://photobooksgallery.am/category/souvenirs"/>
   </url>
   
   <url>
@@ -125,6 +137,10 @@
     <lastmod>2025-12-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+    <xhtml:link rel="alternate" hreflang="ru" href="https://photobooksgallery.am/ru/category/gifts"/>
+    <xhtml:link rel="alternate" hreflang="hy" href="https://photobooksgallery.am/hy/category/gifts"/>
+    <xhtml:link rel="alternate" hreflang="en" href="https://photobooksgallery.am/en/category/gifts"/>
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://photobooksgallery.am/category/gifts"/>
   </url>
   
 </urlset>

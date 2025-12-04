@@ -1,11 +1,13 @@
 name: Deploy Frontend
 
+# DISABLED: Use deploy.yml instead (full stack deployment)
 on:
-  push:
-    branches: [ "main" ]
-    paths:
-      - "frontend/**"
-      - ".github/workflows/deploy-frontend.yml"
+  workflow_dispatch:
+  # push:
+  #   branches: [ "main" ]
+  #   paths:
+  #     - "frontend/**"
+  #     - ".github/workflows/deploy-frontend.yml"
 
 jobs:
   build-and-deploy:

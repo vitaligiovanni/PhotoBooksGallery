@@ -14,6 +14,9 @@ export default defineConfig({
       '@assets': path.resolve(__dirname, '../assets'),
     },
   },
+  optimizeDeps: {
+    exclude: ['canvas'], // Exclude Node.js native modules from browser bundle
+  },
   server: {
     port: 3000,
     host: true,

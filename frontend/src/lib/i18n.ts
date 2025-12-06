@@ -5,13 +5,13 @@ const resources = {
   ru: {
     translation: {
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Фотокниги, выпускные альбомы, виньетки в Ереване",
-      landingPageDescription: "Создавайте уникальные фотокниги, выпускные альбомы с AR и виньетки в Армении. Онлайн редактор, премиум печать, быстрая доставка по Еревану.",
+      landingPageTitle: "Фотокниги и выпускные альбомы в Ереване | Онлайн редактор, быстрая печать",
+      landingPageDescription: "Профессиональная печать фотокниг, выпускных альбомов и виньеток в Ереване. Дополненная реальность (AR), живые фотографии, онлайн редактор. Изготовление за 1 день, доставка по всей Армении.",
       landingPageKeywords: "фотокниги Ереван, выпускные альбомы Армения, виньетки, фотокнига за день, фото сувениры, фотопечать, живые фотографии, AR фото",
       
       // Home Page SEO
-      homePageTitle: "PhotoBooksGallery - Заказать фотокнигу в Ереване | Цены и каталог",
-      homePageDescription: "Закажите фотокниги, выпускные альбомы и фотосувениры в Ереване. Быстрое изготовление, доставка по Армении. Создайте уникальный подарок!",
+      homePageTitle: "Заказать фотокнигу в Ереване — цены, каталог, доставка по Армении",
+      homePageDescription: "Закажите фотокниги, выпускные альбомы, виньетки и фотосувениры в Ереване. Большой каталог, доступные цены, быстрое изготовление. Доставка по всей Армении за 1-3 дня.",
       homePageKeywords: "купить фотокнигу Ереван, заказать фотоальбом Армения, цена фотокниги, выпускной альбом, фоторамки, подарки",
       
       photobooksDescription: "Создайте уникальные фотокниги с профессиональным качеством. Широкий выбор форматов, материалов и дизайнов.",
@@ -303,8 +303,8 @@ const resources = {
       contactCTAButton: "Написать в WhatsApp",
       
       // Graduation Albums Page
-      graduationPageTitle: "Выпускные альбомы - современные виньетки с дополненной реальностью | PhotoBooksGallery",
-      graduationPageDescription: "Создаем современные выпускные альбомы и виньетки с неповторимым дизайном. Дополненная реальность, качественные материалы, быстрая печать. Сохраните воспоминания о выпуске навсегда!",
+      graduationPageTitle: "Выпускные альбомы с дополненной реальностью в Ереване | Живые фото, виньетки",
+      graduationPageDescription: "Создаём современные выпускные альбомы и виньетки с технологией дополненной реальности (AR). Ваши фотографии оживают! Качественные материалы, индивидуальный дизайн, быстрая печать. Сохраните выпускные воспоминания навсегда.",
       graduationPageKeywords: "выпускные альбомы, виньетки, современные выпускные альбомы, дополненная реальность, выпускной альбом, школьные альбомы, университетские альбомы, память о выпуске",
       graduationHeroTitle: "Современные выпускные альбомы",
       graduationHeroSubtitle: "Создаем выпускные альбомы с неповторимым дизайном и дополненной реальностью",
@@ -319,8 +319,8 @@ const resources = {
       graduationModernDesc: "Используем передовые технологии печати и дизайна для создания альбомов, которые соответствуют современным стандартам и вкусам.",
       
       // About Page
-      aboutPageTitle: "О нас - PhotoBooksGallery | Создаем незабываемые фотокниги",
-      aboutPageDescription: "PhotoBooksGallery - создаем качественные фотокниги и фотосувениры с 2018 года. Онлайн редактор, быстрая печать фотографий.",
+      aboutPageTitle: "О студии печати фотокниг в Ереване | 14 лет опыта, более 5000 заказов",
+      aboutPageDescription: "Мы создаём качественные фотокниги, выпускные альбомы и фотосувениры в Армении с 2011 года. Онлайн редактор, профессиональная печать, быстрая доставка по Еревану. Более 5000 довольных клиентов доверили нам свои воспоминания.",
       aboutHeroTitle: "О нас",
       aboutHeroSubtitle: "Мы создаем воспоминания, которые останутся навсегда",
       aboutMissionTitle: "Наша миссия",
@@ -344,8 +344,8 @@ const resources = {
       aboutCTAButton: "Создать фотокнигу",
       
       // Contacts Page
-      contactsPageTitle: "Контакты - PhotoBooksGallery | Связаться с нами",
-      contactsPageDescription: "Свяжитесь с нами любым удобным способом: WhatsApp, Telegram, Instagram, Facebook, Email. Работаем 24/7 и отвечаем в течение 15 минут.",
+      contactsPageTitle: "Контакты | Заказать фотокниги в Ереване — адрес, телефон, WhatsApp",
+      contactsPageDescription: "Свяжитесь с нами любым удобным способом: WhatsApp, Telegram, Instagram, Facebook, Email. Работаем 24/7 и отвечаем в течение 15 минут. Адрес студии в Ереване, доставка по всей Армении.",
       
       // Form actions
       cancel: "Отмена",
@@ -616,13 +616,13 @@ const resources = {
   hy: {
     translation: {
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Ֆոտոգրքեր, վինետկա, ավարտական ալբոմներ Հայաստանում",
-      landingPageDescription: "Ստեղծեք եզակի ֆոտոգրքեր, վինետկա և ավարտական ալբոմներ PhotoBooksGallery-ում: Ֆոտոգիրք մեկ օրում, ժամանակակից ավարտական ալբոմներ ընդլայնված իրականությամբ: Օնլայն խմբագիր, բարձր որակի տպագրություն, արագ առաքում:",
+      landingPageTitle: "Ֆոտոգրքեր և ավարտական ալբոմներ Երևանում | Օնլայն խմբագիր, արագ տպագրություն",
+      landingPageDescription: "Պրոֆեսիոնալ տպագրություն ֆոտոգրքերի, ավարտական ալբոմների և վինետկաների Երևանում։ Ընդլայնված իրականություն (AR), կենդանի լուսանկարներ, օնլայն խմբագիր։ Պատրաստում 1 օրում, առաքում ամբողջ Հայաստանում։",
       landingPageKeywords: "ֆոտոգրքեր, ֆոտոգիրք, վինետկա, ավարտական ալբոմներ, ֆոտոգիրք մեկ օրում, ընդլայնված իրականություն, ֆոտոհուշարձաններ, ֆոտո տպագրություն, ֆոտոշրջանակներ, նվերներ, Հայաստան, օնլայն խմբագիր, PhotoBooksGallery",
       
       // Home Page SEO (HY)
-      homePageTitle: "PhotoBooksGallery - Պատվիրել ֆոտոգիրք Երևանում | Գներ և կատալոգ",
-      homePageDescription: "Պատվիրեք ֆոտոգրքեր, ավարտական ալբոմներ և ֆոտո հուշանիշներ Երևանում։ Արագ արտադրություն, առաքում ամբողջ Հայաստանի տարածքում։ Ստեղծեք եզակի նվեր։",
+      homePageTitle: "Պատվիրել ֆոտոգիրք Երևանում — գներ, կատալոգ, առաքում Հայաստանում",
+      homePageDescription: "Պատվիրեք ֆոտոգրքեր, ավարտական ալբոմներ, վինետկա և ֆոտո հուշանիշներ Երևանում։ Մեծ կատալոգ, մատչելի գներ, արագ արտադրություն։ Առաքում ամբողջ Հայաստանում 1-3 օրում։",
       homePageKeywords: "ֆոտոգիրք Երևան, պատվիրել ֆոտոալբոմ ՀՀ, ֆոտոգրքի գին, ավարտական ալբոմ, լուսանկարների շրջանակ, նվերներ",
       photobooksDescription: "Ստեղծեք եզակի ֆոտոգրքեր մասնագիտական որակով: Լայն տեսականի ձևաչափեր, նյութեր և դիզայներ:",
 
@@ -887,8 +887,8 @@ const resources = {
       termsOfService: "Օգտագործման պայմաններ",
 
       // About Page
-      aboutPageTitle: "Մեր մասին - Memoria | Ստեղծում ենք անմոռանալի ֆոտոգրքեր և ֆոտոսուվենիրներ",
-      aboutPageDescription: "Memoria - ստեղծում ենք որակյալ ֆոտոգրքեր և ֆոտոսուվենիրներ 2018 թվականից: Առցանց խմբագիր, արագ ֆոտոտպագրություն և առաքում ամբողջ երկրով:",
+      aboutPageTitle: "Ֆոտոգրքերի տպագրության ստուդիա Երևանում | 14 տարվա փորձ, ավելի քան 5000 պատվերներ",
+      aboutPageDescription: "Մենք ստեղծում ենք որակյալ ֆոտոգրքեր, ավարտական ալբոմներ և ֆոտո հուշանիշներ Հայաստանում 2011 թվականից։ Օնլայն խմբագիր, պրոֆեսիոնալ տպագրություն, արագ առաքում Երևանում։ Ավելի քան 5000 գոհ հաճախորդներ վստահել են մեզ իրենց հիշողությունները։",
       aboutHeroTitle: "Պահպանում ենք ձեր հիշողությունները",
       aboutHeroSubtitle: "Ստեղծում ենք որակյալ ֆոտոգրքեր և ֆոտոսուվենիրներ հոգատարությամբ և մանրամասնությունների նկատմամբ սիրով",
       aboutMissionTitle: "Մեր առաքելությունը",
@@ -904,8 +904,8 @@ const resources = {
       aboutCTAButton: "Սկսել ստեղծումը",
       
       // Contacts Page
-      contactsPageTitle: "Կապեր - Memoria | Կապվել մեզ հետ",
-      contactsPageDescription: "Կապվեք մեզ հետ ցանկացած հարմար եղանակով: WhatsApp, Telegram, Instagram, Facebook, Email: Աշխատում ենք 24/7 և պատասխանում ենք 15 րոպեի ընթացքում:",
+      contactsPageTitle: "Կապեր | Պատվիրել ֆոտոգրքեր Երևանում — հասցե, հեռախոս, WhatsApp",
+      contactsPageDescription: "Կապվեք մեզ հետ ցանկացած հարմար եղանակով՝ WhatsApp, Telegram, Instagram, Facebook, Email։ Աշխատում ենք 24/7 և պատասխանում ենք 15 րոպեի ընթացքում։ Ստուդիայի հասցեն Երևանում, առաքում ամբողջ Հայաստանում։",
       
       // About Page Features
       onlineEditor: "Առցանց խմբագիր",
@@ -1164,8 +1164,8 @@ const resources = {
       placeOrder: "Պատվիրել",
       
       // Graduation Albums Page
-      graduationPageTitle: "Ավարտական ալբոմներ - ժամանակակից վինետկա ընդլայնված իրականությամբ | PhotoBooksGallery",
-      graduationPageDescription: "Ստեղծում ենք ժամանակակից ավարտական ալբոմներ և վինետկա անկրկնելի դիզայնով: Ընդլայնված իրականություն, որակյալ նյութեր, արագ տպագրություն: Պահպանեք ավարտական հիշողությունները ընդմիշտ:",
+      graduationPageTitle: "Ավարտական ալբոմներ ընդլայնված իրականությամբ Երևանում | Կենդանի լուսանկարներ, վինետկա",
+      graduationPageDescription: "Ստեղծում ենք ժամանակակից ավարտական ալբոմներ և վինետկա ընդլայնված իրականության տեխնոլոգիայով (AR)։ Ձեր լուսանկարները կենդանանում են։ Որակյալ նյութեր, անհատական ​​դիզայն, արագ տպագրություն։ Պահպանեք ավարտական հիշողությունները ընդմիշտ։",
       graduationPageKeywords: "ավարտական ալբոմներ, վինետկա, ժամանակակից ավարտական ալբոմներ, ընդլայնված իրականություն, ավարտական ալբոմ, դպրոցական ալբոմներ, համալսարանական ալբոմներ, ավարտի հիշողություն",
       graduationHeroTitle: "Ժամանակակից ավարտական ալբոմներ",
       graduationHeroSubtitle: "Ստեղծում ենք ավարտական ալբոմներ անկրկնելի դիզայնով և ընդլայնված իրականությամբ",
@@ -1211,13 +1211,13 @@ const resources = {
       bulkErrorTags: "Չհաջողվեց ավելացնել հեշթեգեր",
       bulkErrorStatus: "Չհաջողվեց թարմացնել կարգավիճակները",
       // SEO Meta Tags
-      landingPageTitle: "PhotoBooksGallery - Photobooks, Graduation Albums, Vignettes in Yerevan, Armenia",
+      landingPageTitle: "Photobooks and Graduation Albums in Yerevan | Online Editor, Fast Printing",
       landingPageDescription: "Create unique photobooks, graduation albums and vignettes in Armenia. Same-day photobooks, modern graduation albums with augmented reality. Online editor, high-quality printing, fast delivery in Yerevan.",
       landingPageKeywords: "photobooks Yerevan, graduation albums Armenia, vignettes, same-day photobook, photo gifts, photo printing, living photos, AR photos",
       
       // Home Page SEO
-      homePageTitle: "PhotoBooksGallery - Order Photobooks in Yerevan | Prices & Catalog",
-      homePageDescription: "Order photobooks, graduation albums and photo souvenirs in Yerevan. Fast production, delivery across Armenia. Create a unique gift!",
+      homePageTitle: "Order Photobook in Yerevan — Prices, Catalog, Delivery in Armenia",
+      homePageDescription: "Order photobooks, graduation albums, vignettes and photo souvenirs in Yerevan. Large catalog, affordable prices, fast production. Delivery throughout Armenia in 1-3 days.",
       homePageKeywords: "buy photobook Yerevan, order photo album Armenia, photobook price, graduation album, photo frames, gifts",
       
       photobooksDescription: "Create unique photobooks with professional quality. Wide selection of formats, materials and designs.",
@@ -1465,8 +1465,8 @@ const resources = {
       contactCTAButton: "Write on WhatsApp",
       
       // About Page
-      aboutPageTitle: "About Us - Memoria | Creating Unforgettable Photobooks",
-      aboutPageDescription: "Memoria - creating quality photobooks and photo souvenirs since 2018. Online editor, fast photo printing.",
+      aboutPageTitle: "Photobook Printing Studio in Yerevan | 14 Years Experience, 5000+ Orders",
+      aboutPageDescription: "We create quality photobooks, graduation albums and photo souvenirs in Armenia since 2011. Online editor, professional printing, fast delivery in Yerevan. More than 5000 satisfied customers trusted us with their memories.",
       aboutHeroTitle: "About Us",
       aboutHeroSubtitle: "We create memories that will last forever",
       aboutMissionTitle: "Our Mission",
@@ -1490,8 +1490,8 @@ const resources = {
       aboutCTAButton: "Create Photobook",
       
       // Contacts Page
-      contactsPageTitle: "Contacts - Memoria | Contact Us",
-      contactsPageDescription: "Contact us in any convenient way: WhatsApp, Telegram, Instagram, Facebook, Email. We work 24/7 and respond within 15 minutes.",
+      contactsPageTitle: "Contacts | Order Photobooks in Yerevan — Address, Phone, WhatsApp",
+      contactsPageDescription: "Contact us in any convenient way: WhatsApp, Telegram, Instagram, Facebook, Email. We work 24/7 and respond within 15 minutes. Studio address in Yerevan, delivery throughout Armenia.",
       
       // Form actions
       cancel: "Cancel",
@@ -1758,7 +1758,7 @@ const resources = {
       placeOrder: "Place Order",
       
       // Graduation Albums Page
-      graduationPageTitle: "Graduation Albums - Modern Vignettes with Augmented Reality | PhotoBooksGallery",
+      graduationPageTitle: "Graduation Albums with Augmented Reality in Yerevan | Living Photos, Vignettes",
       graduationPageDescription: "Create modern graduation albums and vignettes with unique design. Augmented reality features, quality materials, fast printing. Preserve graduation memories forever!",
       graduationPageKeywords: "graduation albums, vignettes, modern graduation albums, augmented reality, graduation album, school albums, university albums, graduation memory",
       graduationHeroTitle: "Modern Graduation Albums",

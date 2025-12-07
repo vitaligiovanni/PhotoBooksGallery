@@ -1370,6 +1370,140 @@ export function createARRouter(): Router {
   // ============================================================
 
   /**
+   * POST /api/ar/create-admin
+   * Create AR project by admin (NOT demo - permanent project)
+   * Body: { projectName, phone?, email?, notes?, expiresAt? } + multipart files (photo, video)
+   */
+  router.post(
+    '/create-admin',
+    requireAuth,
+    upload.fields([
+      { name: 'photo', maxCount: 1 },
+      { name: 'video', maxCount: 1 },
+    ]),
+    async (req: Request, res: Response) => {
+      try {
+        const userRole = (req as any).user?.userData?.role;
+        if (userRole !== 'admin') {
+          return res.status(403).json({ error: 'Admin access required' });
+        }
+
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;
+        const { projectName, phone, email, notes, expiresAt } = req.body;
+
+        // Validate files
+        if (!files.photo || !files.video) {
+          return res.status(400).json({ error: 'Both photo and video are required' });
+        }
+
+        if (!projectName || !projectName.trim()) {
+          return res.status(400).json({ error: 'Project name is required' });
+        }
+
+        const photoFile = files.photo[0];
+        const videoFile = files.video[0];
+
+        // Move files to shared uploads directory for AR microservice
+        const arId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        const uploadsDir = path.join(process.cwd(), 'objects', 'uploads');
+        await fs.mkdir(uploadsDir, { recursive: true });
+
+        const photoFilename = `${arId}-photo-0.jpg`;
+        const videoFilename = `${arId}-video-0.mp4`;
+        const photoPath = path.join(uploadsDir, photoFilename);
+        const videoPath = path.join(uploadsDir, videoFilename);
+
+        await fs.copyFile(photoFile.path, photoPath);
+        await fs.copyFile(videoFile.path, videoPath);
+        await fs.unlink(photoFile.path).catch(() => {});
+        await fs.unlink(videoFile.path).catch(() => {});
+
+        const photoUrl = `/objects/uploads/${photoFilename}`;
+        const videoUrl = `/objects/uploads/${videoFilename}`;
+
+        console.log('[AR Router] ✅ Admin project files copied:', { photoUrl, videoUrl });
+
+        // Parse expiration date if provided
+        let expirationDate: Date | null = null;
+        if (expiresAt) {
+          expirationDate = new Date(expiresAt);
+          if (isNaN(expirationDate.getTime())) {
+            return res.status(400).json({ error: 'Invalid expiration date format' });
+          }
+        }
+
+        // Store in Backend DB first
+        const [arProject] = await db.insert(arProjects).values({
+          id: arId,
+          userId,
+          photoUrl: photoUrl as any,
+          videoUrl: videoUrl as any,
+          status: 'pending',
+          isDemo: false,
+          expiresAt: expirationDate as any,
+          config: {
+            projectName: projectName.trim(),
+            phone: phone?.trim() || null,
+            email: email?.trim() || null,
+            notes: notes?.trim() || null,
+          } as any,
+        } as any).returning();
+
+        console.log('[AR Router] ✅ Admin project created in DB:', arProject.id);
+
+        // Try to send compilation request to AR microservice (non-blocking)
+        const arServiceUrl = process.env.AR_SERVICE_URL || 'http://ar-service:5000';
+        
+        try {
+          const compileResponse = await fetch(`${arServiceUrl}/compile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              projectId: arId,
+              photos: [photoUrl],
+              videos: [videoUrl],
+              userId,
+              isDemo: false, // REAL project
+              expiresAt: expirationDate?.toISOString() || null,
+              metadata: {
+                projectName: projectName.trim(),
+                phone: phone?.trim() || null,
+                email: email?.trim() || null,
+                notes: notes?.trim() || null,
+              },
+            }),
+          });
+
+          if (compileResponse.ok) {
+            const compileResult = await compileResponse.json();
+            console.log('[AR Router] ✅ AR microservice accepted admin project:', compileResult);
+          } else {
+            console.warn('[AR Router] ⚠️ AR microservice returned error, project saved but not compiled yet');
+          }
+        } catch (serviceError: any) {
+          console.warn('[AR Router] ⚠️ AR microservice unavailable (dev mode?), project saved:', serviceError.message);
+          // Don't throw - project is created, compilation can happen later
+        }
+
+        res.status(201).json({
+          message: 'Admin AR project created successfully',
+          arProject: {
+            id: arProject.id,
+            status: arProject.status,
+            projectName: projectName.trim(),
+            expiresAt: expirationDate?.toISOString() || null,
+            isDemo: false,
+          },
+        });
+      } catch (error: any) {
+        console.error('[AR Router] create-admin error:', error);
+        res.status(500).json({ error: error.message || 'Failed to create admin AR project' });
+      }
+    }
+  );
+
+  /**
    * POST /api/ar/create-with-product
    * Create AR project linked to a product (for cart integration)
    * Body: { productId: string } + multipart files (photo, video)

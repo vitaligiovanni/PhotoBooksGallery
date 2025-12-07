@@ -5,6 +5,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus, QrCode, ExternalLink, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -54,6 +55,7 @@ export default function AdminARListPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'real' | 'demo'>('all');
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -124,6 +126,50 @@ export default function AdminARListPage() {
     },
   });
 
+  // Массовое удаление
+  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      const results = await Promise.allSettled(
+        ids.map(id => 
+          fetch(`/api/ar/${id}`, {
+            method: 'DELETE',
+            credentials: 'include',
+          }).then(res => {
+            if (!res.ok) throw new Error(`Failed to delete ${id}`);
+            return res.json();
+          })
+        )
+      );
+      const failed = results.filter(r => r.status === 'rejected').length;
+      return { total: ids.length, failed };
+    },
+    onSuccess: (result) => {
+      if (result.failed > 0) {
+        toast({
+          variant: 'destructive',
+          title: 'Частичная ошибка',
+          description: `Удалено: ${result.total - result.failed}/${result.total}`,
+        });
+      } else {
+        toast({
+          title: 'Проекты удалены',
+          description: `Удалено проектов: ${result.total}`,
+        });
+      }
+      setSelectedIds([]);
+      setBulkDeleteConfirm(false);
+      queryClient.invalidateQueries({ queryKey: ['/api/ar/all'] });
+    },
+    onError: () => {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка',
+        description: 'Не удалось удалить проекты',
+      });
+    },
+  });
+
   const rawProjects = response?.data || [];
   
   // Split into real and demo
@@ -149,15 +195,27 @@ export default function AdminARListPage() {
               <CardTitle>AR Проекты (Живые Фото)</CardTitle>
               <CardDescription>Управление AR проектами с автоматической компиляцией</CardDescription>
             </div>
-            <Button 
-              asChild
-              className="bg-purple-600 hover:bg-purple-700"
-            >
-              <Link href="/admin/ar/create">
-                <Plus className="h-4 w-4 mr-2" />
-                Создать AR проект
-              </Link>
-            </Button>
+            <div className="flex gap-2">
+              {selectedIds.length > 0 && (
+                <Button 
+                  variant="destructive"
+                  onClick={() => setBulkDeleteConfirm(true)}
+                  disabled={bulkDeleteMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Удалить выбранные ({selectedIds.length})
+                </Button>
+              )}
+              <Button 
+                asChild
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Link href="/admin/ar/create">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Создать AR проект
+                </Link>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -222,6 +280,34 @@ export default function AdminARListPage() {
             </div>
           </div>
 
+          {!isLoading && projects.length > 0 && (
+            <div className="flex items-center gap-2 mb-4 p-2 bg-muted/50 rounded">
+              <Checkbox
+                checked={selectedIds.length === projects.length && projects.length > 0}
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedIds(projects.map(p => p.id));
+                  } else {
+                    setSelectedIds([]);
+                  }
+                }}
+              />
+              <span className="text-sm font-medium">
+                Выбрать все ({projects.length})
+              </span>
+              {selectedIds.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedIds([])}
+                  className="ml-auto text-xs"
+                >
+                  Снять выделение
+                </Button>
+              )}
+            </div>
+          )}
+
           {!isLoading && !error && rawProjects.length === 0 && (
             <div className="text-center text-sm text-muted-foreground py-8">
               Нет AR проектов. Создайте первый через API или форму загрузки.
@@ -233,12 +319,23 @@ export default function AdminARListPage() {
               {projects.map((project) => {
                 const statusInfo = statusConfig[project.status];
                 const StatusIcon = statusInfo.icon;
+                const isSelected = selectedIds.includes(project.id);
                 
                 return (
                   <div
                     key={project.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                    className={`flex items-center gap-4 p-4 border rounded-lg hover:bg-accent/50 transition-colors ${isSelected ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/20' : ''}`}
                   >
+                    <Checkbox
+                      checked={isSelected}
+                      onCheckedChange={(checked) => {
+                        if (checked) {
+                          setSelectedIds([...selectedIds, project.id]);
+                        } else {
+                          setSelectedIds(selectedIds.filter(id => id !== project.id));
+                        }
+                      }}
+                    />
                     <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-3">
                         <Badge variant={statusInfo.variant} className="flex items-center gap-1">
@@ -392,6 +489,29 @@ export default function AdminARListPage() {
             >
               {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
               Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Диалог подтверждения массового удаления */}
+      <AlertDialog open={bulkDeleteConfirm} onOpenChange={setBulkDeleteConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить выбранные проекты?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Будут удалены <strong>{selectedIds.length}</strong> проектов и все связанные с ними файлы.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={bulkDeleteMutation.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => bulkDeleteMutation.mutate(selectedIds)}
+              disabled={bulkDeleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {bulkDeleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Удалить все ({selectedIds.length})
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

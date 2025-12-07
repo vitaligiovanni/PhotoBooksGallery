@@ -84,9 +84,11 @@ export const mockAuth: RequestHandler = async (req: any, res, next) => {
     // 2) Проверяем есть ли реальная сессия/cookie совместимости
     const sessionUserId = req.session?.userId || req.cookies?.userId;
     if (sessionUserId) {
+      const user = await db.select().from(users).where(eq(users.id, sessionUserId)).limit(1);
       req.user = {
         claims: { sub: sessionUserId },
         isAuthenticated: () => true,
+        userData: user.length > 0 ? user[0] : undefined,
       };
       console.log(`[mockAuth] Using authenticated user: ${sessionUserId}`);
       return next();
@@ -106,6 +108,7 @@ export const mockAuth: RequestHandler = async (req: any, res, next) => {
     if (adminUsers.length > 0) {
       // Используем существующего admin-пользователя
       req.user.claims.sub = adminUsers[0].id;
+      req.user.userData = adminUsers[0];
       console.log(`[mockAuth] Using admin user: ${adminUsers[0].id} (${adminUsers[0].firstName})`);
     } else {
       // Если нет admin-пользователей, создаем нового с ролью admin
@@ -119,6 +122,7 @@ export const mockAuth: RequestHandler = async (req: any, res, next) => {
       });
       
       req.user.claims.sub = newUser.id;
+      req.user.userData = newUser;
       console.log('[mockAuth] Created admin user for local development:', newUser);
     }
     

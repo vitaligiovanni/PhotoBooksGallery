@@ -973,8 +973,8 @@ export function createARRouter(): Router {
   router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const userId = (req as any).user?.id;
-      const userRole = (req as any).user?.role;
+      const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id;
+      const userRole = (req as any).user?.userData?.role;
 
       // Get project
       const [arProject] = await db

@@ -975,6 +975,13 @@ export function createARRouter(): Router {
       const { id } = req.params;
       const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id;
       const userRole = (req as any).user?.userData?.role;
+      console.log('[AR DELETE] request', {
+        id,
+        userId,
+        userRole,
+        hasUser: !!(req as any).user,
+        userDataKeys: (req as any).user?.userData ? Object.keys((req as any).user.userData) : [],
+      });
 
       // Get project
       const [arProject] = await db
@@ -988,9 +995,11 @@ export function createARRouter(): Router {
           error: 'AR project not found',
         });
       }
+      console.log('[AR DELETE] project', { projectUserId: arProject.userId, matchesOwner: arProject.userId === userId });
 
       // Check permission (owner or admin)
       if (arProject.userId !== userId && userRole !== 'admin') {
+        console.warn('[AR DELETE] permission denied', { userId, userRole, projectUserId: arProject.userId });
         return res.status(403).json({
           error: 'Permission denied',
         });

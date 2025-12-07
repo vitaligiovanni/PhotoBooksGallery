@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus, QrCode, ExternalLink, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import CreateARDialog from '@/components/ar/CreateARDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,6 +57,7 @@ export default function AdminARListPage() {
   const [search, setSearch] = useState('');
   const [viewMode, setViewMode] = useState<'all' | 'real' | 'demo'>('all');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
@@ -207,13 +209,11 @@ export default function AdminARListPage() {
                 </Button>
               )}
               <Button 
-                asChild
+                onClick={() => setCreateDialogOpen(true)}
                 className="bg-purple-600 hover:bg-purple-700"
               >
-                <Link href="/admin/ar/create">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Создать AR проект
-                </Link>
+                <Plus className="h-4 w-4 mr-2" />
+                Создать AR проект
               </Button>
             </div>
           </div>
@@ -516,6 +516,9 @@ export default function AdminARListPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Диалог создания AR проекта */}
+      <CreateARDialog open={createDialogOpen} onOpenChange={setCreateDialogOpen} />
     </div>
   );
 }

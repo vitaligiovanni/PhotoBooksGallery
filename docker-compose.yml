@@ -121,6 +121,7 @@ services:
       <<: *default-env
       # Local filesystem storage only
       NODE_ENV: production
+      FORCE_JWT_AUTH: "1"
       PORT: 5002
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL not set in .env}
       AR_SERVICE_URL: http://ar-service:5000

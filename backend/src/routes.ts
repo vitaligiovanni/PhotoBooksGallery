@@ -82,7 +82,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Применяем auth middleware ко всем остальным API маршрутам (кроме auth и публичных)
   // В production используем JWT auth, в development - mock auth
-  const authMiddleware = process.env.NODE_ENV === 'production' ? jwtAuth : mockAuth;
+  // Auth selection: prefer JWT in production; allow override via FORCE_JWT_AUTH=1
+  const authMiddleware = (process.env.FORCE_JWT_AUTH === '1' || process.env.NODE_ENV === 'production') ? jwtAuth : mockAuth;
   
   // Список публичных роутов, которые не требуют авторизации
   const publicRoutes = [

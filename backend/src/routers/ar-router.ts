@@ -46,8 +46,8 @@ const upload = multer({
 
 export function createARRouter(): Router {
   const router = Router();
-  // Use strict JWT in production, relaxed mockAuth in dev to simplify local testing
-  const requireAuth = process.env.NODE_ENV === 'production' ? jwtAuth : mockAuth;
+  // Auth selection: prefer JWT in production; allow override via FORCE_JWT_AUTH=1
+  const requireAuth = (process.env.FORCE_JWT_AUTH === '1' || process.env.NODE_ENV === 'production') ? jwtAuth : mockAuth;
 
   /**
    * POST /api/ar/create-automatic

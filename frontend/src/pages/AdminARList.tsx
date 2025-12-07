@@ -5,8 +5,18 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus, QrCode, ExternalLink } from 'lucide-react';
+import { Loader2, Eye, Edit, CheckCircle, XCircle, Clock, AlertTriangle, Plus, QrCode, ExternalLink, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface ARProjectListItem {
   id: string;
@@ -82,6 +92,34 @@ export default function AdminARListPage() {
         variant: 'destructive',
         title: 'Ошибка',
         description: err.message || 'Не удалось продлить срок',
+      });
+    },
+  });
+
+  // Удаление проекта
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const deleteMutation = useMutation({
+    mutationFn: async (arId: string) => {
+      const res = await fetch(`/api/ar/${arId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error(await res.text());
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: 'Проект удалён',
+        description: 'AR проект успешно удалён',
+      });
+      setDeleteConfirmId(null);
+      queryClient.invalidateQueries({ queryKey: ['/api/ar/all'] });
+    },
+    onError: (err: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Ошибка удаления',
+        description: err.message || 'Не удалось удалить проект',
       });
     },
   });
@@ -310,6 +348,15 @@ export default function AdminARListPage() {
                           <Edit className="h-4 w-4 mr-1" /> Редактор
                         </Link>
                       </Button>
+
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => setDeleteConfirmId(project.id)}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" /> Удалить
+                      </Button>
                     </div>
                   </div>
                 );
@@ -324,6 +371,31 @@ export default function AdminARListPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Диалог подтверждения удаления */}
+      <AlertDialog open={deleteConfirmId !== null} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Удалить AR проект?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Это действие нельзя отменить. Проект и все связанные файлы (фото, видео, маска, скомпилированные файлы) будут удалены безвозвратно.
+              <br /><br />
+              <span className="font-mono text-sm">ID: {deleteConfirmId?.slice(0, 8)}...</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Отмена</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteConfirmId && deleteMutation.mutate(deleteConfirmId)}
+              disabled={deleteMutation.isPending}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Удалить
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

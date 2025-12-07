@@ -1165,7 +1165,6 @@ function DynamicAdaptiveHero({ t, scrollToEditor }: DynamicHeroProps) {
         loop
         playsInline
         preload="auto"
-        poster="/og-image.jpg"
         onError={(e) => console.warn('[HeroVideo] error loading video', e)}
         onLoadedData={() => console.log('[HeroVideo] loaded')}
       >

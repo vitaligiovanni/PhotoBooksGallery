@@ -11,10 +11,10 @@
     "shared"
   ],
   "scripts": {
-    "dev": "npm run dev:all",
+    "dev": "node scripts/dev-all.js",
     "dev:front": "cd frontend && npm run dev",
     "dev:back": "cd backend && npm run dev",
-    "dev:all": "concurrently \"npm run dev:back\" \"npm run dev:front\" --names \"🔴API,🔵WEB\" --prefix-colors \"blue,green\" --kill-others-on-fail",
+    "dev:all": "npx -y concurrently \"npm run dev:back\" \"npm run dev:front\" --names \"🔴API,🔵WEB\" --prefix-colors \"blue,green\" --kill-others-on-fail",
     "build:front": "cd frontend && npm run build",
     "build:back": "cd backend && npm run build",
     "build": "npm run build:back && npm run build:front",
@@ -37,6 +37,8 @@
     "test": "echo \"No tests specified yet\"",
     "health": "curl -f http://localhost:5002/api/health",
     "setup": "npm run install:all && npm run db:push",
+    "doctor": "powershell -ExecutionPolicy Bypass -File .\\scripts\\doctor.ps1",
+    "doctor:seed": "powershell -ExecutionPolicy Bypass -File .\\scripts\\doctor.ps1 -Seed",
     "docker:build": "docker compose build",
     "docker:up": "docker compose up -d",
     "docker:down": "docker compose down",

@@ -3,8 +3,20 @@
 FROM node:20-alpine AS builder
 WORKDIR /workspace
 
-# Install OS packages needed during build
-RUN apk add --no-cache python3 make g++
+# Install OS packages needed during build (включая зависимости для canvas)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pangomm-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    pkgconfig
 
 # Prepare backend workspace and install dev dependencies inside backend folder
 WORKDIR /workspace/backend
@@ -46,8 +58,17 @@ RUN npm run build
 FROM node:20-alpine AS runtime
 WORKDIR /app
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
+# Install curl for healthcheck и runtime зависимости для canvas
+RUN apk add --no-cache \
+    curl \
+    cairo \
+    jpeg \
+    pango \
+    giflib \
+    pixman \
+    pangomm \
+    libjpeg-turbo \
+    freetype
 
 # Copy package manifests and install only production deps
 COPY backend/package*.json ./

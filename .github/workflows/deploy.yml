@@ -87,6 +87,7 @@ jobs:
           FRONTEND_URL=https://photobooksgallery.am
           API_URL=https://photobooksgallery.am
           ALLOWED_ORIGINS=https://photobooksgallery.am
+          AR_PUBLIC_BASE_URL=https://photobooksgallery.am
           TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
           TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
           EOF

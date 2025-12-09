@@ -13,10 +13,9 @@ RUN apk add --no-cache \
     pango-dev \
     giflib-dev \
     pixman-dev \
-    pangomm-dev \
     libjpeg-turbo-dev \
     freetype-dev \
-    pkgconfig
+    pkgconf
 
 # Prepare backend workspace and install dev dependencies inside backend folder
 WORKDIR /workspace/backend
@@ -66,7 +65,6 @@ RUN apk add --no-cache \
     pango \
     giflib \
     pixman \
-    pangomm \
     libjpeg-turbo \
     freetype
 

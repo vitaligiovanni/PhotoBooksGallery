@@ -80,11 +80,22 @@ export default function CreateARDialog({ open, onOpenChange }: CreateARDialogPro
       return res.json();
     },
     onSuccess: (data) => {
+      const compileId = data?.compile?.projectId as string | undefined;
+      const localId = data?.arProject?.id as string | undefined;
+      const statusId = compileId || localId;
       toast({
         title: 'Проект создан',
-        description: `AR проект "${projectName}" создан и отправлен на обработку`,
+        description: compileId
+          ? `AR проект создан. Идёт компиляция (ID: ${compileId}).`
+          : `AR проект создан и отправлен на обработку.`,
       });
       queryClient.invalidateQueries({ queryKey: ['/api/ar/all'] });
+      // Перейти на страницу статуса, если есть ID
+      if (statusId) {
+        try {
+          window.open(`/admin/ar/${statusId}/edit`, '_blank');
+        } catch {}
+      }
       onOpenChange(false);
       resetForm();
     },

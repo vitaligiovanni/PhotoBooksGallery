@@ -1,0 +1,12 @@
+{
+  "projectId": "test-manual-123",
+  "photos": ["backend/objects/uploads/1765138046760-fmdonrx-photo-0.jpg"],
+  "videos": ["backend/objects/uploads/1765138046760-fmdonrx-video-0.mp4"],
+  "userId": "test-user",
+  "isDemo": false,
+  "metadata": {
+    "projectName": "Manual Test",
+    "phone": "123456789",
+    "email": "test@test.com"
+  }
+}

@@ -7,7 +7,7 @@ import sharp from 'sharp';
 import { db } from '../db';
 import { storage } from '../storage';
 import { arProjects, arProjectItems, insertARProjectSchema } from '@shared/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, sql } from 'drizzle-orm';
 import { compileARProject, generateARViewer } from '../services/ar-compiler';
 import { requestARCompilation, getARStatus, getARViewerUrl } from '../services/ar-service-client';
 import { jwtAuth, mockAuth } from './middleware';
@@ -223,8 +223,18 @@ export function createARRouter(): Router {
 
       console.log(`[AR Router] 🔍 Proxying status check for project ${id} to AR microservice...`);
 
-      // Proxy request to AR microservice
-      const microserviceStatus = await getARStatus(id);
+      // Resolve local DB id to AR service UUID if present in config
+      let effectiveId = id;
+      try {
+        const [existingForMap] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+        const cfg = (existingForMap?.config as any) || {};
+        if (cfg && cfg.arServiceId) {
+          effectiveId = cfg.arServiceId;
+        }
+      } catch {}
+
+      // Proxy request to AR microservice with effective id
+      const microserviceStatus = await getARStatus(effectiveId);
 
       console.log(`[AR Router] ✅ AR microservice returned status: ${microserviceStatus.status}, progress: ${microserviceStatus.progress}%`);
 
@@ -241,7 +251,7 @@ export function createARRouter(): Router {
             viewUrl: microserviceStatus.viewUrl || null,
             qrCodeUrl: microserviceStatus.qrCodeUrl || null,
             markerMindUrl: microserviceStatus.markerMindUrl || null,
-            viewerHtmlUrl: microserviceStatus.viewerHtmlUrl || (microserviceStatus.viewUrl ? `/objects/ar-storage/${id}/index.html` : null),
+            viewerHtmlUrl: microserviceStatus.viewerHtmlUrl || (microserviceStatus.viewUrl ? `/objects/ar-storage/${microserviceStatus.projectId}/index.html` : null),
             compilationTimeMs: microserviceStatus.compilationTimeMs || null,
             errorMessage: microserviceStatus.errorMessage || null,
             updatedAt: new Date(),
@@ -254,8 +264,12 @@ export function createARRouter(): Router {
         console.warn('[AR Router] ⚠️ Failed to sync Backend DB:', syncError.message);
       }
 
+      // Compute external viewer URL if public base is configured (e.g., tunnel / production)
+      const publicBase = process.env.AR_PUBLIC_BASE_URL; // e.g. https://intertransversal-delisa-yappingly.ngrok-free.dev
+      const externalViewUrl = publicBase ? `${publicBase}/ar/view/${microserviceStatus.projectId}` : undefined;
+
       // Return microservice response directly
-      res.json({
+      return res.json({
         message: 'AR project status',
         data: {
           id: microserviceStatus.projectId,
@@ -264,6 +278,7 @@ export function createARRouter(): Router {
           photoUrl: microserviceStatus.photoUrl,
           videoUrl: microserviceStatus.videoUrl,
           viewUrl: microserviceStatus.viewUrl,
+          externalViewUrl,
           qrCodeUrl: microserviceStatus.qrCodeUrl,
           markerMindUrl: microserviceStatus.markerMindUrl,
           viewerHtmlUrl: microserviceStatus.viewerHtmlUrl,
@@ -277,7 +292,6 @@ export function createARRouter(): Router {
       });
     } catch (error: any) {
       console.error('[AR Router] ❌ Error proxying status check:', error);
-      
       // Check if it's a 404 from microservice
       if (error.message?.includes('not found') || error.message?.includes('404')) {
         return res.status(404).json({
@@ -300,12 +314,42 @@ export function createARRouter(): Router {
   router.get('/my-projects', requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = (req as any).user?.id;
-
-      const userProjects = await db
+      let userProjects = await db
         .select()
         .from(arProjects)
         .where(eq(arProjects.userId, userId))
         .orderBy(desc(arProjects.createdAt));
+
+      // Live refresh statuses for pending/processing projects by querying AR microservice
+      const refreshed: any[] = [];
+      for (const proj of userProjects) {
+        if (proj.status === 'pending' || proj.status === 'processing') {
+          const serviceId = (proj.config as any)?.arServiceId || proj.id;
+          try {
+            const micro = await getARStatus(serviceId);
+            await db.update(arProjects).set({
+              status: micro.status,
+              viewUrl: micro.viewUrl || proj.viewUrl || null,
+              qrCodeUrl: micro.qrCodeUrl || proj.qrCodeUrl || null,
+              viewerHtmlUrl: micro.viewerHtmlUrl || (micro.viewUrl ? `/objects/ar-storage/${micro.projectId}/index.html` : proj.viewerHtmlUrl || null),
+              compilationTimeMs: micro.compilationTimeMs || proj.compilationTimeMs || null,
+              errorMessage: micro.errorMessage || null,
+              updatedAt: new Date() as any,
+            } as any).where(eq(arProjects.id, proj.id));
+            refreshed.push({ id: proj.id, status: micro.status });
+          } catch (e: any) {
+            // Ignore errors; keep current status
+          }
+        }
+      }
+      if (refreshed.length) {
+        // Reload projects after refresh
+        userProjects = await db
+          .select()
+          .from(arProjects)
+          .where(eq(arProjects.userId, userId))
+          .orderBy(desc(arProjects.createdAt));
+      }
 
       res.json({
         message: 'User AR projects',
@@ -313,6 +357,8 @@ export function createARRouter(): Router {
           id: project.id,
           status: project.status,
           viewUrl: project.viewUrl,
+          viewerHtmlUrl: project.viewerHtmlUrl,
+          externalViewUrl: process.env.AR_PUBLIC_BASE_URL ? `${process.env.AR_PUBLIC_BASE_URL}/ar/view/${(project.config as any)?.arServiceId || project.id}` : undefined,
           qrCodeUrl: project.qrCodeUrl,
           orderId: project.orderId,
           markerQuality: project.markerQuality,
@@ -433,13 +479,29 @@ export function createARRouter(): Router {
         return res.status(400).json({ error: 'Mask file (png/webp) is required under field name "mask"' });
       }
 
-      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      // Resolve local id vs AR service UUID stored in config
+      let projectId = id;
+      let project: any;
+      const byLocal = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      if (byLocal && byLocal[0]) {
+        project = byLocal[0];
+      } else {
+        const byService = await db
+          .select()
+          .from(arProjects)
+          .where(sql`(config->>'arServiceId') = ${id}`)
+          .limit(1);
+        if (byService && byService[0]) {
+          project = byService[0];
+          projectId = project.id as string;
+        }
+      }
       if (!project) return res.status(404).json({ error: 'AR project not found' });
       if (project.status !== 'ready' && project.status !== 'processing' && project.status !== 'pending') {
         return res.status(400).json({ error: `Project status ${project.status} is not eligible for mask update` });
       }
 
-      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
       const viewerHtmlPath = path.join(storageDir, 'index.html');
       
       // Check for video file (multi-target: video-0.mp4, legacy: video.mp4)
@@ -473,11 +535,11 @@ export function createARRouter(): Router {
 
       // update DB with mask url and size
       await db.update(arProjects).set({
-        maskUrl: `/api/ar/storage/${id}/${maskFileName}` as any,
+        maskUrl: `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/${maskFileName}` as any,
         maskWidth: (maskMeta.width ?? null) as any,
         maskHeight: (maskMeta.height ?? null) as any,
         updatedAt: new Date() as any,
-      } as any).where(eq(arProjects.id, id));
+      } as any).where(eq(arProjects.id, projectId));
 
       // regenerate viewer HTML keeping same config
       const markerName = 'marker';
@@ -490,7 +552,7 @@ export function createARRouter(): Router {
       console.log(`[AR Mask Upload] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
       
       await generateARViewer({
-        arId: id,
+        arId: (project.config as any)?.arServiceId || projectId,
         markerBaseName: markerName,
         videoFileName, // Use detected filename (video.mp4 or video-0.mp4)
         maskFileName,
@@ -504,9 +566,9 @@ export function createARRouter(): Router {
       res.json({
         message: 'Mask updated and viewer regenerated',
         data: {
-          id,
-          viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
-          maskUrl: `/api/ar/storage/${id}/${maskFileName}`,
+          id: projectId,
+          viewerHtmlUrl: `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/index.html`,
+          maskUrl: `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/${maskFileName}`,
           maskWidth: maskMeta.width ?? null,
           maskHeight: maskMeta.height ?? null,
         }
@@ -529,10 +591,22 @@ export function createARRouter(): Router {
       }
       const { id } = req.params;
 
-      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      // Resolve local vs AR service uuid
+      let projectId = id;
+      let project: any;
+      const byLocal = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      if (byLocal && byLocal[0]) {
+        project = byLocal[0];
+      } else {
+        const byService = await db.select().from(arProjects).where(sql`(config->>'arServiceId') = ${id}`).limit(1);
+        if (byService && byService[0]) {
+          project = byService[0];
+          projectId = project.id as string;
+        }
+      }
       if (!project) return res.status(404).json({ error: 'AR project not found' });
 
-      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
       const viewerHtmlPath = path.join(storageDir, 'index.html');
       
       // Find and delete existing mask files
@@ -553,7 +627,7 @@ export function createARRouter(): Router {
         maskWidth: null as any,
         maskHeight: null as any,
         updatedAt: new Date() as any,
-      } as any).where(eq(arProjects.id, id));
+      } as any).where(eq(arProjects.id, projectId));
 
       // Regenerate viewer HTML without mask
       const markerName = 'marker';
@@ -583,8 +657,8 @@ export function createARRouter(): Router {
       res.json({
         message: 'Mask removed and viewer regenerated',
         data: {
-          id,
-          viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+          id: projectId,
+          viewerHtmlUrl: `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/index.html`,
         }
       });
     } catch (error: any) {
@@ -607,13 +681,25 @@ export function createARRouter(): Router {
       const { id } = req.params;
       const { threshold = 240 } = req.body; // порог яркости для определения "белого" (0-255)
 
-      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      // Resolve local vs AR service uuid
+      let projectId = id;
+      let project: any;
+      const byLocal = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      if (byLocal && byLocal[0]) {
+        project = byLocal[0];
+      } else {
+        const byService = await db.select().from(arProjects).where(sql`(config->>'arServiceId') = ${id}`).limit(1);
+        if (byService && byService[0]) {
+          project = byService[0];
+          projectId = project.id as string;
+        }
+      }
       if (!project) return res.status(404).json({ error: 'AR project not found' });
       if (!project.maskUrl) {
         return res.status(400).json({ error: 'No mask uploaded yet' });
       }
 
-      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
       const maskPath = path.join(storageDir, path.basename(project.maskUrl as string));
       
       try {
@@ -667,11 +753,11 @@ export function createARRouter(): Router {
         .toFile(convertedPath);
 
       // Обновляем БД
-      const convertedMaskUrl = `/api/ar/storage/${id}/${convertedFileName}`;
+      const convertedMaskUrl = `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/${convertedFileName}`;
       await db.update(arProjects).set({
         maskUrl: convertedMaskUrl as any,
         updatedAt: new Date() as any,
-      } as any).where(eq(arProjects.id, id));
+      } as any).where(eq(arProjects.id, projectId));
 
       // Регенерируем viewer с новой маской
       const viewerHtmlPath = path.join(storageDir, 'index.html');
@@ -686,7 +772,7 @@ export function createARRouter(): Router {
       console.log(`[AR Convert Mask] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
 
       await generateARViewer({
-        arId: id,
+        arId: (project.config as any)?.arServiceId || projectId,
         markerBaseName: markerName,
         videoFileName: 'video.mp4',
         maskFileName: convertedFileName,
@@ -700,9 +786,9 @@ export function createARRouter(): Router {
       res.json({
         message: 'Mask converted successfully',
         data: {
-          id,
+          id: projectId,
           convertedMaskUrl,
-          viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+          viewerHtmlUrl: `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/index.html`,
         }
       });
     } catch (error: any) {
@@ -724,8 +810,19 @@ export function createARRouter(): Router {
       }
       const { id } = req.params;
       const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked, shapeType } = req.body;
-
-      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      // Resolve local vs AR service uuid
+      let projectId = id;
+      let project: any;
+      const byLocal = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+      if (byLocal && byLocal[0]) {
+        project = byLocal[0];
+      } else {
+        const byService = await db.select().from(arProjects).where(sql`(config->>'arServiceId') = ${id}`).limit(1);
+        if (byService && byService[0]) {
+          project = byService[0];
+          projectId = project.id as string;
+        }
+      }
       if (!project) return res.status(404).json({ error: 'AR project not found' });
       
       // Check if this is a multi-target project (has items)
@@ -770,7 +867,7 @@ export function createARRouter(): Router {
           calibratedPosZ: String(videoPosition.z) as any,
         }),
         updatedAt: new Date() as any,
-      } as any).where(eq(arProjects.id, id));
+      } as any).where(eq(arProjects.id, projectId));
 
       let maskFileName: string | undefined;
       
@@ -780,7 +877,7 @@ export function createARRouter(): Router {
       if (shapeType && shapeType !== 'custom') {
         console.log(`[AR Config] 🎭 Generating ${shapeType} mask locally...`);
         
-        const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+        const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
         const maskDestPath = path.join(storageDir, 'mask-0.png');
         
         try {
@@ -816,9 +913,9 @@ export function createARRouter(): Router {
           
           // Update DB with mask URL
           await db.update(arProjects).set({
-            maskUrl: `/objects/ar-storage/${id}/mask-0.png` as any,
+            maskUrl: `/objects/ar-storage/${(project.config as any)?.arServiceId || projectId}/mask-0.png` as any,
             updatedAt: new Date() as any,
-          } as any).where(eq(arProjects.id, id));
+          } as any).where(eq(arProjects.id, projectId));
           
           maskFileName = 'mask-0.png';
           console.log(`[AR Config] DEBUG: maskFileName set to "${maskFileName}"`);
@@ -831,7 +928,7 @@ export function createARRouter(): Router {
         }
       }
 
-      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', id);
+      const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
       
       // Determine correct video filename (multi-target uses video-0.mp4, legacy uses video.mp4)
       let videoFileName = 'video.mp4';
@@ -939,7 +1036,7 @@ export function createARRouter(): Router {
       console.log(`[AR Config] Generating viewer with video: ${videoFileName}, mask: ${maskFileName || 'none'}`);
       
       await generateARViewer({
-        arId: id,
+        arId: (project.config as any)?.arServiceId || projectId,
         markerBaseName: markerName,
         videoFileName,
         maskFileName,
@@ -953,11 +1050,11 @@ export function createARRouter(): Router {
       res.json({
         message: 'AR config updated and viewer regenerated',
         data: {
-          id,
+          id: projectId,
           config: updatedConfig,
           videoFileName,
           planeScale,
-          viewerHtmlUrl: `/api/ar/storage/${id}/index.html`,
+          viewerHtmlUrl: `/api/ar/storage/${(project.config as any)?.arServiceId || projectId}/index.html`,
         }
       });
     } catch (error: any) {
@@ -1453,16 +1550,17 @@ export function createARRouter(): Router {
         console.log('[AR Router] ✅ Admin project created in DB:', arProject.id);
 
         // Try to send compilation request to AR microservice (non-blocking)
-        const arServiceUrl = process.env.AR_SERVICE_URL || 'http://ar-service:5000';
-        
+        // Prefer localhost in development to avoid Docker DNS issues
+        const arServiceUrl = process.env.AR_SERVICE_URL || 'http://localhost:5000';
+        let arServiceProjectId: string | null = null;
         try {
           const compileResponse = await fetch(`${arServiceUrl}/compile`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               projectId: arId,
-              photos: [photoUrl],
-              videos: [videoUrl],
+              photoUrls: [photoUrl],
+              videoUrls: [videoUrl],
               userId,
               isDemo: false, // REAL project
               expiresAt: expirationDate?.toISOString() || null,
@@ -1474,13 +1572,29 @@ export function createARRouter(): Router {
               },
             }),
           });
-
           if (compileResponse.ok) {
-            const compileResult = await compileResponse.json();
+            const compileResult: any = await compileResponse.json();
+            arServiceProjectId = compileResult?.projectId || compileResult?.id || null;
             console.log('[AR Router] ✅ AR microservice accepted admin project:', compileResult);
+            // Persist mapping from local project id to AR service UUID for status resolution
+            if (arServiceProjectId) {
+              try {
+                const [existing] = await db.select().from(arProjects).where(eq(arProjects.id, arId)).limit(1);
+                const existingConfig = (existing?.config as any) || {};
+                const newConfig = { ...existingConfig, arServiceId: arServiceProjectId };
+                await db.update(arProjects).set({
+                  config: newConfig as any,
+                  viewerHtmlUrl: `/objects/ar-storage/${arServiceProjectId}/index.html`,
+                  qrCodeUrl: `/objects/ar-storage/${arServiceProjectId}/qr-code.png`
+                } as any).where(eq(arProjects.id, arId));
+              } catch (mapErr: any) {
+                console.warn('[AR Router] ⚠️ Failed to persist arServiceId mapping:', mapErr.message);
+              }
+            }
           } else {
             console.warn('[AR Router] ⚠️ AR microservice returned error, project saved but not compiled yet');
           }
+          
         } catch (serviceError: any) {
           console.warn('[AR Router] ⚠️ AR microservice unavailable (dev mode?), project saved:', serviceError.message);
           // Don't throw - project is created, compilation can happen later
@@ -1495,6 +1609,7 @@ export function createARRouter(): Router {
             expiresAt: expirationDate?.toISOString() || null,
             isDemo: false,
           },
+          compile: arServiceProjectId ? { projectId: arServiceProjectId } : null,
         });
       } catch (error: any) {
         console.error('[AR Router] create-admin error:', error);
@@ -1653,7 +1768,7 @@ export function createARRouter(): Router {
           orderId,
           attachedToOrder: true,
           updatedAt: new Date(),
-        })
+        } as any)
         .where(eq(arProjects.id, id))
         .returning();
 
@@ -1784,7 +1899,7 @@ export function createARRouter(): Router {
         // Send compilation request to AR microservice with multiple photos and videos
         console.log(`[AR Router] 📤 Sending ${photoUrls.length} photo(s) + ${videoUrls.length} video(s) to AR microservice...`);
         
-        const compileResult = await requestARCompilation({
+        const compileResult: any = await requestARCompilation({
           userId,
           photoUrls: photoUrls, // Массив фотографий
           videoUrls: videoUrls, // Массив видео (по одному на фото)

@@ -75,9 +75,11 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Strategy 1: API calls - always network (no cache)
-  if (url.pathname.startsWith('/api/')) {
-    event.respondWith(fetch(request));
+  // Strategy 1: API and dynamic objects - always network (no cache)
+  // Avoid caching dynamic resources that change frequently, like uploads and AR storage JSON/HTML
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/objects/')) {
+    event.respondWith(fetch(request, { cache: 'no-store' })
+      .catch(() => new Response('Network error', { status: 503 })));
     return;
   }
 

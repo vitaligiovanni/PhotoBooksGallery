@@ -77,6 +77,8 @@ export default function AdminAREditPage() {
   const [isMatch, params] = useRoute('/admin/ar/:id/edit');
   const arId = (params as any)?.id || null;
   const queryClient = useQueryClient();
+  const viewerUrl = arId ? `/objects/ar-storage/${arId}/index.html` : null;
+  const qrUrl = arId ? `/objects/ar-storage/${arId}/qr-code.png` : null;
 
   const { data: project, isLoading, error, refetch } = useQuery<ARProject | null>({
     queryKey: ['/api/ar/status', arId],
@@ -255,7 +257,21 @@ export default function AdminAREditPage() {
       <Card>
         <CardHeader>
           <CardTitle>AR Редактор проекта</CardTitle>
-          <CardDescription>Тонкая настройка наложения видео и маски для проекта {arId}</CardDescription>
+          <CardDescription>
+            Тонкая настройка наложения видео и маски для проекта {arId}
+          </CardDescription>
+          <div className="mt-3 flex items-center gap-2">
+            {viewerUrl && (
+              <a href={viewerUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded bg-primary px-3 py-1 text-white text-sm">
+                Открыть AR Viewer
+              </a>
+            )}
+            {qrUrl && (
+              <a href={qrUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded border px-3 py-1 text-sm">
+                Открыть QR
+              </a>
+            )}
+          </div>
         </CardHeader>
         <CardContent className="space-y-8">
           {isLoading && <div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Загрузка проекта...</div>}

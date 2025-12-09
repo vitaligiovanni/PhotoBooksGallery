@@ -29,13 +29,9 @@ RUN npm install --no-audit --no-fund --prefer-offline || \
 COPY frontend ./frontend
 COPY shared ./shared
 
-# Install Playwright for prerendering
-RUN npx playwright install chromium --with-deps || \
-    (apk add --no-cache chromium && npx playwright install chromium)
-
-# Build the frontend with prerender
+# Build the frontend without prerender (safer in CI/containers)
 WORKDIR /workspace/frontend
-RUN npm run build:prerender
+RUN npm run build
 
 # Production stage
 FROM nginx:alpine

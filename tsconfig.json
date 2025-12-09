@@ -10,7 +10,8 @@
       "@frontend/*": ["frontend/src/*"]
     },
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": []
   },
   "include": [
     "shared/**/*",

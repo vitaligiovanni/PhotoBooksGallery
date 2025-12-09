@@ -53,6 +53,8 @@
     "postinstall": "echo \"📦 PhotoBooks Gallery ready! Run 'npm run dev' to start development\""
   },
   "devDependencies": {
+    "@types/node": "^24.10.2",
+    "@types/nodemailer": "^7.0.4",
     "concurrently": "^8.2.2",
     "rimraf": "^5.0.5"
   },

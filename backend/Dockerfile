@@ -13,6 +13,7 @@ RUN apk add --no-cache \
     pango-dev \
     giflib-dev \
     pixman-dev \
+    pangomm-dev \
     libjpeg-turbo-dev \
     freetype-dev \
     pkgconf
@@ -65,6 +66,7 @@ RUN apk add --no-cache \
     pango \
     giflib \
     pixman \
+    pangomm \
     libjpeg-turbo \
     freetype
 

@@ -8,6 +8,21 @@ ENV VITE_API_URL=$VITE_API_URL
 # Build with monorepo workspaces so shared deps are available during TS build
 WORKDIR /workspace
 
+# Install canvas build dependencies (required by workspace deps)
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    cairo-dev \
+    jpeg-dev \
+    pango-dev \
+    giflib-dev \
+    pixman-dev \
+    pangomm-dev \
+    libjpeg-turbo-dev \
+    freetype-dev \
+    pkgconf
+
 # Configure npm для лучшей стабильности сети
 RUN npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \

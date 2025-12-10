@@ -1,22 +1,21 @@
 #### Backend Dockerfile (multi-stage, production-ready)
 # 1) Builder stage: install all deps and build TypeScript
-FROM node:20-alpine AS builder
+# Using node:20-slim (Debian-based) instead of Alpine for canvas prebuilt binaries
+FROM node:20-slim AS builder
 WORKDIR /workspace
 
-# Install OS packages needed during build (включая зависимости для canvas)
-RUN apk add --no-cache \
+# Install OS packages needed during build (canvas dependencies)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-    pixman-dev \
-    pangomm-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    pkgconf
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    libpixman-1-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
 # Prepare backend workspace and install dev dependencies inside backend folder
 WORKDIR /workspace/backend
@@ -55,20 +54,20 @@ RUN echo "Debug shared node_modules at /workspace/shared" && ls -la /workspace/s
 RUN npm run build
 
 # 2) Production runtime: only production deps + built artifacts
-FROM node:20-alpine AS runtime
+# Using node:20-slim for glibc compatibility with canvas prebuilt binaries
+FROM node:20-slim AS runtime
 WORKDIR /app
 
 # Install curl for healthcheck и runtime зависимости для canvas
-RUN apk add --no-cache \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
-    cairo \
-    jpeg \
-    pango \
-    giflib \
-    pixman \
-    pangomm \
-    libjpeg-turbo \
-    freetype
+    libcairo2 \
+    libjpeg62-turbo \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgif7 \
+    libpixman-1-0 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Copy package manifests and install only production deps
 COPY backend/package*.json ./
@@ -83,6 +82,9 @@ RUN npm config set fetch-retries 5 && \
 RUN npm install --omit=dev --prefer-offline --no-audit --no-fund || \
     (sleep 10 && npm install --omit=dev --prefer-offline --no-audit --no-fund) || \
     (sleep 20 && npm install --omit=dev --no-audit --no-fund)
+
+# Copy pre-compiled canvas native bindings from builder (avoids recompilation)
+COPY --from=builder /workspace/backend/node_modules/canvas /app/node_modules/canvas
 
 # Copy built app and necessary runtime files
 COPY --from=builder /workspace/backend/dist ./dist

@@ -1,27 +1,12 @@
 # Frontend Dockerfile (multi-stage)
-FROM node:20-alpine as builder
+FROM node:20-alpine AS builder
 
 # Аргумент для передачи API URL во время сборки
 ARG VITE_API_URL=http://localhost:8080
 ENV VITE_API_URL=$VITE_API_URL
 
-# Build with monorepo workspaces so shared deps are available during TS build
+# Build frontend independently (no need for backend deps)
 WORKDIR /workspace
-
-# Install canvas build dependencies (required by workspace deps)
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-    pixman-dev \
-    pangomm-dev \
-    libjpeg-turbo-dev \
-    freetype-dev \
-    pkgconf
 
 # Configure npm для лучшей стабильности сети
 RUN npm config set fetch-retries 5 && \
@@ -29,22 +14,27 @@ RUN npm config set fetch-retries 5 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm config set fetch-timeout 300000
 
-# Copy only package manifests first for better layer caching
-COPY package.json ./
+# Copy only frontend and shared package manifests (NOT backend - avoid canvas!)
 COPY frontend/package*.json ./frontend/
 COPY shared/package*.json ./shared/
-COPY backend/package*.json ./backend/
 
-# Install all workspace dependencies with retry logic and cache
-RUN npm install --no-audit --no-fund --prefer-offline || \
-    (sleep 10 && npm install --no-audit --no-fund --prefer-offline) || \
+# Install frontend deps only (no workspaces, no backend)
+WORKDIR /workspace/frontend
+RUN npm install --no-audit --no-fund || \
+    (sleep 10 && npm install --no-audit --no-fund) || \
     (sleep 20 && npm install --no-audit --no-fund)
 
+# Install shared deps
+WORKDIR /workspace/shared
+RUN npm install --no-audit --no-fund || \
+    (sleep 10 && npm install --no-audit --no-fund)
+
 # Copy source code
+WORKDIR /workspace
 COPY frontend ./frontend
 COPY shared ./shared
 
-# Build the frontend without prerender (safer in CI/containers)
+# Build the frontend
 WORKDIR /workspace/frontend
 RUN npm run build
 

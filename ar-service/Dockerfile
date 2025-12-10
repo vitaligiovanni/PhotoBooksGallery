@@ -1,59 +1,82 @@
-# AR Service Dockerfile
-FROM node:18-alpine
+# AR Service Dockerfile - Multi-stage build with node:20-slim (Debian/glibc)
+# This ensures canvas prebuilt binaries work correctly
 
-# Install dependencies for native modules (sharp, canvas)
-RUN apk add --no-cache \
+# ========== BUILDER STAGE ==========
+FROM node:20-slim AS builder
+
+# Install build dependencies for canvas (Debian packages)
+RUN apt-get update && apt-get install -y --no-install-recommends \
     python3 \
     make \
     g++ \
-    pkgconfig \
-    cairo-dev \
-    pango-dev \
-    jpeg-dev \
-    giflib-dev \
-    libpng-dev \
-    freetype-dev \
-    pixman \
-    ffmpeg
+    libcairo2-dev \
+    libjpeg-dev \
+    libpango1.0-dev \
+    libgif-dev \
+    libpixman-1-dev \
+    pkg-config \
+    && rm -rf /var/lib/apt/lists/*
 
-# Create app directory
 WORKDIR /app
 
-# Copy package files from ar-service subfolder (context is project root)
+# Copy package files
 COPY ar-service/package*.json ./
 
-# Configure npm для лучшей стабильности сети
+# Configure npm for network stability
 RUN npm config set fetch-retries 5 && \
     npm config set fetch-retry-mintimeout 20000 && \
     npm config set fetch-retry-maxtimeout 120000 && \
     npm config set fetch-timeout 300000
 
 # Install ALL dependencies (including devDependencies for build)
-RUN npm ci --prefer-offline || \
-    (sleep 10 && npm ci --prefer-offline) || \
+RUN npm ci || \
+    (sleep 10 && npm ci) || \
     (sleep 20 && npm install --no-audit --no-fund)
 
-# Copy ar-service source code ONLY (from ar-service subfolder)
+# Copy source code
 COPY ar-service/src ./src
 COPY ar-service/tsconfig.json ./
 
 # Build TypeScript
 RUN npm run build
 
-# Create migrations folder and copy SQL if exists (optional step)
+# Create migrations folder
 RUN mkdir -p ./dist/migrations
 
-# Remove devDependencies after build to reduce image size
-RUN npm prune --production
+# Verify canvas works in builder
+RUN node -e "const c = require('canvas'); console.log('✅ Canvas works in builder:', typeof c.createCanvas)"
 
-# CRITICAL: Rebuild canvas AFTER prune to ensure it's compiled for production runtime
-# This must be last to prevent any npm operations from invalidating the build
-RUN npm rebuild canvas --verbose && \
-    ls -lh /app/node_modules/canvas/build/Release/canvas.node && \
-    node -e "const Canvas = require('canvas'); console.log('✅ Canvas loaded successfully')"
+# ========== RUNTIME STAGE ==========
+FROM node:20-slim AS runtime
+
+# Install ONLY runtime libraries for canvas (no build tools)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 \
+    libjpeg62-turbo \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgif7 \
+    libpixman-1-0 \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy package files and install production dependencies
+COPY ar-service/package*.json ./
+RUN npm ci --omit=dev --ignore-scripts || npm install --omit=dev --ignore-scripts
+
+# Copy canvas module with prebuilt binaries from builder
+COPY --from=builder /app/node_modules/canvas /app/node_modules/canvas
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
 
 # Create storage directories
-RUN mkdir -p /app/storage/ar-storage /app/storage/uploads
+RUN mkdir -p /app/storage/ar-storage /app/storage/uploads /app/objects
+
+# Verify canvas works in runtime
+RUN node -e "const c = require('canvas'); console.log('✅ Canvas works in runtime:', typeof c.createCanvas)"
 
 # Expose port
 EXPOSE 5000
@@ -62,10 +85,5 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
   CMD node -e "require('http').get('http://localhost:5000/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"
 
-# Copy entrypoint script to perform a deterministic canvas rebuild at container start
-COPY ar-service/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-
-# Start service via entrypoint (rebuilds canvas once, then launches app)
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+# Start service directly (no entrypoint needed - canvas already works)
 CMD ["node", "dist/index.js"]

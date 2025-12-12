@@ -5,11 +5,17 @@ export interface CalibrationSandboxProps {
   videoScale: { width: number; height: number } | null; // DEPRECATED: используется только для обратной совместимости
   position: { x: number; y: number; z: number };
   rotation: { x: number; y: number; z: number };
+  zoom?: number; // Текущий зум (0.5-2.0)
+  offsetX?: number; // Сдвиг по X (-0.5 до +0.5)
+  offsetY?: number; // Сдвиг по Y (-0.5 до +0.5)
   onChange: (update: { 
     videoScale?: { width: number; height: number }; 
     cropRegion?: { x: number; y: number; width: number; height: number };
     position?: { x: number; y: number; z: number }; 
-    rotationZ?: number 
+    rotationZ?: number;
+    zoom?: number;
+    offsetX?: number;
+    offsetY?: number;
   }) => void;
   markerImageUrl?: string | null;
   videoAspectRatio?: number; // width/height оригинального видео (для crop области)
@@ -27,6 +33,9 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
   videoScale, 
   position, 
   rotation, 
+  zoom: initialZoom = 1.0,
+  offsetX: initialOffsetX = 0,
+  offsetY: initialOffsetY = 0,
   onChange, 
   markerImageUrl,
   videoAspectRatio = 16/9,
@@ -42,35 +51,27 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
   const planeH = photoAspectRatio || 0.75; // fallback
   
   // Crop region: область видео для отображения (нормализованные координаты 0-1)
-  // Инициализируем с пропорциями фото по центру
-  const [cropRegion, setCropRegion] = useState({ x: 0.1, y: 0.1, width: 0.8, height: 0.8 });
+  // ПО УМОЛЧАНИЮ: ВЕСЬ квадрат на всю площадь фотографии!
+  const [cropRegion, setCropRegion] = useState({ x: 0, y: 0, width: 1, height: 1 });
   
-  // NEW: Zoom and Offset state
-  const [zoom, setZoom] = useState<number>(1.0);
-  const [offsetX, setOffsetX] = useState<number>(0);
-  const [offsetY, setOffsetY] = useState<number>(0);
+  // Zoom and Offset state - инициализируем из пропсов!
+  const [zoom, setZoom] = useState<number>(initialZoom);
+  const [offsetX, setOffsetX] = useState<number>(initialOffsetX);
+  const [offsetY, setOffsetY] = useState<number>(initialOffsetY);
   const [aspectLocked, setAspectLocked] = useState<boolean>(true);
   
-  // При изменении пропорций фото - пересчитываем crop region
+  // Синхронизация zoom/offset из пропсов при изменении
   React.useEffect(() => {
-    const photoAR = 1 / photoAspectRatio; // width/height фото
-    const videoAR = videoAspectRatio; // width/height видео
-    
-    // Центрируем crop область с пропорциями фото
-    let width = 0.8;
-    let height = width / photoAR;
-    
-    // Если высота выходит за границы, уменьшаем
-    if (height > 0.8) {
-      height = 0.8;
-      width = height * photoAR;
-    }
-    
-    const x = (1 - width) / 2;
-    const y = (1 - height) / 2;
-    
-    setCropRegion({ x, y, width, height });
-  }, [photoAspectRatio, videoAspectRatio]);
+    if (initialZoom !== undefined) setZoom(initialZoom);
+  }, [initialZoom]);
+  
+  React.useEffect(() => {
+    if (initialOffsetX !== undefined) setOffsetX(initialOffsetX);
+  }, [initialOffsetX]);
+  
+  React.useEffect(() => {
+    if (initialOffsetY !== undefined) setOffsetY(initialOffsetY);
+  }, [initialOffsetY]);
   
   // Convert normalized units to pixels for rendering
   const pxW = 420; // sandbox width px
@@ -301,6 +302,22 @@ export const CalibrationSandbox: React.FC<CalibrationSandboxProps> = ({
         <label className="text-xs">Поворот Z°</label>
         <input type="range" min={-180} max={180} step={1} value={rotation.z} onChange={rotateChange} className="flex-1" />
         <input type="number" className="w-16 text-xs border rounded px-1 py-0.5" value={rotation.z} onChange={e=>rotateChange({ target: { value: e.target.value } } as any)} />
+      </div>
+      
+      {/* Кнопка сброса кропа на всю площадь */}
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => {
+            setCropRegion({ x: 0, y: 0, width: 1, height: 1 });
+            onChange({ cropRegion: { x: 0, y: 0, width: 1, height: 1 } });
+          }}
+          className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+        >
+          🔄 Сбросить кроп (вся площадь фото)
+        </button>
+        {(cropRegion.x !== 0 || cropRegion.y !== 0 || cropRegion.width !== 1 || cropRegion.height !== 1) && (
+          <span className="text-xs text-orange-600 font-medium">Обрезка активна</span>
+        )}
       </div>
       
       {/* NEW: Zoom and Offset Controls */}

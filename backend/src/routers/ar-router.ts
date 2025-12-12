@@ -49,6 +49,78 @@ export function createARRouter(): Router {
   // Auth selection: prefer JWT in production; allow override via FORCE_JWT_AUTH=1
   const requireAuth = (process.env.FORCE_JWT_AUTH === '1' || process.env.NODE_ENV === 'production') ? jwtAuth : mockAuth;
 
+  // Ensure AR project exists in backend DB by hydrating from AR microservice status
+  const hydrateProjectFromMicroservice = async (projectId: string) => {
+    try {
+      const microStatus: any = await getARStatus(projectId);
+      if (!microStatus || microStatus.error) return null;
+
+      const photoUrl: string | null = microStatus.photoUrl || null;
+      const videoUrl: string | null = microStatus.videoUrl || null;
+
+      // Try to extract photo/video dimensions for correct plane/mask proportions
+      let photoWidth: number | null = null;
+      let photoHeight: number | null = null;
+      let photoAspectRatio: number | null = null;
+      let videoWidth: number | null = null;
+      let videoHeight: number | null = null;
+
+      try {
+        if (photoUrl) {
+          const photoPath = path.join(process.cwd(), photoUrl.replace(/^\/+/, ''));
+          if (videoUrl) {
+            const videoPath = path.join(process.cwd(), videoUrl.replace(/^\/+/, ''));
+            const { extractMediaMetadata } = await import('../services/media-metadata');
+            const meta = await extractMediaMetadata(photoPath, videoPath);
+            photoWidth = meta.photo.width;
+            photoHeight = meta.photo.height;
+            photoAspectRatio = Number((meta.photo.aspectRatio || (photoWidth && photoHeight ? photoWidth / photoHeight : null))?.toFixed(3)) || null;
+            videoWidth = meta.video.width;
+            videoHeight = meta.video.height;
+          } else {
+            const { extractPhotoMetadata } = await import('../services/media-metadata');
+            const meta = await extractPhotoMetadata(photoPath);
+            photoWidth = meta.width;
+            photoHeight = meta.height;
+            photoAspectRatio = Number((meta.aspectRatio || (photoWidth && photoHeight ? photoWidth / photoHeight : null))?.toFixed(3)) || null;
+          }
+        }
+      } catch (e: any) {
+        console.warn('[AR Router] Unable to extract media metadata for hydration:', e?.message || e);
+      }
+
+      const now = new Date();
+      const projectRecord: any = {
+        id: projectId,
+        userId: 'demo', // fallback user for local/mock auth
+        photoUrl,
+        videoUrl,
+        status: microStatus.status || 'ready',
+        viewUrl: microStatus.viewUrl || null,
+        viewerHtmlUrl: microStatus.viewerHtmlUrl || null,
+        qrCodeUrl: microStatus.qrCodeUrl || null,
+        markerMindUrl: microStatus.markerMindUrl || null,
+        isDemo: microStatus.isDemo ?? true,
+        expiresAt: microStatus.expiresAt ? new Date(microStatus.expiresAt) : null,
+        config: { markersCount: microStatus.markersCount || 1 },
+        photoWidth,
+        photoHeight,
+        photoAspectRatio,
+        videoWidth,
+        videoHeight,
+        createdAt: microStatus.createdAt ? new Date(microStatus.createdAt) : now,
+        updatedAt: now,
+      };
+
+      await db.insert(arProjects).values(projectRecord);
+      console.log(`[AR Router] ✅ Hydrated missing project ${projectId} from AR microservice`);
+      return projectRecord;
+    } catch (e: any) {
+      console.error('[AR Router] ❌ Failed to hydrate project from AR microservice:', e?.message || e);
+      return null;
+    }
+  };
+
   /**
    * POST /api/ar/create-automatic
    * DEPRECATED: Используйте /api/ar/create-demo вместо этого
@@ -238,9 +310,11 @@ export function createARRouter(): Router {
 
       console.log(`[AR Router] ✅ AR microservice returned status: ${microserviceStatus.status}, progress: ${microserviceStatus.progress}%`);
 
-      // Sync Backend DB with AR microservice status (eventual consistency)
+      // Fetch local DB record for additional fields (dimensions, config)
+      let localProject: any = null;
       try {
         const [existing] = await db.select().from(arProjects).where(eq(arProjects.id, id)).limit(1);
+        localProject = existing;
         
         if (existing) {
           // Update existing project
@@ -256,19 +330,21 @@ export function createARRouter(): Router {
             errorMessage: microserviceStatus.errorMessage || null,
             updatedAt: new Date(),
           } as any).where(eq(arProjects.id, id));
-          console.log('[AR Router] ✅ Synced Backend DB with microservice status');
         } else {
-          console.warn('[AR Router] ⚠️ Project not in Backend DB, will be invisible in /api/ar/all');
+          // Auto-hydrate missing projects so recompile/config routes keep working
+          localProject = await hydrateProjectFromMicroservice(id);
         }
-      } catch (syncError: any) {
-        console.warn('[AR Router] ⚠️ Failed to sync Backend DB:', syncError.message);
+      } catch {}
+
+      if (!localProject) {
+        console.warn('[AR Router] ⚠️ Project not in Backend DB, will be invisible in /api/ar/all');
       }
 
       // Compute external viewer URL if public base is configured (e.g., tunnel / production)
       const publicBase = process.env.AR_PUBLIC_BASE_URL; // e.g. https://intertransversal-delisa-yappingly.ngrok-free.dev
       const externalViewUrl = publicBase ? `${publicBase}/ar/view/${microserviceStatus.projectId}` : undefined;
 
-      // Return microservice response directly
+      // Return microservice response with local DB dimensions
       return res.json({
         message: 'AR project status',
         data: {
@@ -288,6 +364,20 @@ export function createARRouter(): Router {
           expiresAt: microserviceStatus.expiresAt,
           createdAt: microserviceStatus.createdAt,
           updatedAt: microserviceStatus.updatedAt,
+          // Local DB fields for editor
+          photoWidth: localProject?.photoWidth || null,
+          photoHeight: localProject?.photoHeight || null,
+          videoWidth: localProject?.videoWidth || null,
+          videoHeight: localProject?.videoHeight || null,
+          photoAspectRatio: localProject?.photoAspectRatio || null,
+          videoAspectRatio: localProject?.videoAspectRatio || null,
+          scaleWidth: localProject?.scaleWidth || null,
+          scaleHeight: localProject?.scaleHeight || null,
+          // CRITICAL: Mask fields for preview
+          maskUrl: localProject?.maskUrl || null,
+          maskWidth: localProject?.maskWidth || null,
+          maskHeight: localProject?.maskHeight || null,
+          config: localProject?.config || null,
         },
       });
     } catch (error: any) {
@@ -541,26 +631,32 @@ export function createARRouter(): Router {
         updatedAt: new Date() as any,
       } as any).where(eq(arProjects.id, projectId));
 
-      // regenerate viewer HTML keeping same config
+      // regenerate viewer HTML keeping same config, including zoom/offset
       const markerName = 'marker';
+      const cfg = (project.config as any) || {};
       
       // CRITICAL: Use photo aspect ratio for scale (NOT old scaleWidth/scaleHeight from DB!)
       const photoAR = Number(project.photoAspectRatio) || 
         (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
-      const videoScale = { width: 1.0, height: 1.0 / photoAR };
+      const videoScale = cfg.videoScale || { width: 1.0, height: 1.0 / photoAR };
       
-      console.log(`[AR Mask Upload] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
+      console.log(`[AR Mask Upload] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}, zoom=${cfg.zoom ?? 1}, offsets=${cfg.offsetX ?? 0},${cfg.offsetY ?? 0}`);
       
       await generateARViewer({
-        arId: (project.config as any)?.arServiceId || projectId,
+        arId: cfg.arServiceId || projectId,
         markerBaseName: markerName,
         videoFileName, // Use detected filename (video.mp4 or video-0.mp4)
         maskFileName,
-        videoPosition: (project.config as any)?.videoPosition,
-        videoRotation: (project.config as any)?.videoRotation,
+        videoPosition: cfg.videoPosition,
+        videoRotation: cfg.videoRotation,
         videoScale,
-        autoPlay: (project.config as any)?.autoPlay ?? true,
-        loop: (project.config as any)?.loop ?? true,
+        planeAspectRatio: photoAR,
+        zoom: cfg.zoom,
+        offsetX: cfg.offsetX,
+        offsetY: cfg.offsetY,
+        aspectLocked: cfg.aspectLocked,
+        autoPlay: cfg.autoPlay ?? true,
+        loop: cfg.loop ?? true,
       }, viewerHtmlPath);
 
       res.json({
@@ -638,20 +734,26 @@ export function createARRouter(): Router {
         videoFileName = 'video-0.mp4';
       } catch {}
 
+      const cfg = (project.config as any) || {};
       const photoAR = Number(project.photoAspectRatio) || 
         (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
-      const videoScale = { width: 1.0, height: 1.0 / photoAR };
+      const videoScale = cfg.videoScale || { width: 1.0, height: 1.0 / photoAR };
       
       await generateARViewer({
-        arId: id,
+        arId: cfg.arServiceId || projectId,
         markerBaseName: markerName,
         videoFileName,
         maskFileName: undefined, // NO MASK
-        videoPosition: (project.config as any)?.videoPosition,
-        videoRotation: (project.config as any)?.videoRotation,
+        videoPosition: cfg.videoPosition,
+        videoRotation: cfg.videoRotation,
         videoScale,
-        autoPlay: (project.config as any)?.autoPlay ?? true,
-        loop: (project.config as any)?.loop ?? true,
+        planeAspectRatio: photoAR,
+        zoom: cfg.zoom,
+        offsetX: cfg.offsetX,
+        offsetY: cfg.offsetY,
+        aspectLocked: cfg.aspectLocked,
+        autoPlay: cfg.autoPlay ?? true,
+        loop: cfg.loop ?? true,
       }, viewerHtmlPath);
 
       res.json({
@@ -767,18 +869,23 @@ export function createARRouter(): Router {
       // CRITICAL: Use photo aspect ratio for scale (NOT old scaleWidth/scaleHeight!)
       const photoAR = Number(project.photoAspectRatio) || 
         (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
-      const videoScale = { width: 1.0, height: 1.0 / photoAR };
+      const videoScale = existingConfig.videoScale || { width: 1.0, height: 1.0 / photoAR };
       
-      console.log(`[AR Convert Mask] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}`);
+      console.log(`[AR Convert Mask] Using photo AR=${photoAR.toFixed(3)}, scale=${videoScale.width}×${videoScale.height.toFixed(3)}, zoom=${existingConfig.zoom ?? 1}`);
 
       await generateARViewer({
-        arId: (project.config as any)?.arServiceId || projectId,
+        arId: existingConfig.arServiceId || projectId,
         markerBaseName: markerName,
         videoFileName: 'video.mp4',
         maskFileName: convertedFileName,
         videoPosition: existingConfig.videoPosition,
         videoRotation: existingConfig.videoRotation,
         videoScale,
+        planeAspectRatio: photoAR,
+        zoom: existingConfig.zoom,
+        offsetX: existingConfig.offsetX,
+        offsetY: existingConfig.offsetY,
+        aspectLocked: existingConfig.aspectLocked,
         autoPlay: existingConfig.autoPlay ?? true,
         loop: existingConfig.loop ?? true,
       }, viewerHtmlPath);
@@ -809,7 +916,7 @@ export function createARRouter(): Router {
         return res.status(403).json({ error: 'Admin access required' });
       }
       const { id } = req.params;
-      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked, shapeType } = req.body;
+      const { videoPosition, videoRotation, videoScale, cropRegion, fitMode, autoPlay, loop, zoom, offsetX, offsetY, aspectLocked, shapeType, removeMask } = req.body;
       // Resolve local vs AR service uuid
       let projectId = id;
       let project: any;
@@ -825,17 +932,11 @@ export function createARRouter(): Router {
       }
       if (!project) return res.status(404).json({ error: 'AR project not found' });
       
-      // Check if this is a multi-target project (has items)
-      const items = await db.select().from(arProjectItems).where(eq(arProjectItems.projectId, id));
-      if (items.length > 0) {
-        return res.status(400).json({ 
-          error: 'This is a multi-target project. Use /api/ar/:projectId/items/:itemId endpoint to update item configs.',
-          itemsCount: items.length
-        });
-      }
+      // For multi-target projects, this updates global project config
+      // For item-specific config (position, rotation per marker), use /api/ar/:projectId/items/:itemId
       
-      // For legacy single-photo projects, allow config update even in pending status
-      if (project.status !== 'ready' && project.status !== 'pending') {
+      // Allow config updates even if project errored (to let user fix settings)
+      if (project.status !== 'ready' && project.status !== 'pending' && project.status !== 'error') {
         return res.status(400).json({ error: `Cannot update config for project in ${project.status} status` });
       }
 
@@ -871,10 +972,32 @@ export function createARRouter(): Router {
 
       let maskFileName: string | undefined;
       
-      console.log(`[AR Config] DEBUG: shapeType="${shapeType}", will generate mask: ${!!(shapeType && shapeType !== 'custom')}`);
+      console.log(`[AR Config] DEBUG: shapeType="${shapeType}", removeMask=${!!removeMask}, will generate mask: ${!!(shapeType && shapeType !== 'custom' && shapeType !== 'none')}`);
       
-      // If shapeType is provided, generate mask locally (no full recompilation needed)
-      if (shapeType && shapeType !== 'custom') {
+      // If shapeType is 'none' or removeMask flag passed — delete mask files/DB entry
+      if ((shapeType === 'none' || removeMask === true) && (project as any).maskUrl) {
+        const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
+        const possibleMasks = ['mask.png', 'mask.webp', 'mask.gif', 'mask-0.png', 'mask-0.webp', path.basename((project as any).maskUrl as string)];
+        for (const maskFile of possibleMasks) {
+          const maskPath = path.join(storageDir, maskFile);
+          try {
+            await fs.unlink(maskPath);
+            console.log(`[AR Config] Removed mask file ${maskFile}`);
+          } catch {}
+        }
+        await db.update(arProjects).set({
+          maskUrl: null as any,
+          maskWidth: null as any,
+          maskHeight: null as any,
+          updatedAt: new Date() as any,
+        } as any).where(eq(arProjects.id, projectId));
+        project.maskUrl = null;
+        maskFileName = undefined;
+        console.log('[AR Config] Mask cleared via shapeType=none/removeMask');
+      }
+
+      // If shapeType is provided (and not custom/none), generate mask locally (no full recompilation needed)
+      if (shapeType && shapeType !== 'custom' && shapeType !== 'none') {
         console.log(`[AR Config] 🎭 Generating ${shapeType} mask locally...`);
         
         const storageDir = path.join(process.cwd(), 'objects', 'ar-storage', (project.config as any)?.arServiceId || projectId);
@@ -921,10 +1044,8 @@ export function createARRouter(): Router {
           console.log(`[AR Config] DEBUG: maskFileName set to "${maskFileName}"`);
         } catch (maskError: any) {
           console.error('[AR Config] ❌ Failed to generate mask:', maskError);
-          return res.status(500).json({ 
-            error: 'Failed to generate mask', 
-            details: maskError.message 
-          });
+          // Не падаем 500: просто продолжаем без маски
+          maskFileName = undefined;
         }
       }
 
@@ -984,7 +1105,7 @@ export function createARRouter(): Router {
         }
       }
 
-      // Plane scale: use cropRegion proportions if available, otherwise photo dimensions
+      // Plane scale: use cropRegion proportions if available, otherwise based on photo AR in normalized units
       let planeScale;
       
       if (cropRegion && cropRegion.width && cropRegion.height) {
@@ -1020,21 +1141,21 @@ export function createARRouter(): Router {
           };
         }
       } else {
-        // Use photo aspect ratio for plane scale
-        // Video has been resized to match photo dimensions in AR compiler
-        // So plane should match photo AR, not force 1:1
+        // Нормализованный масштаб плоскости: ширина=1, высота=1/AR
         const photoAR = Number(project.photoAspectRatio) || (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
-        
-        planeScale = { 
-          width: 1.0, 
-          height: 1.0 / photoAR 
-        };
-        console.log(`[AR Config] Using photo AR=${photoAR.toFixed(3)}, plane=${planeScale.width}×${planeScale.height.toFixed(3)}`);
+        planeScale = { width: 1.0, height: 1.0 / photoAR };
+        console.log(`[AR Config] Photo AR=${photoAR.toFixed(3)}, normalized plane=${planeScale.width.toFixed(3)}×${planeScale.height.toFixed(3)}`);
       }
       
-      // Generate viewer HTML with correct video filename (video.mp4 or video-0.mp4)
-      console.log(`[AR Config] Generating viewer with video: ${videoFileName}, mask: ${maskFileName || 'none'}`);
+      // Photo AR already calculated above
+      const photoAR = Number(project.photoAspectRatio) || (project.photoWidth && project.photoHeight ? project.photoWidth / project.photoHeight : 1.0);
       
+      // Generate viewer HTML with correct video filename (video.mp4 or video-0.mp4)
+      console.log(`[AR Config] Generating viewer with video: ${videoFileName}, mask: ${maskFileName || 'none'}, photoAR=${photoAR.toFixed(3)}, zoom=${updatedConfig.zoom ?? 'n/a'}, offsets=${updatedConfig.offsetX ?? 0},${updatedConfig.offsetY ?? 0}, fitMode=${updatedConfig.fitMode || 'cover'}`);
+      
+      // Compute video aspect ratio from stored dimensions if available
+      const videoAspectRatio = (project.videoWidth && project.videoHeight) ? (Number(project.videoWidth) / Number(project.videoHeight)) : undefined;
+
       await generateARViewer({
         arId: (project.config as any)?.arServiceId || projectId,
         markerBaseName: markerName,
@@ -1043,6 +1164,12 @@ export function createARRouter(): Router {
         videoPosition: updatedConfig.videoPosition,
         videoRotation: updatedConfig.videoRotation,
         videoScale: planeScale,
+        planeAspectRatio: photoAR, // Передаём AR для правильного расчёта в generateARViewer
+        videoAspectRatio,
+        fitMode: updatedConfig.fitMode || 'cover',
+        zoom: updatedConfig.zoom,
+        offsetX: updatedConfig.offsetX,
+        offsetY: updatedConfig.offsetY,
         autoPlay: updatedConfig.autoPlay ?? true,
         loop: updatedConfig.loop ?? true,
       }, viewerHtmlPath);
@@ -1133,11 +1260,14 @@ export function createARRouter(): Router {
   router.post('/:projectId/recompile', requireAuth, async (req: Request, res: Response) => {
     try {
       const { projectId } = req.params;
-      const userId = (req as any).user?.id;
+      const userId = (req as any).user?.claims?.sub || (req as any).user?.userData?.id || (req as any).user?.id;
       const userRole = (req as any).user?.role || (req as any).user?.userData?.role;
 
       // Verify project exists and user has access
-      const [project] = await db.select().from(arProjects).where(eq(arProjects.id, projectId)).limit(1);
+      let [project] = await db.select().from(arProjects).where(eq(arProjects.id, projectId)).limit(1);
+      if (!project) {
+        project = (await hydrateProjectFromMicroservice(projectId)) as any;
+      }
       if (!project) {
         return res.status(404).json({ error: 'Project not found' });
       }
@@ -1147,6 +1277,17 @@ export function createARRouter(): Router {
 
       // Start compilation in background
       console.log(`[AR Router] Manual recompilation triggered for project ${projectId}`);
+
+      // Обновляем статус сразу, чтобы UI видел «pending»
+      try {
+        await db.update(arProjects).set({
+          status: 'pending' as any,
+          updatedAt: new Date() as any,
+        } as any).where(eq(arProjects.id, project.id as any));
+      } catch (statusErr) {
+        console.warn('[AR Router] Failed to set pending before recompile:', statusErr);
+      }
+
       compileARProject(projectId).catch((error) => {
         console.error(`[AR Router] Recompilation failed for ${projectId}:`, error);
       });

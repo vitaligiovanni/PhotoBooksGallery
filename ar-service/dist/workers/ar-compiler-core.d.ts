@@ -61,12 +61,17 @@ export interface CompilationResult {
     metadata?: {
         markersCount?: number;
         multiTarget?: boolean;
-        photoWidth: number;
-        photoHeight: number;
+        photoWidth?: number;
+        photoHeight?: number;
+        photoSizes?: Array<{
+            width: number;
+            height: number;
+            aspectRatio: number;
+        }>;
         videoWidth?: number;
         videoHeight?: number;
         videoDurationMs?: number;
-        photoAspectRatio: string;
+        photoAspectRatio?: string;
         videoAspectRatio?: string;
         fitMode?: string;
         scaleWidth?: string;

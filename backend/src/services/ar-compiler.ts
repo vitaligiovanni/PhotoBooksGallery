@@ -100,7 +100,7 @@ async function generateMultiTargetViewer(
   arProjectId: string, 
   items: any[], 
   storageDir: string, 
-  metadata?: { photoWidth?: number; photoHeight?: number; photoAspectRatio?: string }
+  metadata?: { photoWidth?: number; photoHeight?: number; photoAspectRatio?: number }
 ): Promise<void> {
   // MindAR "imageTargetSrc" expects a SINGLE .mind file containing multiple targets
   // The compileMultiItemProject() function now generates targets.mind with all markers combined
@@ -108,7 +108,7 @@ async function generateMultiTargetViewer(
   
   // Get photo aspect ratio from metadata (or calculate from dimensions)
   const photoAR = metadata?.photoAspectRatio 
-    ? parseFloat(metadata.photoAspectRatio)
+    ? metadata.photoAspectRatio
     : (metadata?.photoWidth && metadata?.photoHeight 
         ? metadata.photoWidth / metadata.photoHeight 
         : 0.75); // Fallback for old projects
@@ -179,7 +179,7 @@ async function generateMultiTargetViewer(
         visible="false"
         class="clickable"
         data-auto-play="${autoPlay}"
-        animation__fadein="property: material.opacity; from: 0; to: 1; dur: 800; easing: easeInOutQuad; startEvents: video-ready-${idx}"
+        animation__fadein="property: material.opacity; from: 0; to: 1; dur: 300; easing: easeInOutQuad; startEvents: video-ready-${idx}"
       ></a-plane>
       <a-video id="ar-video-el-${idx}" src="#ar-video-${idx}" autoplay muted playsinline style="display:none"></a-video>
     </a-entity>`;
@@ -341,7 +341,7 @@ async function generateMultiTargetViewer(
                   console.warn('[Multi Cover] scale apply failed:', scaleErr);
                 }
                 
-                // ПРОФЕССИОНАЛЬНЫЙ FADE-IN: запускаем через 200ms когда первый кадр загружен
+                // ПРОФЕССИОНАЛЬНЫЙ FADE-IN: запускаем через 50ms когда первый кадр загружен
                 setTimeout(() => {
                   if (planeEl) {
                     planeEl.setAttribute('visible', 'true');
@@ -349,7 +349,7 @@ async function generateMultiTargetViewer(
                     planeEl.emit('video-ready-${idx}');
                     console.log('Fade-in animation started for video ${idx}');
                   }
-                }, 200);
+                }, 50);
               }).catch(e => {
                 console.warn('Play failed for video ${idx}, retrying muted:', e);
                 try { 
@@ -361,7 +361,7 @@ async function generateMultiTargetViewer(
                         planeEl.setAttribute('visible', 'true');
                         planeEl.emit('video-ready-${idx}');
                       }
-                    }, 200);
+                    }, 50);
                   });
                 } catch {}
               });
@@ -497,6 +497,23 @@ export async function generateARViewer(
     aspectLocked = true,
   } = config;
 
+  // Вычисляем правильный масштаб если плaneAspectRatio известен и videoScale не передан
+  let finalVideoScale = videoScale;
+  if (planeAspectRatio && (!videoScale || (videoScale.width === 1 && videoScale.height === 1))) {
+    // Масштабируем width=1.0, а height вычисляем из плaneAspectRatio
+    // Если плаза 3:4 (0.75), то height будет 1.333
+    finalVideoScale = {
+      width: 1.0,
+      height: 1.0 / planeAspectRatio
+    };
+    console.log(`[generateARViewer] ✅ Computed videoScale from planeAspectRatio: ${finalVideoScale.width}×${finalVideoScale.height.toFixed(3)}`);
+  } else {
+    console.log(`[generateARViewer] planeAspectRatio=${planeAspectRatio}, videoScale=${JSON.stringify(videoScale)}`);
+    if (!planeAspectRatio) {
+      console.warn(`[generateARViewer] ⚠️ planeAspectRatio is undefined! Using default videoScale`);
+    }
+  }
+
   const html = `<!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -546,7 +563,7 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 ${maskFileName ? `<img id="mask" src="./${maskFileName}?t=${Date.now()}" crossorigin="anonymous">` : ''}
 </a-assets>
 <a-camera position="0 0 0" look-controls="enabled:false" cursor="rayOrigin:mouse"></a-camera>
-<a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${videoScale.width}" height="${videoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double${maskFileName ? ';alphaMap:#mask' : ''}" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>
+<a-entity mindar-image-target="targetIndex:0"><a-plane id="plane" rotation="${videoRotation.x} ${videoRotation.y} ${videoRotation.z}" width="${finalVideoScale.width}" height="${finalVideoScale.height}" position="${videoPosition.x} ${videoPosition.y} ${videoPosition.z}" material="src:#vid;shader:flat;transparent:true;opacity:0;side:double${maskFileName ? ';alphaMap:#mask' : ''}" visible="false" animation__fade="property:material.opacity;from:0;to:1;dur:500;startEvents:showvid;easing:easeInOutQuad"></a-plane></a-entity>
 </a-scene>
 <script>
 console.log('[AR] Page loaded');
@@ -598,6 +615,7 @@ if (maskImg && planeEl) {
       mesh.material.needsUpdate = true;
       maskApplied = true;
       console.log('[AR] ✅ AlphaMap applied successfully! Video should be masked.');
+      setTimeout(()=>{applyTextureTransform();console.log('[AR] 🔄 Initial texture transform applied to sync mask')},50);
     }
   }
   
@@ -628,10 +646,14 @@ const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
 console.log('[AR] iOS detected:',isIOS);
 function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.currentTime=0;video.muted=true;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing (muted)');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible');if(!isIOS){setTimeout(()=>{video.muted=false;console.log('[AR] ✓ Auto-unmuted (Android/Desktop)')},1000)}else{setTimeout(()=>{unmuteHint.style.display='block';console.log('[AR] 📢 Showing unmute hint (iOS)')},500);const handleUnmute=()=>{if(!video.muted)return;video.muted=false;unmuteHint.style.display='none';console.log('[AR] ✓ Unmuted by user tap (iOS)');document.body.removeEventListener('click',handleUnmute);document.body.removeEventListener('touchstart',handleUnmute)};document.body.addEventListener('click',handleUnmute);document.body.addEventListener('touchstart',handleUnmute)}setTimeout(()=>{orderBtn.style.display='block';orderBtn.classList.add('fade-in-up');console.log('[AR] 🛒 Order button shown')},5000)},200)}).catch(e=>{console.error('[AR] ❌ Play failed even muted:',e);loading.innerHTML='<h2>Ошибка видео</h2><p>'+e.message+'</p>'})}else{console.log('[AR] Play promise undefined')}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
 target.addEventListener('targetLost',()=>{console.log('[AR] Marker lost');markerActive=false;plane.setAttribute('visible','false');plane.setAttribute('material','opacity',0);video.pause();video.currentTime=0;unmuteHint.style.display='none'});
-const FIT_MODE='${fitMode}';const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};const ZOOM=${zoom};const OFFSET_X=${offsetX};const OFFSET_Y=${offsetY};const ASPECT_LOCKED=${aspectLocked};console.log('[AR] FitMode:',FIT_MODE,'VideoAR:',VIDEO_AR,'PlaneAR:',PLANE_AR,'Zoom:',ZOOM,'Offset:',OFFSET_X,OFFSET_Y,'AspectLocked:',ASPECT_LOCKED);
+let currentZoom=${zoom},currentOffsetX=${offsetX},currentOffsetY=${offsetY};
+const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};console.log('[AR] Config: ZOOM='+currentZoom+' OFFSET_X='+currentOffsetX+' OFFSET_Y='+currentOffsetY+' VIDEO_AR='+VIDEO_AR+' PLANE_AR='+PLANE_AR);
 let coverScaleX=1,coverScaleY=1;
-if(FIT_MODE==='cover'&&VIDEO_AR&&PLANE_AR){const vRatio=VIDEO_AR;const pRatio=PLANE_AR;if(vRatio>pRatio){coverScaleY=vRatio/pRatio;console.log('[AR] Cover: video wider, scaleY=',coverScaleY)}else{coverScaleX=pRatio/vRatio;console.log('[AR] Cover: video taller, scaleX=',coverScaleX)}console.log('[AR] ✓ Calculated cover scale:',coverScaleX,'x',coverScaleY)}
-let smoothInit=false;let sp=[0,0,0];let sq=null;const SMOOTH_ALPHA_POS=0.5;const SMOOTH_ALPHA_ROT=0.5;function smoothTick(){if(!markerActive||!plane||!plane.object3D){requestAnimationFrame(smoothTick);return;}const o=plane.object3D;if(!smoothInit){sp=[o.position.x,o.position.y,o.position.z];sq=o.quaternion.clone();smoothInit=true;}else{sp[0]+=(o.position.x-sp[0])*SMOOTH_ALPHA_POS;sp[1]+=(o.position.y-sp[1])*SMOOTH_ALPHA_POS;sp[2]+=(o.position.z-sp[2])*SMOOTH_ALPHA_POS;sq.slerp(o.quaternion,SMOOTH_ALPHA_ROT);o.position.set(sp[0],sp[1],sp[2]);o.quaternion.copy(sq);}if(FIT_MODE==='cover'){if(ASPECT_LOCKED){o.scale.set(coverScaleX*ZOOM,coverScaleY*ZOOM,1);}else{o.scale.set(coverScaleX,coverScaleY,1);}}if(OFFSET_X!==0||OFFSET_Y!==0){const basePos=[${videoPosition.x},${videoPosition.y},${videoPosition.z}];o.position.set(basePos[0]+OFFSET_X,basePos[1]+OFFSET_Y,basePos[2]);}requestAnimationFrame(smoothTick);}requestAnimationFrame(smoothTick);
+if('${fitMode}'==='cover'&&VIDEO_AR&&PLANE_AR){const vRatio=VIDEO_AR,pRatio=PLANE_AR;if(vRatio>pRatio){coverScaleY=vRatio/pRatio;console.log('[AR] Cover: video wider (AR '+vRatio.toFixed(2)+' > '+pRatio.toFixed(2)+'), scaleY='+coverScaleY.toFixed(2))}else{coverScaleX=pRatio/vRatio;console.log('[AR] Cover: video taller (AR '+vRatio.toFixed(2)+' < '+pRatio.toFixed(2)+'), scaleX='+coverScaleX.toFixed(2))}}
+function applyTextureTransform(){const mesh=plane.getObject3D('mesh');if(!mesh||!mesh.material||!mesh.material.map){return}const tex=mesh.material.map;const zX=coverScaleX*currentZoom,zY=coverScaleY*currentZoom;tex.repeat.set(zX,zY);const offX=0.5*(1-zX)+currentOffsetX,offY=0.5*(1-zY)-currentOffsetY;tex.offset.set(offX,offY);tex.needsUpdate=true;if(mesh.material.alphaMap){const alphaTex=mesh.material.alphaMap;alphaTex.repeat.set(zX,zY);alphaTex.offset.set(offX,offY);alphaTex.needsUpdate=true;console.log('[AR] 🎭 AlphaMap transform synced with video texture')}console.log('[AR] Texture transform: repeat=('+zX.toFixed(3)+','+zY.toFixed(3)+') offset=('+offX.toFixed(3)+','+offY.toFixed(3)+')')}
+window.addEventListener('message',(e)=>{if(e.data.type==='ar-calibration'){console.log('[AR] 🔄 Live preview update:',e.data.payload);if(typeof e.data.payload.zoom==='number'){currentZoom=e.data.payload.zoom;console.log('[AR] Updated zoom:',currentZoom)}if(typeof e.data.payload.offsetX==='number'){currentOffsetX=e.data.payload.offsetX;console.log('[AR] Updated offsetX:',currentOffsetX)}if(typeof e.data.payload.offsetY==='number'){currentOffsetY=e.data.payload.offsetY;console.log('[AR] Updated offsetY:',currentOffsetY)}if(e.data.payload.position){plane.setAttribute('position',e.data.payload.position.x+' '+e.data.payload.position.y+' '+e.data.payload.position.z);console.log('[AR] Updated position:',e.data.payload.position)}if(e.data.payload.rotation){plane.setAttribute('rotation',e.data.payload.rotation.x+' '+e.data.payload.rotation.y+' '+e.data.payload.rotation.z);console.log('[AR] Updated rotation:',e.data.payload.rotation)}applyTextureTransform()}});
+let frameCount=0;function updateLoop(){if(!markerActive||!plane||!plane.object3D){requestAnimationFrame(updateLoop);return}frameCount++;if(frameCount%10===0){applyTextureTransform();if(frameCount===10)console.log('[AR] ✓ Texture transform applied and running')}requestAnimationFrame(updateLoop)}
+scene.addEventListener('renderstart',()=>{console.log('[AR] Render started, beginning texture update loop');updateLoop()});
 </script>
 </body>
 </html>`;
@@ -734,7 +756,7 @@ export async function compileARProject(arProjectId: string): Promise<void> {
         externalViewUrl: rawProject.external_view_url,
         isDemo: rawProject.is_demo,
         expiresAt: rawProject.expires_at,
-      } as ARProject;
+      } as any;
       
       // Get items
       const itemsResult = await client.query(
@@ -860,7 +882,7 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
       console.log(`[AR Compiler Multi] Video ${i}: resizing to ${photoMeta.width}×${photoMeta.height} (photo AR=${photoMeta.aspectRatio.toFixed(3)})`);
       
       // CRITICAL: Resize/crop video to match photo dimensions using ffmpeg
-      const { resizeVideoToMatchPhoto } = await import('./video-processor');
+      const { resizeVideoToMatchPhoto, applyZoomOffsetCrop } = await import('./video-processor');
       try {
         await resizeVideoToMatchPhoto(
           videoSrc,
@@ -868,7 +890,23 @@ async function compileMultiItemProject(arProjectId: string, items: any[], storag
           photoMeta.height,
           videoDest
         );
-        console.log(`[AR Compiler Multi] ✅ Video ${i} processed successfully`);
+        console.log(`[AR Compiler Multi] ✅ Video ${i} processed successfully (match photo)`);
+        // Дополнительно применяем ручной zoom/offset, если заданы в конфиге item или проекта
+        const itemConfig = item.config || {};
+        const projConfig = (project as any)?.config || {};
+        const zoom = (itemConfig.zoom ?? projConfig.zoom ?? 1.0);
+        const offsetX = (itemConfig.offsetX ?? projConfig.offsetX ?? 0);
+        const offsetY = (itemConfig.offsetY ?? projConfig.offsetY ?? 0);
+        if (Math.abs(zoom - 1) > 0.01 || Math.abs(offsetX) > 0.0001 || Math.abs(offsetY) > 0.0001) {
+          const zoomedPath = path.join(storageDir, `video-${i}-zoomed.mp4`);
+          try {
+            await applyZoomOffsetCrop(videoDest, photoMeta.width, photoMeta.height, zoom, offsetX, offsetY, zoomedPath);
+            await fs.copyFile(zoomedPath, videoDest);
+            console.log(`[AR Compiler Multi] ✓ Applied zoom/offset to video ${i} (zoom=${zoom}, off=${offsetX},${offsetY})`);
+          } catch (zErr: any) {
+            console.warn(`[AR Compiler Multi] Zoom/offset failed for video ${i}, keeping matched video:`, zErr?.message);
+          }
+        }
       } catch (videoError: any) {
         console.error(`[AR Compiler Multi] ❌ Video processing failed for ${i}:`, videoError.message);
         console.log(`[AR Compiler Multi] Falling back to copy...`);
@@ -1090,10 +1128,29 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
         }
       }
       
+      // При необходимости применяем ручной zoom/offset (близко к тому, что видит пользователь в редакторе)
+      const cfgZoom = (project.config as any)?.zoom ?? 1.0;
+      const cfgOffsetX = (project.config as any)?.offsetX ?? 0;
+      const cfgOffsetY = (project.config as any)?.offsetY ?? 0;
+      let videoAfterTransform = finalVideoPath;
+
+      if (Math.abs(cfgZoom - 1) > 0.01 || Math.abs(cfgOffsetX) > 0.0001 || Math.abs(cfgOffsetY) > 0.0001) {
+        try {
+          const { applyZoomOffsetCrop } = await import('./video-processor');
+          const zoomedPath = path.join(storageDir, 'video-zoomed.mp4');
+          await applyZoomOffsetCrop(finalVideoPath, photoWidth ?? meta.photo.width, photoHeight ?? meta.photo.height, cfgZoom, cfgOffsetX, cfgOffsetY, zoomedPath);
+          videoAfterTransform = zoomedPath;
+          console.log('[AR Compiler] ✓ Applied zoom/offset crop to video');
+        } catch (zoomErr: any) {
+          console.warn('[AR Compiler] Zoom/offset crop failed, fallback to unmodified video:', zoomErr?.message);
+          videoAfterTransform = finalVideoPath;
+        }
+      }
+
       // Копируем финальное видео в storage
       const videoFileName = 'video.mp4';
       const videoDestPath = path.join(storageDir, videoFileName);
-      await fs.copyFile(finalVideoPath, videoDestPath);
+      await fs.copyFile(videoAfterTransform, videoDestPath);
 
       // Progress logging (DB update removed to prevent CRM freeze)
       console.log(`[AR Compiler] ✓ Media prepared for ${arProjectId}`);
@@ -1176,12 +1233,12 @@ async function compileSinglePhotoProject(arProjectId: string, project: any, stor
     const resizedPhotoPath = await resizePhotoIfNeeded(photoPath, storageDir, 1920);
     
     // Border enhancement handled by AR microservice (port 5000)
-    const finalMarkerSourcePath = resizedPhotoPath;
+    let finalMarkerSourcePath = resizedPhotoPath;
     
     if (false) {
       console.log('[AR Compiler] 🎨 Enhanced with border → cropping for clean marker');
       // Magic: .mind gets high features, but recognizes original photo without border
-      finalMarkerSourcePath = await createCroppedMindMarker(enhancerResult.photoPath, storageDir);
+      // finalMarkerSourcePath = await createCroppedMindMarker(enhancerResult.photoPath, storageDir);
       console.log('[AR Compiler] ✨ Professional mode: Print clean photo, get stable tracking!');
     } else {
       console.log('[AR Compiler] 📸 Using resized photo (enhancer disabled)');

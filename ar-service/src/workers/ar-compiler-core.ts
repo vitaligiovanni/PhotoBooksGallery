@@ -1197,9 +1197,20 @@ async function generateMultiTargetARViewer(
       : `src:#vid${i};shader:flat;transparent:true;opacity:0;side:double`;
 
     // CRITICAL: Each marker has its OWN size based on its photo dimensions
+    // A-Frame plane: width and height in meters
+    // For horizontal photo (AR>1): width should be > height
+    // For vertical photo (AR<1): height should be > width
     const photoSize = config.photoSizes[i];
-    const planeWidth = 1.0;
-    const planeHeight = 1.0 / photoSize.aspectRatio; // height = width / AR
+    let planeWidth, planeHeight;
+    if (photoSize.aspectRatio >= 1.0) {
+      // Horizontal or square photo
+      planeWidth = photoSize.aspectRatio;
+      planeHeight = 1.0;
+    } else {
+      // Vertical photo
+      planeWidth = 1.0;
+      planeHeight = 1.0 / photoSize.aspectRatio;
+    }
 
     return `
 <a-entity mindar-image-target="targetIndex:${i}">
@@ -1328,7 +1339,7 @@ async function generateARViewer(
     maskFileName,
     videoPosition = { x: 0, y: 0, z: 0 },
     videoRotation = { x: 0, y: 0, z: 0 },
-    videoScale = { width: 1, height: 0.75 },
+    videoScale: providedVideoScale,
     autoPlay = true,
     loop = true,
     fitMode = 'contain',
@@ -1339,6 +1350,22 @@ async function generateARViewer(
     offsetY = 0,
     aspectLocked = true,
   } = config;
+
+  // Calculate proper videoScale based on photo aspect ratio
+  // A-Frame uses physical size in meters - height=1 is standard, width varies by aspect ratio
+  let videoScale = providedVideoScale || { width: 1, height: 0.75 };
+  
+  if (planeAspectRatio && planeAspectRatio > 0) {
+    // planeAspectRatio is width/height (e.g., 1.77 for 16:9, 0.56 for 9:16)
+    if (planeAspectRatio > 1) {
+      // Horizontal photo - width > height
+      videoScale = { width: planeAspectRatio, height: 1 };
+    } else {
+      // Vertical photo - height > width  
+      videoScale = { width: 1, height: 1 / planeAspectRatio };
+    }
+    console.log(`[AR Viewer] Photo AR=${planeAspectRatio.toFixed(2)} → videoScale={width:${videoScale.width.toFixed(2)}, height:${videoScale.height.toFixed(2)}}`);
+  }
 
   const html = `<!DOCTYPE html>
 <html lang="ru">
@@ -1379,7 +1406,6 @@ body,html{margin:0;padding:0;width:100%;height:100%;overflow:hidden}
 <body>
 <div class="arjs-loader" id="loading"><div id="lottie-container"></div><div class="loading-text">Приготовьтесь к волшебству</div><div class="loading-dots"><span></span><span></span><span></span></div></div>
 <img id="logo" src="https://photobooksgallery.am/logo.png" alt="PhotoBooks Gallery" onerror="this.style.display='none'">
-<div id="instructions">Наведите камеру на фотографию</div>
 <div id="unmute-hint">Нажмите для звука</div>
 <button id="share-btn" title="Поделиться">📤</button>
 <a id="order-btn" href="https://photobooksgallery.am" target="_blank">🛒 Заказать альбом</a>
@@ -1422,10 +1448,12 @@ const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent)&&!window.MSStream;
 console.log('[AR] iOS detected:',isIOS);
 function check(){console.log('[AR] Check state:',JSON.stringify(r),'markerActive:',markerActive);if(markerActive)return;if(r.v&&r.t&&r.m){markerActive=true;console.log('[AR] 🎬 ALL READY! Playing video...');video.currentTime=0;video.muted=true;const playPromise=video.play();if(playPromise){playPromise.then(()=>{console.log('[AR] ✓ Video playing (muted)');setTimeout(()=>{plane.setAttribute('visible','true');plane.emit('showvid');console.log('[AR] ✓ Plane visible');if(!isIOS){setTimeout(()=>{video.muted=false;console.log('[AR] ✓ Auto-unmuted (Android/Desktop)')},1000)}else{setTimeout(()=>{unmuteHint.style.display='block';console.log('[AR] 📢 Showing unmute hint (iOS)')},500);const handleUnmute=()=>{if(!video.muted)return;video.muted=false;unmuteHint.style.display='none';console.log('[AR] ✓ Unmuted by user tap (iOS)');document.body.removeEventListener('click',handleUnmute);document.body.removeEventListener('touchstart',handleUnmute)};document.body.addEventListener('click',handleUnmute);document.body.addEventListener('touchstart',handleUnmute)}setTimeout(()=>{orderBtn.style.display='block';orderBtn.classList.add('fade-in-up');console.log('[AR] 🛒 Order button shown')},5000)},200)}).catch(e=>{console.error('[AR] ❌ Play failed even muted:',e);loading.innerHTML='<h2>Ошибка видео</h2><p>'+e.message+'</p>'})}else{console.log('[AR] Play promise undefined')}}else{console.log('[AR] ⏳ Waiting for:',!r.v?'video':'',!r.t?'texture':'',!r.m?'marker':'')}}
 target.addEventListener('targetLost',()=>{console.log('[AR] Marker lost');markerActive=false;plane.setAttribute('visible','false');plane.setAttribute('material','opacity',0);video.pause();video.currentTime=0;unmuteHint.style.display='none'});
-const FIT_MODE='${fitMode}';const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};const ZOOM=${zoom};const OFFSET_X=${offsetX};const OFFSET_Y=${offsetY};const ASPECT_LOCKED=${aspectLocked};console.log('[AR] FitMode:',FIT_MODE,'VideoAR:',VIDEO_AR,'PlaneAR:',PLANE_AR,'Zoom:',ZOOM,'Offset:',OFFSET_X,OFFSET_Y,'AspectLocked:',ASPECT_LOCKED);
+const VIDEO_AR=${videoAspectRatio || 'null'};const PLANE_AR=${planeAspectRatio || 'null'};const ZOOM=${zoom};const OFFSET_X=${offsetX};const OFFSET_Y=${offsetY};console.log('[AR] Config: ZOOM='+ZOOM+' OFFSET_X='+OFFSET_X+' OFFSET_Y='+OFFSET_Y+' VIDEO_AR='+VIDEO_AR+' PLANE_AR='+PLANE_AR);
 let coverScaleX=1,coverScaleY=1;
-if(FIT_MODE==='cover'&&VIDEO_AR&&PLANE_AR){const vRatio=VIDEO_AR;const pRatio=PLANE_AR;if(vRatio>pRatio){coverScaleY=vRatio/pRatio;console.log('[AR] Cover: video wider, scaleY=',coverScaleY)}else{coverScaleX=pRatio/vRatio;console.log('[AR] Cover: video taller, scaleX=',coverScaleX)}console.log('[AR] ✓ Calculated cover scale:',coverScaleX,'x',coverScaleY)}
-let smoothInit=false;let sp=[0,0,0];let sq=null;const SMOOTH_ALPHA_POS=0.5;const SMOOTH_ALPHA_ROT=0.5;function smoothTick(){if(!markerActive||!plane||!plane.object3D){requestAnimationFrame(smoothTick);return;}const o=plane.object3D;if(!smoothInit){sp=[o.position.x,o.position.y,o.position.z];sq=o.quaternion.clone();smoothInit=true;}else{sp[0]+=(o.position.x-sp[0])*SMOOTH_ALPHA_POS;sp[1]+=(o.position.y-sp[1])*SMOOTH_ALPHA_POS;sp[2]+=(o.position.z-sp[2])*SMOOTH_ALPHA_POS;sq.slerp(o.quaternion,SMOOTH_ALPHA_ROT);o.position.set(sp[0],sp[1],sp[2]);o.quaternion.copy(sq);}if(FIT_MODE==='cover'){if(ASPECT_LOCKED){o.scale.set(coverScaleX*ZOOM,coverScaleY*ZOOM,1);}else{o.scale.set(coverScaleX,coverScaleY,1);}}if(OFFSET_X!==0||OFFSET_Y!==0){const basePos=[${videoPosition.x},${videoPosition.y},${videoPosition.z}];o.position.set(basePos[0]+OFFSET_X,basePos[1]+OFFSET_Y,basePos[2]);}requestAnimationFrame(smoothTick);}requestAnimationFrame(smoothTick);
+if('${fitMode}'==='cover'&&VIDEO_AR&&PLANE_AR){const vRatio=VIDEO_AR,pRatio=PLANE_AR;if(vRatio>pRatio){coverScaleY=vRatio/pRatio;console.log('[AR] Cover: video wider (AR '+vRatio.toFixed(2)+' > '+pRatio.toFixed(2)+'), scaleY='+coverScaleY.toFixed(2))}else{coverScaleX=pRatio/vRatio;console.log('[AR] Cover: video taller (AR '+vRatio.toFixed(2)+' < '+pRatio.toFixed(2)+'), scaleX='+coverScaleX.toFixed(2))}}
+function applyTextureTransform(){const mesh=plane.getObject3D('mesh');if(!mesh||!mesh.material||!mesh.material.map){return}const tex=mesh.material.map;const zX=coverScaleX*ZOOM,zY=coverScaleY*ZOOM;tex.repeat.set(zX,zY);const offX=0.5*(1-zX)+OFFSET_X,offY=0.5*(1-zY)-OFFSET_Y;tex.offset.set(offX,offY);tex.needsUpdate=true}
+let frameCount=0;function updateLoop(){if(!markerActive||!plane||!plane.object3D){requestAnimationFrame(updateLoop);return}frameCount++;if(frameCount%10===0){applyTextureTransform();if(frameCount===10)console.log('[AR] ✓ Texture transform applied and running')}requestAnimationFrame(updateLoop)}
+const scene=document.querySelector('a-scene');scene.addEventListener('renderstart',()=>{console.log('[AR] Render started, beginning texture update loop');updateLoop()});
 </script>
 </body>
 </html>`;

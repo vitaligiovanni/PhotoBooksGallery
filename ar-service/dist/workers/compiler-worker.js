@@ -10,7 +10,10 @@ class CompilerWorker {
      * PRODUCTION: Runs in Worker Thread (compiled .js files work fine)
      */
     async compile(job) {
-        const isDevelopment = process.env.NODE_ENV !== 'production';
+        // WORKAROUND: временно отключаем Worker Threads в проде из-за canvas ERR_DLOPEN_FAILED
+        // Локально (NODE_ENV!=production) как было: без воркера
+        // В проде принудительно в main-thread до стабилизации нативного canvas
+        const isDevelopment = true;
         if (isDevelopment) {
             // DEVELOPMENT MODE: Direct compilation in main thread
             // tsx watch will restart server if needed

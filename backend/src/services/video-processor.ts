@@ -114,3 +114,77 @@ export async function resizeVideoToMatchPhoto(
       .run();
   });
 }
+
+/**
+ * Дополнительное кадрирование по zoom/offset (ручная подстройка как в редакторе).
+ * - zoom > 1: увеличивает картинку (кадрирование меньшего окна).
+ * - offsetX/offsetY: смещают окно кадрирования в пределах допустимого остатка.
+ * - aspect удерживается как у целевого фото (photoWidth/photoHeight).
+ */
+export async function applyZoomOffsetCrop(
+  videoSrc: string,
+  photoWidth: number,
+  photoHeight: number,
+  zoom: number = 1,
+  offsetX: number = 0,
+  offsetY: number = 0,
+  outputPath: string
+): Promise<void> {
+  const targetAR = photoWidth / photoHeight;
+  const meta = await extractVideoMetadata(videoSrc);
+  const videoAR = meta.width / meta.height;
+
+  // Базовое окно под аспект маркера
+  let baseCropWidth = meta.width;
+  let baseCropHeight = Math.round(baseCropWidth / targetAR);
+  if (baseCropHeight > meta.height) {
+    baseCropHeight = meta.height;
+    baseCropWidth = Math.round(baseCropHeight * targetAR);
+  }
+
+  const safeZoom = Math.max(0.5, Math.min(2.0, zoom || 1));
+  const cropWidth = Math.max(1, Math.min(meta.width, Math.round(baseCropWidth / safeZoom)));
+  const cropHeight = Math.max(1, Math.min(meta.height, Math.round(baseCropHeight / safeZoom)));
+
+  const baseOriginX = Math.round((meta.width - baseCropWidth) / 2);
+  const baseOriginY = Math.round((meta.height - baseCropHeight) / 2);
+  const maxShiftX = Math.max(0, Math.round((baseCropWidth - cropWidth) / 2));
+  const maxShiftY = Math.max(0, Math.round((baseCropHeight - cropHeight) / 2));
+
+  const clampedOffsetX = Math.max(-1, Math.min(1, offsetX || 0));
+  const clampedOffsetY = Math.max(-1, Math.min(1, offsetY || 0));
+
+  // Смещение окна внутри базового crop
+  const shiftX = Math.round(maxShiftX * clampedOffsetX);
+  const shiftY = Math.round(maxShiftY * clampedOffsetY);
+
+  const cropX = Math.max(0, Math.min(meta.width - cropWidth, baseOriginX + maxShiftX + shiftX));
+  const cropY = Math.max(0, Math.min(meta.height - cropHeight, baseOriginY + maxShiftY + shiftY));
+
+  const cmd = ffmpeg(videoSrc)
+    .videoFilters(`crop=${cropWidth}:${cropHeight}:${cropX}:${cropY}`)
+    .size(`${photoWidth}x${photoHeight}`)
+    .videoCodec('libx264')
+    .outputOptions([
+      '-crf 23',
+      '-preset fast',
+      '-movflags +faststart',
+    ])
+    .output(outputPath);
+
+  return new Promise((resolve, reject) => {
+    cmd
+      .on('start', (cmdLine) => {
+        console.log(`[Video Processor] Zoom crop ffmpeg: ${cmdLine}`);
+      })
+      .on('end', () => {
+        console.log('[Video Processor] ✅ Zoom/offset crop applied');
+        resolve();
+      })
+      .on('error', (err) => {
+        console.error('[Video Processor] ❌ Zoom crop ffmpeg error:', err);
+        reject(err);
+      })
+      .run();
+  });
+}

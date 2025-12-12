@@ -1,9 +1,13 @@
 interface CompilationJob {
     projectId: string;
     userId: string;
-    photoPath: string;
+    photoPath?: string;
+    photoPaths?: string[];
     videoPath?: string;
+    videoPaths?: string[];
     maskPath?: string;
+    maskUrls?: string[];
+    shapeType?: 'circle' | 'oval' | 'square' | 'rect' | 'custom';
     storageDir: string;
     config: Record<string, any>;
 }

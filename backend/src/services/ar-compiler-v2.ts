@@ -32,10 +32,12 @@ async function initMindAR() {
 
   try {
     // Динамический import для ESM модулей
+    // @ts-ignore
     const compilerModule = await import('mind-ar/src/image-target/offline-compiler.js');
     OfflineCompiler = compilerModule.OfflineCompiler;
 
     // Регистрируем CPU kernels для TensorFlow.js
+    // @ts-ignore
     await import('mind-ar/src/image-target/detector/kernels/cpu/index.js');
     
     console.log('[AR Compiler v2] ✅ MindAR OfflineCompiler loaded');
@@ -54,6 +56,13 @@ export interface CompilationResult {
   compilationTimeMs?: number;
   fileSize?: number;
   error?: string;
+  metadata?: {
+    photoWidth?: number;
+    photoHeight?: number;
+    photoAspectRatio?: number;
+    videoWidth?: number;
+    videoHeight?: number;
+  };
 }
 
 /**
@@ -217,6 +226,13 @@ export async function compileMultiTargetMindFile(
       })
     );
 
+    // Извлекаем метаданные из первого изображения (используется как основное)
+    const firstImageMetadata = {
+      photoWidth: images[0]?.width || undefined,
+      photoHeight: images[0]?.height || undefined,
+      photoAspectRatio: images[0] ? (images[0].width / images[0].height) : undefined,
+    };
+
     // ОПТИМИЗАЦИЯ: maxScale=640 для быстрой компиляции нескольких маркеров
     const compiler = new OfflineCompiler({ maxScale: 640 });
     let lastProgressLog = 0;
@@ -240,6 +256,7 @@ export async function compileMultiTargetMindFile(
     console.log(
       `[AR Compiler v2] ✅ Multi-target SUCCESS! Created ${mindFilePath}\n` +
       `  - Targets: ${photoPaths.length}\n` +
+      `  - First photo: ${firstImageMetadata.photoWidth}×${firstImageMetadata.photoHeight}px (AR=${firstImageMetadata.photoAspectRatio?.toFixed(3)})\n` +
       `  - Size: ${(fileSize / 1024).toFixed(1)} KB\n` +
       `  - Time: ${(compilationTimeMs / 1000).toFixed(1)}s`
     );
@@ -249,6 +266,7 @@ export async function compileMultiTargetMindFile(
       mindFilePath,
       compilationTimeMs,
       fileSize,
+      metadata: firstImageMetadata,
     };
   } catch (error: any) {
     const compilationTimeMs = Date.now() - startTime;

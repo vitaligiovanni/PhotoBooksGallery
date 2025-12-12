@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useRoute } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -171,7 +171,7 @@ export default function AdminAREditPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/ar/status', arId] });
-      setTimeout(() => setIframeKey(k => k + 1), 1000); // reload viewer iframe (увеличено до 1s для crop обработки)
+      setTimeout(() => setIframeKey(k => k + 1), 1000); // reload viewer iframe (╤Г╨▓╨╡╨╗╨╕╤З╨╡╨╜╨╛ ╨┤╨╛ 1s ╨┤╨╗╤П crop ╨╛╨▒╤А╨░╨▒╨╛╤В╨║╨╕)
     }
   });
 
@@ -249,41 +249,41 @@ export default function AdminAREditPage() {
   });
 
   if (!arId) {
-    return <div className="p-6 text-sm text-muted-foreground">Нет ID проекта в пути (/admin/ar/:id/edit)</div>;
+    return <div className="p-6 text-sm text-muted-foreground">╨Э╨╡╤В ID ╨┐╤А╨╛╨╡╨║╤В╨░ ╨▓ ╨┐╤Г╤В╨╕ (/admin/ar/:id/edit)</div>;
   }
 
   return (
     <div className="container mx-auto px-4 py-8">
       <Card>
         <CardHeader>
-          <CardTitle>AR Редактор проекта</CardTitle>
+          <CardTitle>AR ╨а╨╡╨┤╨░╨║╤В╨╛╤А ╨┐╤А╨╛╨╡╨║╤В╨░</CardTitle>
           <CardDescription>
-            Тонкая настройка наложения видео и маски для проекта {arId}
+            ╨в╨╛╨╜╨║╨░╤П ╨╜╨░╤Б╤В╤А╨╛╨╣╨║╨░ ╨╜╨░╨╗╨╛╨╢╨╡╨╜╨╕╤П ╨▓╨╕╨┤╨╡╨╛ ╨╕ ╨╝╨░╤Б╨║╨╕ ╨┤╨╗╤П ╨┐╤А╨╛╨╡╨║╤В╨░ {arId}
           </CardDescription>
           <div className="mt-3 flex items-center gap-2">
             {viewerUrl && (
               <a href={viewerUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded bg-primary px-3 py-1 text-white text-sm">
-                Открыть AR Viewer
+                ╨Ю╤В╨║╤А╤Л╤В╤М AR Viewer
               </a>
             )}
             {qrUrl && (
               <a href={qrUrl} target="_blank" rel="noreferrer" className="inline-flex items-center rounded border px-3 py-1 text-sm">
-                Открыть QR
+                ╨Ю╤В╨║╤А╤Л╤В╤М QR
               </a>
             )}
           </div>
         </CardHeader>
         <CardContent className="space-y-8">
-          {isLoading && <div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> Загрузка проекта...</div>}
+          {isLoading && <div className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> ╨Ч╨░╨│╤А╤Г╨╖╨║╨░ ╨┐╤А╨╛╨╡╨║╤В╨░...</div>}
           {error && <Alert variant="destructive"><AlertDescription>{(error as any).message}</AlertDescription></Alert>}
           
-          {/* Multi-item section (новая функция: несколько живых фото) */}
+          {/* Multi-item section (╨╜╨╛╨▓╨░╤П ╤Д╤Г╨╜╨║╤Ж╨╕╤П: ╨╜╨╡╤Б╨║╨╛╨╗╤М╨║╨╛ ╨╢╨╕╨▓╤Л╤Е ╤Д╨╛╤В╨╛) */}
           {project && (
             <>
               <div className="mb-6">
                 <div className="flex items-center gap-2 mb-4">
                   <Layers className="h-5 w-5 text-primary" />
-                  <h3 className="text-lg font-semibold">Управление живыми фото (Multi-target)</h3>
+                  <h3 className="text-lg font-semibold">╨г╨┐╤А╨░╨▓╨╗╨╡╨╜╨╕╨╡ ╨╢╨╕╨▓╤Л╨╝╨╕ ╤Д╨╛╤В╨╛ (Multi-target)</h3>
                 </div>
                 <ARProjectItemsList projectId={arId} />
               </div>
@@ -291,18 +291,18 @@ export default function AdminAREditPage() {
             </>
           )}
 
-          {/* Legacy single-photo editor (показывается ВСЕГДА) */}
+          {/* Legacy single-photo editor (╨┐╨╛╨║╨░╨╖╤Л╨▓╨░╨╡╤В╤Б╤П ╨Т╨б╨Х╨У╨Ф╨Р) */}
           {project && (
             <>
               {/* Asset Triad Panel */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-4">Активы проекта (Legacy single-photo)</h3>
+                <h3 className="text-lg font-semibold mb-4">╨Р╨║╤В╨╕╨▓╤Л ╨┐╤А╨╛╨╡╨║╤В╨░ (Legacy single-photo)</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Photo Marker */}
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <ImageIcon className="h-4 w-4" /> Фото-маркер
+                        <ImageIcon className="h-4 w-4" /> ╨д╨╛╤В╨╛-╨╝╨░╤А╨║╨╡╤А
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -310,12 +310,12 @@ export default function AdminAREditPage() {
                         <div className="space-y-2">
                           <img src={project.photoUrl} alt="AR Photo Marker" className="w-full rounded border" />
                           <div className="text-xs text-muted-foreground space-y-1">
-                            <div>Размер: {project.photoWidth}×{project.photoHeight}px</div>
-                            <div>Соотношение: {project.photoAspectRatio || '—'}</div>
+                            <div>╨а╨░╨╖╨╝╨╡╤А: {project.photoWidth}├Ч{project.photoHeight}px</div>
+                            <div>╨б╨╛╨╛╤В╨╜╨╛╤И╨╡╨╜╨╕╨╡: {project.photoAspectRatio || 'тАФ'}</div>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-sm text-muted-foreground">Фото не загружено</div>
+                        <div className="text-sm text-muted-foreground">╨д╨╛╤В╨╛ ╨╜╨╡ ╨╖╨░╨│╤А╤Г╨╢╨╡╨╜╨╛</div>
                       )}
                     </CardContent>
                   </Card>
@@ -324,7 +324,7 @@ export default function AdminAREditPage() {
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <VideoIcon className="h-4 w-4" /> Видео ({fitMode})
+                        <VideoIcon className="h-4 w-4" /> ╨Т╨╕╨┤╨╡╨╛ ({fitMode})
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -332,81 +332,44 @@ export default function AdminAREditPage() {
                         <div className="space-y-2">
                           <video src={project.videoUrl} controls className="w-full rounded border" />
                           <div className="text-xs text-muted-foreground space-y-1">
-                            <div>Размер: {project.videoWidth}×{project.videoHeight}px</div>
-                            <div>Соотношение: {project.videoAspectRatio || '—'}</div>
-                            {project.videoDurationMs && <div>Длина: {(project.videoDurationMs / 1000).toFixed(1)}s</div>}
+                            <div>╨а╨░╨╖╨╝╨╡╤А: {project.videoWidth}├Ч{project.videoHeight}px</div>
+                            <div>╨б╨╛╨╛╤В╨╜╨╛╤И╨╡╨╜╨╕╨╡: {project.videoAspectRatio || 'тАФ'}</div>
+                            {project.videoDurationMs && <div>╨Ф╨╗╨╕╨╜╨░: {(project.videoDurationMs / 1000).toFixed(1)}s</div>}
                             <div>FitMode: <span className="font-mono">{fitMode}</span></div>
                           </div>
                         </div>
                       ) : (
-                        <div className="text-sm text-muted-foreground">Видео не загружено</div>
+                        <div className="text-sm text-muted-foreground">╨Т╨╕╨┤╨╡╨╛ ╨╜╨╡ ╨╖╨░╨│╤А╤Г╨╢╨╡╨╜╨╛</div>
                       )}
                     </CardContent>
                   </Card>
 
-                  {/* Mask - LIVE PREVIEW с видео */}
+                  {/* Mask */}
                   <Card>
                     <CardHeader className="pb-3">
                       <CardTitle className="text-sm flex items-center gap-2">
-                        <Eye className="h-4 w-4" /> Видео + Маска (LIVE)
+                        <ImageIcon className="h-4 w-4" /> ╨Ь╨░╤Б╨║╨░/╨а╨░╨╝╨║╨░
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {project.videoUrl && project.maskUrl ? (
+                      {project.maskUrl ? (
                         <div className="space-y-2">
-                          {/* LIVE Preview: видео с применённой маской - ASPECT RATIO КАК У ФОТОГРАФИИ */}
-                          <div 
-                            className="relative rounded border overflow-hidden" 
-                            style={{
-                              backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, white 0% 50%)',
-                              backgroundSize: '20px 20px',
-                              backgroundPosition: '0 0, 10px 10px',
-                              aspectRatio: project.photoWidth && project.photoHeight 
-                                ? `${project.photoWidth} / ${project.photoHeight}` 
-                                : 'auto'
-                            }}>
-                            <video 
-                              src={project.videoUrl} 
-                              autoPlay 
-                              loop 
-                              muted 
-                              playsInline 
-                              className="w-full" 
-                              style={{
-                                maskImage: `url(${project.maskUrl}?t=${Date.now()})`,
-                                WebkitMaskImage: `url(${project.maskUrl}?t=${Date.now()})`,
-                                maskSize: `${zoom * 100}% ${zoom * 100}%`,
-                                WebkitMaskSize: `${zoom * 100}% ${zoom * 100}%`,
-                                maskRepeat: 'no-repeat',
-                                WebkitMaskRepeat: 'no-repeat',
-                                maskPosition: `${50 + offsetX * 100}% ${50 - offsetY * 100}%`,
-                                WebkitMaskPosition: `${50 + offsetX * 100}% ${50 - offsetY * 100}%`
-                              }} 
-                            />
-                          </div>
-                          <div className="text-xs text-muted-foreground space-y-1">
-                            <div className="text-green-600 font-medium">✅ Маска применена</div>
-                            <div>🔍 Zoom: {zoom.toFixed(2)} | Offset: ({offsetX.toFixed(2)}, {offsetY.toFixed(2)})</div>
-                            {project.maskWidth && project.maskHeight && (
-                              <div>Размер маски: {project.maskWidth}×{project.maskHeight}px</div>
-                            )}
-                          </div>
-                        </div>
-                      ) : project.maskUrl ? (
-                        <div className="space-y-2">
-                          {/* Если нет видео - показываем только маску */}
+                          {/* Checkerboard background for transparency preview */}
                           <div className="relative rounded border overflow-hidden" style={{
                             backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, white 0% 50%)',
-                            backgroundSize: '20px 20px'
+                            backgroundSize: '20px 20px',
+                            backgroundPosition: '0 0, 10px 10px'
                           }}>
                             <img src={project.maskUrl} alt="Mask" className="w-full" />
                           </div>
-                          <div className="text-xs text-yellow-600">⚠️ Видео не загружено</div>
+                          <div className="text-xs text-muted-foreground space-y-1">
+                            <div>╨а╨░╨╖╨╝╨╡╤А: {project.maskWidth}├Ч{project.maskHeight}px</div>
+                          </div>
                         </div>
                       ) : (
                         <div className="text-sm text-muted-foreground">
-                          <div className="mb-2">Маска не загружена</div>
-                          <div className="text-xs opacity-70">Загрузите PNG/WebP с прозрачностью</div>
+                          <div className="mb-2">╨Ь╨░╤Б╨║╨░ ╨╜╨╡ ╨╖╨░╨│╤А╤Г╨╢╨╡╨╜╨░</div>
+                          <div className="text-xs opacity-70">╨Ч╨░╨│╤А╤Г╨╖╨╕╤В╨╡ PNG/WebP ╤Б ╨┐╤А╨╛╨╖╤А╨░╤З╨╜╨╛╤Б╤В╤М╤О</div>
                         </div>
                       )}
                     </CardContent>
@@ -420,7 +383,7 @@ export default function AdminAREditPage() {
                 {/* Controls */}
                 <div className="space-y-6">
                   <div>
-                    <h3 className="font-semibold flex items-center gap-2"><Wand2 className="h-4 w-4" /> Позиция</h3>
+                    <h3 className="font-semibold flex items-center gap-2"><Wand2 className="h-4 w-4" /> ╨Я╨╛╨╖╨╕╤Ж╨╕╤П</h3>
                     <div className="grid grid-cols-3 gap-2 mt-2">
                       {(['x','y','z'] as const).map(axis => (
                         <Input key={axis} type="number" step="0.01" value={pos[axis]} onChange={e => setPos(p => ({ ...p, [axis]: parseFloat(e.target.value) }))} placeholder={axis.toUpperCase()} />
@@ -429,7 +392,7 @@ export default function AdminAREditPage() {
                     {/* Nudge Controls */}
                     <div className="mt-3 space-y-2">
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Target className="h-3 w-3" /> Точная настройка
+                        <Target className="h-3 w-3" /> ╨в╨╛╤З╨╜╨░╤П ╨╜╨░╤Б╤В╤А╨╛╨╣╨║╨░
                       </div>
                       <div className="flex gap-2 items-center">
                         <div className="flex flex-col items-center gap-1">
@@ -456,14 +419,14 @@ export default function AdminAREditPage() {
                             Z+ <ArrowUp className="h-3 w-3 ml-1" />
                           </Button>
                           <Button size="sm" variant="outline" className="h-8 px-2 text-xs" onClick={() => setPos(p => ({ ...p, z: p.z - 0.01 }))}>
-                            Z– <ArrowDown className="h-3 w-3 ml-1" />
+                            ZтАУ <ArrowDown className="h-3 w-3 ml-1" />
                           </Button>
                         </div>
                       </div>
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-semibold flex items-center gap-2"><Wand2 className="h-4 w-4" /> Ротация</h3>
+                    <h3 className="font-semibold flex items-center gap-2"><Wand2 className="h-4 w-4" /> ╨а╨╛╤В╨░╤Ж╨╕╤П</h3>
                     <div className="grid grid-cols-3 gap-2 mt-2">
                       {(['x','y','z'] as const).map(axis => (
                         <Input key={axis} type="number" step="1" value={rot[axis]} onChange={e => setRot(r => ({ ...r, [axis]: parseFloat(e.target.value) }))} placeholder={axis.toUpperCase()} />
@@ -472,21 +435,7 @@ export default function AdminAREditPage() {
                   </div>
                   {/* Scale section REMOVED - backend automatically calculates from photoAspectRatio */}
                   <div>
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold">Fit Mode</h3>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        onClick={() => {
-                          setZoom(1.0);
-                          setOffsetX(0);
-                          setOffsetY(0);
-                        }}
-                        className="text-xs h-7"
-                      >
-                        🔄 Сбросить зум
-                      </Button>
-                    </div>
+                    <h3 className="font-semibold">Fit Mode</h3>
                     <select className="w-full border rounded px-2 py-1 text-sm" value={fitMode} onChange={e => setFitMode(e.target.value as any)}>
                       <option value="contain">contain</option>
                       <option value="cover">cover</option>
@@ -503,11 +452,11 @@ export default function AdminAREditPage() {
                   </div>
                   <Separator />
                   <div>
-                    <h3 className="font-semibold flex items-center gap-2 mb-3"><ImageIcon className="h-4 w-4" /> Маска для видео</h3>
+                    <h3 className="font-semibold flex items-center gap-2 mb-3"><ImageIcon className="h-4 w-4" /> ╨Ь╨░╤Б╨║╨░ ╨┤╨╗╤П ╨▓╨╕╨┤╨╡╨╛</h3>
                     
                     {/* Shape Type Selector */}
                     <div className="space-y-3 mb-4">
-                      <div className="text-sm font-medium text-muted-foreground">Выберите форму маски:</div>
+                      <div className="text-sm font-medium text-muted-foreground">╨Т╤Л╨▒╨╡╤А╨╕╤В╨╡ ╤Д╨╛╤А╨╝╤Г ╨╝╨░╤Б╨║╨╕:</div>
                       <div className="grid grid-cols-5 gap-2">
                         <Button
                           size="sm"
@@ -519,8 +468,8 @@ export default function AdminAREditPage() {
                             setMaskPreview(null);
                           }}
                         >
-                          <span className="text-2xl">⭕</span>
-                          <span className="text-xs">Круг</span>
+                          <span className="text-2xl">тнХ</span>
+                          <span className="text-xs">╨Ъ╤А╤Г╨│</span>
                         </Button>
                         
                         <Button
@@ -533,8 +482,8 @@ export default function AdminAREditPage() {
                             setMaskPreview(null);
                           }}
                         >
-                          <span className="text-2xl">🥚</span>
-                          <span className="text-xs">Овал</span>
+                          <span className="text-2xl">ЁЯеЪ</span>
+                          <span className="text-xs">╨Ю╨▓╨░╨╗</span>
                         </Button>
                         
                         <Button
@@ -547,8 +496,8 @@ export default function AdminAREditPage() {
                             setMaskPreview(null);
                           }}
                         >
-                          <span className="text-2xl">◻️</span>
-                          <span className="text-xs">Квадрат</span>
+                          <span className="text-2xl">тЧ╗я╕П</span>
+                          <span className="text-xs">╨Ъ╨▓╨░╨┤╤А╨░╤В</span>
                         </Button>
                         
                         <Button
@@ -561,8 +510,8 @@ export default function AdminAREditPage() {
                             setMaskPreview(null);
                           }}
                         >
-                          <span className="text-2xl">▭</span>
-                          <span className="text-xs">Прямоуг.</span>
+                          <span className="text-2xl">тЦн</span>
+                          <span className="text-xs">╨Я╤А╤П╨╝╨╛╤Г╨│.</span>
                         </Button>
                         
                         <Button
@@ -571,66 +520,37 @@ export default function AdminAREditPage() {
                           className="h-16 flex flex-col items-center justify-center gap-1"
                           onClick={() => setShapeType('custom')}
                         >
-                          <span className="text-2xl">🎭</span>
-                          <span className="text-xs">Своя</span>
+                          <span className="text-2xl">ЁЯОн</span>
+                          <span className="text-xs">╨б╨▓╨╛╤П</span>
                         </Button>
                       </div>
                       
                       {shapeType && shapeType !== 'custom' && (
                         <Alert>
                           <AlertDescription className="text-xs">
-                            Маска "{shapeType}" будет сгенерирована автоматически при компиляции
+                            ╨Ь╨░╤Б╨║╨░ "{shapeType}" ╨▒╤Г╨┤╨╡╤В ╤Б╨│╨╡╨╜╨╡╤А╨╕╤А╨╛╨▓╨░╨╜╨░ ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╕ ╨┐╤А╨╕ ╨║╨╛╨╝╨┐╨╕╨╗╤П╤Ж╨╕╨╕
                           </AlertDescription>
                         </Alert>
                       )}
-                      
-                      {/* Кнопка удаления для ВСЕХ типов масок */}
-                      {(shapeType || project.maskUrl) && (
-                        <div className="flex gap-2 mt-3">
-                          <Button 
-                            disabled={deleteMaskMutation.isPending} 
-                            onClick={() => {
-                              deleteMaskMutation.mutate();
-                              setShapeType(null);
-                            }} 
-                            size="sm" 
-                            variant="destructive"
-                          >
-                            {deleteMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />} Удалить маску
-                          </Button>
-                          {shapeType && (
-                            <div className="text-xs text-muted-foreground self-center">
-                              Выбрана: <strong>{shapeType === 'circle' ? '⭕ Круг' : shapeType === 'oval' ? '🥚 Овал' : shapeType === 'square' ? '◻️ Квадрат' : shapeType === 'rect' ? '▭ Прямоугольник' : '🎭 Своя'}</strong>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                     
-                    {/* Current Mask Preview - только маска */}
+                    {/* Current Mask Preview */}
                     {project.maskUrl && (
                       <div className="mb-3">
-                        <div className="text-xs font-medium text-muted-foreground mb-1">Текущая маска:</div>
-                        <div className="relative rounded border overflow-hidden max-w-[150px]" style={{
+                        <div className="relative rounded border overflow-hidden max-w-xs" style={{
                           backgroundImage: 'repeating-conic-gradient(#e5e7eb 0% 25%, white 0% 50%)',
-                          backgroundSize: '20px 20px',
-                          aspectRatio: project.photoWidth && project.photoHeight 
-                            ? `${project.photoWidth} / ${project.photoHeight}` 
-                            : 'auto'
+                          backgroundSize: '20px 20px'
                         }}>
-                          <img src={project.maskUrl} alt="mask" className="w-full h-full object-contain" />
+                          <img src={project.maskUrl} alt="mask" className="w-full" />
                         </div>
-                        <div className="text-xs text-green-600 font-medium mt-1">✅ {shapeType === 'circle' ? 'Круг' : shapeType === 'oval' ? 'Овал' : shapeType === 'square' ? 'Квадрат' : shapeType === 'rect' ? 'Прямоугольник' : 'Своя маска'}</div>
-                        <div className="text-[10px] text-muted-foreground mt-1">
-                          💡 Live превью с видео смотрите в "Активах проекта" выше
-                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">╨в╨╡╨║╤Г╤Й╨░╤П ╨╝╨░╤Б╨║╨░ ╨▓ ╨┐╤А╨╛╨╡╨║╤В╨╡</div>
                       </div>
                     )}
                     
                     {/* Custom Mask Upload (only show if custom selected) */}
                     {shapeType === 'custom' && (
                       <div className="space-y-2 mt-3 p-3 border rounded-lg bg-muted/50">
-                        <div className="text-sm font-medium">Загрузите свою маску (PNG/WebP с прозрачностью)</div>
+                        <div className="text-sm font-medium">╨Ч╨░╨│╤А╤Г╨╖╨╕╤В╨╡ ╤Б╨▓╨╛╤О ╨╝╨░╤Б╨║╤Г (PNG/WebP ╤Б ╨┐╤А╨╛╨╖╤А╨░╤З╨╜╨╛╤Б╤В╤М╤О)</div>
                         <input 
                           type="file" 
                           accept="image/png,image/webp" 
@@ -650,17 +570,25 @@ export default function AdminAREditPage() {
                             }}>
                               <img src={maskPreview} alt="Preview" className="w-full" />
                             </div>
-                            <div className="text-xs text-muted-foreground mt-1">Превью загруженной маски</div>
+                            <div className="text-xs text-muted-foreground mt-1">╨Я╤А╨╡╨▓╤М╤О ╨╖╨░╨│╤А╤Г╨╢╨╡╨╜╨╜╨╛╨╣ ╨╝╨░╤Б╨║╨╕</div>
                           </div>
                         )}
                         <div className="flex gap-2 mt-2">
                           <Button disabled={!maskFile || uploadMaskMutation.isPending} onClick={() => uploadMaskMutation.mutate()} size="sm" variant="secondary">
-                            {uploadMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />} Загрузить маску
+                            {uploadMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4 mr-1" />} ╨Ч╨░╨│╤А╤Г╨╖╨╕╤В╤М ╨╝╨░╤Б╨║╤Г
                           </Button>
                           {maskFile && <Button size="sm" variant="ghost" onClick={() => {
                             setMaskFile(null);
                             setMaskPreview(null);
-                          }}>Отменить</Button>}
+                          }}>╨Ю╤В╨╝╨╡╨╜╨╕╤В╤М</Button>}
+                          <Button 
+                            disabled={deleteMaskMutation.isPending} 
+                            onClick={() => deleteMaskMutation.mutate()} 
+                            size="sm" 
+                            variant="destructive"
+                          >
+                            {deleteMaskMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 mr-1" />} ╨г╨┤╨░╨╗╨╕╤В╤М ╨╝╨░╤Б╨║╤Г
+                          </Button>
                         </div>
                       </div>
                     )}
@@ -669,21 +597,21 @@ export default function AdminAREditPage() {
                   {/* Legacy single-photo save. For multi-target projects we force per-item config editing */}
                   {!isMultiTarget ? (
                     <Button disabled={patchMutation.isPending} onClick={() => patchMutation.mutate()}>
-                      {patchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Сохранить и регенерировать
+                      {patchMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} ╨б╨╛╤Е╤А╨░╨╜╨╕╤В╤М ╨╕ ╤А╨╡╨│╨╡╨╜╨╡╤А╨╕╤А╨╛╨▓╨░╤В╤М
                     </Button>
                   ) : (
                     <Alert>
                       <AlertDescription>
-                        Это мульти‑проект (несколько живых фото). Сохранение настроек выполняется отдельно для каждого фото в разделе «Живые фото» ниже. Кнопка общего сохранения отключена.
+                        ╨н╤В╨╛ ╨╝╤Г╨╗╤М╤В╨╕тАС╨┐╤А╨╛╨╡╨║╤В (╨╜╨╡╤Б╨║╨╛╨╗╤М╨║╨╛ ╨╢╨╕╨▓╤Л╤Е ╤Д╨╛╤В╨╛). ╨б╨╛╤Е╤А╨░╨╜╨╡╨╜╨╕╨╡ ╨╜╨░╤Б╤В╤А╨╛╨╡╨║ ╨▓╤Л╨┐╨╛╨╗╨╜╤П╨╡╤В╤Б╤П ╨╛╤В╨┤╨╡╨╗╤М╨╜╨╛ ╨┤╨╗╤П ╨║╨░╨╢╨┤╨╛╨│╨╛ ╤Д╨╛╤В╨╛ ╨▓ ╤А╨░╨╖╨┤╨╡╨╗╨╡ ┬л╨Ц╨╕╨▓╤Л╨╡ ╤Д╨╛╤В╨╛┬╗ ╨╜╨╕╨╢╨╡. ╨Ъ╨╜╨╛╨┐╨║╨░ ╨╛╨▒╤Й╨╡╨│╨╛ ╤Б╨╛╤Е╤А╨░╨╜╨╡╨╜╨╕╤П ╨╛╤В╨║╨╗╤О╤З╨╡╨╜╨░.
                       </AlertDescription>
                     </Alert>
                   )}
-                  <Button variant="outline" className="ml-2" onClick={() => refetch()} disabled={isLoading}><RefreshCcw className="h-4 w-4 mr-2" /> Обновить данные</Button>
+                  <Button variant="outline" className="ml-2" onClick={() => refetch()} disabled={isLoading}><RefreshCcw className="h-4 w-4 mr-2" /> ╨Ю╨▒╨╜╨╛╨▓╨╕╤В╤М ╨┤╨░╨╜╨╜╤Л╨╡</Button>
                 </div>
 
                 {/* Preview */}
                 <div className="space-y-4">
-                  <h3 className="font-semibold flex items-center gap-2"><Eye className="h-4 w-4" /> Просмотр</h3>
+                  <h3 className="font-semibold flex items-center gap-2"><Eye className="h-4 w-4" /> ╨Я╤А╨╛╤Б╨╝╨╛╤В╤А</h3>
                   {project.viewerHtmlUrl ? (
                     <iframe
                       key={iframeKey}
@@ -708,11 +636,11 @@ export default function AdminAREditPage() {
                       }}
                     />
                   ) : (
-                    <div className="text-sm text-muted-foreground">Viewer ещё не готов.</div>
+                    <div className="text-sm text-muted-foreground">Viewer ╨╡╤Й╤С ╨╜╨╡ ╨│╨╛╤В╨╛╨▓.</div>
                   )}
                   {/* Calibration sandbox */}
                   <div className="mt-4">
-                    <h4 className="font-medium mb-2">Калибровочный sandbox</h4>
+                    <h4 className="font-medium mb-2">╨Ъ╨░╨╗╨╕╨▒╤А╨╛╨▓╨╛╤З╨╜╤Л╨╣ sandbox</h4>
                     <CalibrationSandbox
                       photoAspectRatio={(project.photoWidth && project.photoHeight) ? (project.photoHeight / project.photoWidth) : 4/3}
                       videoAspectRatio={(project.videoWidth && project.videoHeight) ? (project.videoWidth / project.videoHeight) : 16/9}
@@ -735,14 +663,14 @@ export default function AdminAREditPage() {
                   </div>
                   <div className="grid grid-cols-2 gap-3 text-xs">
                     <div className="p-2 border rounded">
-                      <div className="font-semibold">Фото AR</div>
-                      <div>Aspect: {project.photoAspectRatio || '—'}</div>
+                      <div className="font-semibold">╨д╨╛╤В╨╛ AR</div>
+                      <div>Aspect: {project.photoAspectRatio || 'тАФ'}</div>
                       <div>FitMode: {fitMode}</div>
                     </div>
                     <div className="p-2 border rounded">
-                      <div className="font-semibold">Видео</div>
-                      <div>Aspect: {project.videoAspectRatio || '—'}</div>
-                      <div>Scale: {project.scaleWidth}×{project.scaleHeight}</div>
+                      <div className="font-semibold">╨Т╨╕╨┤╨╡╨╛</div>
+                      <div>Aspect: {project.videoAspectRatio || 'тАФ'}</div>
+                      <div>Scale: {project.scaleWidth}├Ч{project.scaleHeight}</div>
                     </div>
                   </div>
                 </div>
@@ -754,7 +682,7 @@ export default function AdminAREditPage() {
               )}
               {(patchMutation.isSuccess || uploadMaskMutation.isSuccess || convertMaskMutation.isSuccess) && (
                 <Alert><AlertDescription>
-                  {convertMaskMutation.isSuccess ? 'Маска конвертирована успешно' : 'Изменения применены.'}
+                  {convertMaskMutation.isSuccess ? '╨Ь╨░╤Б╨║╨░ ╨║╨╛╨╜╨▓╨╡╤А╤В╨╕╤А╨╛╨▓╨░╨╜╨░ ╤Г╤Б╨┐╨╡╤И╨╜╨╛' : '╨Ш╨╖╨╝╨╡╨╜╨╡╨╜╨╕╤П ╨┐╤А╨╕╨╝╨╡╨╜╨╡╨╜╤Л.'}
                 </AlertDescription></Alert>
               )}
             </>
@@ -765,20 +693,20 @@ export default function AdminAREditPage() {
           <div className="px-6 pb-6">
             <Separator className="my-6" />
             <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">Опасная зона: удаление проекта безвозвратно удалит файлы и запись.</div>
+              <div className="text-sm text-muted-foreground">╨Ю╨┐╨░╤Б╨╜╨░╤П ╨╖╨╛╨╜╨░: ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╡ ╨┐╤А╨╛╨╡╨║╤В╨░ ╨▒╨╡╨╖╨▓╨╛╨╖╨▓╤А╨░╤В╨╜╨╛ ╤Г╨┤╨░╨╗╨╕╤В ╤Д╨░╨╣╨╗╤Л ╨╕ ╨╖╨░╨┐╨╕╤Б╤М.</div>
               <Button
                 variant="destructive"
                 onClick={async () => {
-                  if (!confirm('Удалить проект безвозвратно?')) return;
+                  if (!confirm('╨г╨┤╨░╨╗╨╕╤В╤М ╨┐╤А╨╛╨╡╨║╤В ╨▒╨╡╨╖╨▓╨╛╨╖╨▓╤А╨░╤В╨╜╨╛?')) return;
                   try {
                     const res = await fetch(`/api/ar/${project.id}`, { method: 'DELETE', credentials: 'include' });
                     if (!res.ok) throw new Error(await res.text());
                     navigate('/admin/ar');
                   } catch (e:any) {
-                    alert(e.message || 'Не удалось удалить проект');
+                    alert(e.message || '╨Э╨╡ ╤Г╨┤╨░╨╗╨╛╤Б╤М ╤Г╨┤╨░╨╗╨╕╤В╤М ╨┐╤А╨╛╨╡╨║╤В');
                   }
                 }}
-              >Удалить проект</Button>
+              >╨г╨┤╨░╨╗╨╕╤В╤М ╨┐╤А╨╛╨╡╨║╤В</Button>
             </div>
           </div>
         )}

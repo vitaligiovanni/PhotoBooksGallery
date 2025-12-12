@@ -1,5 +1,5 @@
 import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component, ReactNode } from "react";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -39,6 +39,72 @@ const LivingPhotos = lazy(() => import("@/pages/LivingPhotos"));
 const ARViewRedirect = lazy(() => import("@/pages/ARViewRedirect"));
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PWAInstallPrompt } from "@/components/PWAInstallPrompt";
+
+// ErrorBoundary для обработки ошибок загрузки динамических модулей
+class ChunkLoadErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    // Проверяем, это ошибка загрузки чанка
+    const isChunkLoadError = 
+      error.message.includes('Failed to fetch dynamically imported module') ||
+      error.message.includes('Importing a module script failed') ||
+      error.message.includes('error loading dynamically imported module');
+    
+    if (isChunkLoadError) {
+      console.warn('🔄 Chunk load error detected, reloading page...', error.message);
+      // Автоматически перезагружаем страницу один раз
+      const hasReloaded = sessionStorage.getItem('chunk-reload');
+      if (!hasReloaded) {
+        sessionStorage.setItem('chunk-reload', 'true');
+        window.location.reload();
+      }
+    }
+    
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error('ChunkLoadErrorBoundary caught error:', error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-screen p-6">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-semibold mb-3">Компонент не загрузился</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Вы можете перезагрузить страницу или вернуться на главную.
+            </p>
+            <div className="flex gap-3 justify-center">
+              <button 
+                onClick={() => window.location.reload()} 
+                className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
+              >
+                🔄 Перезагрузить
+              </button>
+              <button 
+                onClick={() => window.location.href = '/'} 
+                className="px-4 py-2 border rounded-md hover:bg-accent"
+              >
+                🏠 На главную
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 function HomePage() {
   // Всегда показываем Landing страницу - она более красивая
@@ -106,14 +172,16 @@ function App() {
         <I18nextProvider i18n={i18n}>
           <CurrencyProvider>
             <TooltipProvider>
-              <Toaster />
-              <AppLayout>
-                <LanguageRouter />
-                <Suspense fallback={null}>
-                  <AppPopups />
-                </Suspense>
-                <PWAInstallPrompt />
-              </AppLayout>
+              <ChunkLoadErrorBoundary>
+                <Toaster />
+                <AppLayout>
+                  <LanguageRouter />
+                  <Suspense fallback={null}>
+                    <AppPopups />
+                  </Suspense>
+                  <PWAInstallPrompt />
+                </AppLayout>
+              </ChunkLoadErrorBoundary>
             </TooltipProvider>
           </CurrencyProvider>
         </I18nextProvider>

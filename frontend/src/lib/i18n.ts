@@ -1780,7 +1780,22 @@ const resources = {
 let initialLang = 'hy';
 try {
   const stored = typeof window !== 'undefined' ? localStorage.getItem('app_language') : null;
-  if (stored && (stored === 'ru' || stored === 'hy' || stored === 'en')) initialLang = stored;
+  
+  if (stored && (stored === 'ru' || stored === 'hy' || stored === 'en')) {
+    // Используем сохранённый язык
+    initialLang = stored;
+  } else if (typeof window !== 'undefined' && navigator.language) {
+    // Определяем по языку браузера
+    const browserLang = navigator.language.toLowerCase();
+    if (browserLang.startsWith('ru')) {
+      initialLang = 'ru';
+    } else if (browserLang.startsWith('hy') || browserLang.startsWith('am')) {
+      initialLang = 'hy';
+    } else if (browserLang.startsWith('en')) {
+      initialLang = 'en';
+    }
+    // По умолчанию для .am домена - армянский
+  }
 } catch (e) {
   // ignore
 }
